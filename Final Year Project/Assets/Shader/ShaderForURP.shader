@@ -5,7 +5,7 @@
 //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics
 
 
-Shader "Unlit/ShaderForURP"
+Shader "Custom/ShaderForURP"
 {
     Properties
     {
@@ -17,10 +17,10 @@ Shader "Unlit/ShaderForURP"
         Tags { "RenderType"="Opaque" }
         LOD 100
 
-        /*Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
-        in our HLSL pass. Everything within this block will be available to all the passes we define*/
+        //Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
+        //in our HLSL pass. Everything within this block will be available to all the passes we define*/
         HLSLINCLUDE
-        #include "Packages/com.unity.render-rpipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         //we need to include the properties our shader is going to use between the cbuffer start and 
         //cbuffer end Tags
         CBUFFER_START(UnityPerMaterial) //The UnityPerMaterial parameter ensures these properties are consistent among passes.
@@ -44,7 +44,7 @@ Shader "Unlit/ShaderForURP"
         {
             float4 position : POSITION;
             float2 uv : TEXCOORD0; 
-        }
+        };
 
         /*A semantic is a string attached to a shader input or output that conveys information 
         about the intended use of a parameter. Semantics are required on all variables passed 
@@ -55,7 +55,7 @@ Shader "Unlit/ShaderForURP"
         {
             float4 position : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
             float2 uv : TEXCOORD0;
-        }
+        };
 
         ENDHLSL
 
@@ -74,6 +74,7 @@ Shader "Unlit/ShaderForURP"
                 //to the 2D screen coordinates.'
                 o.position = TransformObjectToHClip(i.position.xyz);
                 o.uv = i.uv;
+                return o;
             }
             //Fragment Shader
             /*In a process known as rasterisation, post vertex shader, HLSL takes all triangle pixels currently
