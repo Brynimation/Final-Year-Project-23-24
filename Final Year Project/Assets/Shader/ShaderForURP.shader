@@ -11,8 +11,9 @@ Shader "Custom/ShaderForURP"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _BaseColour ("Base Colour", Color) = (1,1,1,1)
-        _NumVertices("NumVertices", Integer) = 1000
-        _PointSize("Point Size", float) = 1.0
+        //_NumVertices("NumVertices", Integer) = 1000
+        _PointSize("Point Size", float) = 2.0
+        _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
     }
     SubShader
     {
@@ -32,7 +33,6 @@ Shader "Custom/ShaderForURP"
         //By defining all of our properties within a buffer, we make our material compatible with SRP Batcher, which makes rendering
         //happen faster.
             float4 _BaseColour;
-            uniform float _PointSize = 20.0;
         CBUFFER_END
 
         //Textures don't need to go within the cbuffer
@@ -76,17 +76,21 @@ Shader "Custom/ShaderForURP"
             float size : PSIZE; //Size of each vertex.
             float2 uv : TEXCOORD0;
         };
+        float _PointSize;
+        float3 _CameraPosition;
 
         ENDHLSL
 
         Pass
         {
+            
             HLSLPROGRAM
             //pragma directives
             #pragma vertex vert
             #pragma fragment frag
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
+            //float _PointSize;
             v2f vert(VertexInput i)
             {
                 v2f o; //What our function will output
@@ -94,16 +98,16 @@ Shader "Custom/ShaderForURP"
                 //relative to the object's centre, to clip space, where each vertex is positioned relative
                 //to the 2D screen coordinates.'
                 /*Rotate vertex more from the centre to create a spiral*/
-                float distance = length(i.position);
+                float dist = length(i.position);
                 float theta = atan2(i.position.x, i.position.y);
-                float theta2 = theta + distance;
+                float theta2 = theta + dist;
                 //x = rcostheta2, y = rcostheta2
-                float x = distance * cos(theta2);
-                float y = distance * sin(theta2);
+                float x = dist * cos(theta2);
+                float y = dist * sin(theta2);
                 float3 newCoord = float3(x, y, i.position.z);
                 o.position = TransformObjectToHClip(newCoord);
                 o.uv = i.uv;
-                o.size = _PointSize;
+                o.size = (1.0/ distance(_CameraPosition, o.position));
                 return o;
             }
             //Fragment Shader

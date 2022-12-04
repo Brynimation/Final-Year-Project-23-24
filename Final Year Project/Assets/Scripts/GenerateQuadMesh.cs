@@ -10,6 +10,7 @@ public class GenerateQuadMesh : MonoBehaviour
     public int xResolution;
     public int yResolution;
     public Material material;
+    public Vector3 cameraPos;
 
     public int xSize;
     public int ySize;
@@ -26,8 +27,8 @@ public class GenerateQuadMesh : MonoBehaviour
     {
         meshRenderer = this.gameObject.AddComponent<MeshRenderer>();
         meshFilter = this.gameObject.AddComponent<MeshFilter>();
-        //GeneratePoints();
-        GeneratePlane();
+        GeneratePoints();
+        //GeneratePlane();
     }
 
     void GeneratePoints()
@@ -48,7 +49,7 @@ public class GenerateQuadMesh : MonoBehaviour
             }
         }
         mesh.vertices = vertices;
-        mesh.uv = uvs;;
+        mesh.uv = uvs;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
         mesh.RecalculateBounds();
         meshFilter.mesh = mesh;
@@ -82,8 +83,12 @@ public class GenerateQuadMesh : MonoBehaviour
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
         meshRenderer.material = material;
-        
-
+    }
+    private void Update()
+    {
+        cameraPos = Camera.main.transform.position;
+        Debug.Log(cameraPos);
+        material.SetVector("_CameraPosition", cameraPos);
     }
 
     public void addTriangle(int a, int b, int c){
