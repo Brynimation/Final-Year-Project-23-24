@@ -4,6 +4,8 @@
 //https://www.youtube.com/watch?v=gY1Mx4kkZPU&t=603s
 //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics
 
+/*In spiral galaxies the velocities of stars in the outer orbits are much faster than expected.- https://sites.ualberta.ca/~pogosyan/teaching/ASTRO_122/lect24/lecture24.html*/
+
 
 Shader "Custom/ShaderForURP"
 {
@@ -14,7 +16,11 @@ Shader "Custom/ShaderForURP"
         //_NumVertices("NumVertices", Integer) = 1000
         _PointSize("Point Size", float) = 2.0
         _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
-    }
+        _CurTime("Time", float) = 0.0
+        _GalacticBulgeRadius("Galactic Bulge Radius", float) = 10.0
+        _GalacticDiskRadius("Galactic Disk Radius", float) = 30.0
+        _GalacticHaloRadius("Galactic Halo Radius", float) = 50.0
+     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -76,7 +82,11 @@ Shader "Custom/ShaderForURP"
             float size : PSIZE; //Size of each vertex.
             float2 uv : TEXCOORD0;
         };
+        float _GalacticDiskRadius;
+        float _GalacticBulgeRadius;
+        float _GalacticHaloRadius;
         float _PointSize;
+        float _CurTime;
         float3 _CameraPosition;
 
         ENDHLSL
@@ -91,7 +101,7 @@ Shader "Custom/ShaderForURP"
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
             //float _PointSize;
-            v2f vert(VertexInput i)
+            v2f vert1(VertexInput i)
             {
                 v2f o; //What our function will output
                 //We need to transform the vertices from object space, where each vertex is positioned
@@ -102,12 +112,82 @@ Shader "Custom/ShaderForURP"
                 float theta = atan2(i.position.x, i.position.y);
                 float theta2 = theta + dist;
                 //x = rcostheta2, y = rcostheta2
+                //float speed = (dist == 0.0) ? 1000 : (float) 1.0/dist; 
                 float x = dist * cos(theta2);
                 float y = dist * sin(theta2);
                 float3 newCoord = float3(x, y, i.position.z);
                 o.position = TransformObjectToHClip(newCoord);
                 o.uv = i.uv;
-                o.size = (1.0/ distance(_CameraPosition, o.position));
+                o.size = 4.0;
+                return o;
+            }
+            /*https://gist.github.com/keijiro/ee7bc388272548396870*/
+            float nrand(float2 uv)
+            {
+                return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+            }
+
+            v2f vert(VertexInput i)
+            {
+                v2f o;
+                float3 newCoord = i.position;
+                if(length(i.position) - _GalacticDiskRadius/2.0 > 0.001f){
+                    newCoord = normalize(i.position) * _GalacticDiskRadius/2.0;
+                }
+                /*Now we've got a bunch of points on the surface of a circle.*/
+                float theta = atan2(newCoord.x, newCoord.y);
+                //float d = nrand(i.uv) * _GalacticDiskRadius;
+                float d = smoothstep(0, 1, i.index/10000.0) * _GalacticDiskRadius;
+                newCoord.x = d * cos(theta);
+                newCoord.y = d * sin(theta);
+                //now we redefine the radius of each point
+                o.position = TransformObjectToHClip(newCoord);
+                o.uv = i.uv;
+                o.size = 4.0;
+                return o;
+            }
+
+            v2f vert2(VertexInput i)
+            {
+
+                float maxArmOffset = 0.5f;
+                int numArms = 5;
+                float armSeparationDistance = 2 * PI / numArms;
+                v2f o;
+                float dist = i.index * i.index;
+                float angle = i.index;
+                float armOffset = i.index / 5000.0;
+                armOffset -= maxArmOffset/2.0;
+                armOffset = max(armOffset, maxArmOffset);
+                armOffset = armOffset * 1/(dist);
+                /*Here we constrain it so that only certain angles are possible. This creates the 
+                density waves of our galaxy. We add the offset to widen the arms*/
+                angle = (int)(angle/armSeparationDistance) * armSeparationDistance +armOffset;
+
+                
+
+                float x = dist * cos(angle);
+                float y = dist * sin(angle);
+                float3 newCoord = float3(x, y, 0);
+                o.position = TransformObjectToHClip(newCoord);
+                o.uv = i.uv;
+                o.size = 4.0;
+                return o;
+            }
+            v2f vert3(VertexInput i)
+            {
+                v2f o;
+                float dist = exp(-length(i.position)) * 100;
+                float theta = atan2(i.position.x, i.position.y);
+                float theta2 = theta + dist;
+                //x = rcostheta2, y = rcostheta2
+                //float speed = (dist == 0.0) ? 1000 : (float) 1.0/dist; 
+                float x = dist * cos(theta2);
+                float y = dist * sin(theta2);
+                float3 newCoord = float3(x, y, i.position.z);
+                o.position = TransformObjectToHClip(newCoord);
+                o.uv = i.uv;
+                o.size = 4.0;
                 return o;
             }
             //Fragment Shader

@@ -14,6 +14,9 @@ public class GenerateQuadMesh : MonoBehaviour
 
     public int xSize;
     public int ySize;
+    public float GalacticBulgeRadius;
+    public float GalacticDiskRadius;
+    public float GalacticHaloRadius;
     int triangleIndex;
     int vertexIndex;
     int indexVal;
@@ -21,13 +24,16 @@ public class GenerateQuadMesh : MonoBehaviour
     Vector3[] vertices;
     int[] triangles;
     int[] indices;
-    Vector2[] uvs; 
+    Vector2[] uvs;
+
+    
 
     void Start()
     {
         meshRenderer = this.gameObject.AddComponent<MeshRenderer>();
         meshFilter = this.gameObject.AddComponent<MeshFilter>();
         GeneratePoints();
+        material.SetFloat("_GalacticDiskRadius", GalacticDiskRadius); ;
         //GeneratePlane();
     }
 
@@ -43,7 +49,7 @@ public class GenerateQuadMesh : MonoBehaviour
             for(int y = 0; y < yResolution; y++)
             {
                 uvs[vertexIndex] = new Vector3((x/(float)xResolution), y/(float)yResolution);
-                vertices[vertexIndex] = new Vector3((x * xSize)/xResolution, (y * ySize)/yResolution, 0f);
+                vertices[vertexIndex] = new Vector3(-0.5f * GalacticDiskRadius + (x * GalacticDiskRadius)/xResolution, -0.5f * GalacticDiskRadius + (y * GalacticDiskRadius)/yResolution, 0f);
                 indices[vertexIndex] = vertexIndex;
                 vertexIndex++;
             }
@@ -89,6 +95,7 @@ public class GenerateQuadMesh : MonoBehaviour
         cameraPos = Camera.main.transform.position;
         Debug.Log(cameraPos);
         material.SetVector("_CameraPosition", cameraPos);
+        material.SetFloat("_CurTime", Time.time);
     }
 
     public void addTriangle(int a, int b, int c){
