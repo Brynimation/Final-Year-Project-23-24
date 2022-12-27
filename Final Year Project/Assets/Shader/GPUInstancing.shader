@@ -12,7 +12,7 @@ Shader "Custom/GPUInstancingShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _BaseColour ("Base Colour", Color) = (1,1,1,1)
+        _BaseColour ("Base Colour", Color) = (0.45, 0.25, 0.01, 1.0)
         //_NumVertices("NumVertices", Integer) = 1000
         _PointSize("Point Size", float) = 2.0
         _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
@@ -23,8 +23,12 @@ Shader "Custom/GPUInstancingShader"
      }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+		Tags {"Queue" = "Transparent" "RenderType" = "Transparent" }
+		LOD 100
+
+		Cull Off
+		ZWrite Off
+		Blend One One
 
         //Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
         //in our HLSL pass. Everything within this block will be available to all the passes we define*/
@@ -35,9 +39,9 @@ Shader "Custom/GPUInstancingShader"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         //we need to include the properties our shader is going to use between the cbuffer start and 
         //cbuffer end Tags
-        CBUFFER_START(UnityPerMaterial)
-            float4 _BaseColour;
-        CBUFFER_END
+        //CBUFFER_START(UnityPerMaterial)
+            //float4 _BaseColour;
+        //CBUFFER_END
 
         //Textures don't need to go within the cbuffer
         TEXTURE2D(_MainTex);
@@ -56,8 +60,7 @@ Shader "Custom/GPUInstancingShader"
         {
             float4 position : POSITION;
             float2 uv : TEXCOORD0; 
-
-            uint index : SV_VertexId;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         /*A semantic is a string attached to a shader input or output that conveys information 
@@ -77,18 +80,21 @@ Shader "Custom/GPUInstancingShader"
         struct v2f 
         {
             float4 position : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
-            float size : PSIZE; //Size of each vertex.
+            float4 vertexPos : VERTEX;
             float2 uv : TEXCOORD0;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
         float _GalacticDiskRadius;
         float _GalacticBulgeRadius;
         float _GalacticHaloRadius;
+        
         float _PointSize;
         float _CurTime;
         float3 _CameraPosition;
         uniform RWStructuredBuffer<float3> positions : register(u1);
-        int offset;
-
+        
+        uniform int offsetVal;
+        uniform float4 _BaseColour = float4(0.45, 0.25, 0.01, 1.0);
         ENDHLSL
 
         Pass
@@ -96,7 +102,7 @@ Shader "Custom/GPUInstancingShader"
             
             HLSLPROGRAM
             //pragma directives
-            #pragma target 4.5
+            #pragma target 5.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
@@ -106,12 +112,12 @@ Shader "Custom/GPUInstancingShader"
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(i); //Makes the instanceID accessible to shader functions.
                 UNITY_TRANSFER_INSTANCE_ID(i, o);
-                o.position = TransformObjectToHClip(i.vertex);//
+                o.position = TransformObjectToHClip(i.position);//
                 o.uv = i.uv;
                 #ifdef UNITY_INSTANCING_ENABLED
-                    o.position += float4(positions[unity_InstanceID + offset], 0.0f);
+                    o.position += float4(positions[unity_InstanceID + offsetVal], 0.0f);
                 #endif
-                o.vertex = i.vertex;
+                o.vertexPos = i.position;
                 return o;
             }
          
@@ -120,10 +126,10 @@ Shader "Custom/GPUInstancingShader"
                 //Sample the main texture at the correct uv coordinate using the SAMPLE_TEXTURE_2D macro, and 
                 //then passing in the main texture, its sampler and the specified uv coordinate
                 UNITY_SETUP_INSTANCE_ID(i);
-                float dist = distance(i.vertex, float(0.0, 0.0, 0.0));
-                float multiplier = min((0.1/pow(dist, 100.0)), 1);
+                //float dist = length(i.vertexPos);
+                //float multiplier = min((0.1/pow(dist, 100.0)), 1);
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                return baseTex * _BaseColour * multiplier;
+                return baseTex * _BaseColour;// * multiplier;
             }
             ENDHLSL
         }
