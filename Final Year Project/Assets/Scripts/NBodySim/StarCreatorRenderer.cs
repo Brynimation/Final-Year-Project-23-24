@@ -12,9 +12,6 @@ public class StarCreatorRenderer : MonoBehaviour
     Matrix4x4[][] transformList;
     int numBodies;
 
-
-    
-   
     void Start()
     {
         numBodies = NBodyDispatcher.Instance.numBodies;
@@ -22,28 +19,11 @@ public class StarCreatorRenderer : MonoBehaviour
         MeshFilter mf = GetComponent<MeshFilter>();
         mesh = new Mesh();
         Vector3[] vertices = new Vector3[4];
-
-        vertices[0] = new Vector3(-starSize, -starSize, 0);
-        vertices[1] = new Vector3(starSize, -starSize, 0);
-        vertices[2] = new Vector3(-starSize, starSize, 0);
-        vertices[3] = new Vector3(starSize, starSize, 0);
-
-        mesh.vertices = vertices;
-
-        int[] tri = new int[6];
-
-        tri[0] = 0;
-        tri[1] = 2;
-        tri[2] = 1;
-
-        tri[3] = 2;
-        tri[4] = 3;
-        tri[5] = 1;
-
-        mesh.triangles = tri;
         mf.mesh = mesh;
 
-        for (int i = 0; i < numBodies / maxInstances; i++) 
+        initialiseQuad(mesh, mf);
+
+        for (int i = 0; i < (numBodies / maxInstances); i++) 
         {
             int instances = maxInstances;
             if (i == (numBodies / maxInstances) - 1) 
@@ -83,5 +63,29 @@ public class StarCreatorRenderer : MonoBehaviour
             }
             Graphics.DrawMeshInstanced(mesh, 0, material, transformList[i], instances, mpb);
         }
+    }
+    void initialiseQuad(Mesh mesh, MeshFilter mf)
+    {
+        Vector3[] vertices = new Vector3[4];
+
+        vertices[0] = new Vector3(-starSize, -starSize, 0);
+        vertices[1] = new Vector3(starSize, -starSize, 0);
+        vertices[2] = new Vector3(-starSize, starSize, 0);
+        vertices[3] = new Vector3(starSize, starSize, 0);
+
+        mesh.vertices = vertices;
+
+        int[] tri = new int[6];
+
+        tri[0] = 0;
+        tri[1] = 2;
+        tri[2] = 1;
+
+        tri[3] = 2;
+        tri[4] = 3;
+        tri[5] = 1;
+
+        mesh.triangles = tri;
+        mf.mesh = mesh;
     }
 }

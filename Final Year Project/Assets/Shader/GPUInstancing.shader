@@ -14,12 +14,6 @@ Shader "Custom/GPUInstancingShader"
         _MainTex ("Texture", 2D) = "white" {}
         _BaseColour ("Base Colour", Color) = (0.45, 0.25, 0.01, 1.0)
         //_NumVertices("NumVertices", Integer) = 1000
-        _PointSize("Point Size", float) = 2.0
-        _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
-        _CurTime("Time", float) = 0.0
-        _GalacticBulgeRadius("Galactic Bulge Radius", float) = 10.0
-        _GalacticDiskRadius("Galactic Disk Radius", float) = 30.0
-        _GalacticHaloRadius("Galactic Halo Radius", float) = 50.0
      }
     SubShader
     {
@@ -29,73 +23,6 @@ Shader "Custom/GPUInstancingShader"
 		Cull Off
 		ZWrite Off
 		Blend One One
-
-        //Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
-        //in our HLSL pass. Everything within this block will be available to all the passes we define*/
-        HLSLINCLUDE
-        static const float PI = 3.14159265f;
-        static const float angleStep = 180;
-        static const float DegreeToRadians = 1 / PI;
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        //we need to include the properties our shader is going to use between the cbuffer start and 
-        //cbuffer end Tags
-        //CBUFFER_START(UnityPerMaterial)
-            //float4 _BaseColour;
-        //CBUFFER_END
-
-        //Textures don't need to go within the cbuffer
-        TEXTURE2D(_MainTex);
-        SAMPLER(sampler_MainTex);
-
-        /*Shaders usually consist of a vertex shader and a fragment shader.
-         Shader graph handles the receipt of certain input from the mesh for the user, such
-         as vertex positions and UV coordinates. The properties of our shader are also passed as input.
-         The vertex shader operates on every vertex of the mesh that the shader is attached to. It
-         will output a 2D screenspace position for each of these vertices. We must first create a
-         struct that is passed as input to our VertexShader*/
-
-        
-
-        struct VertexInput
-        {
-            float4 position : POSITION;
-            float2 uv : TEXCOORD0; 
-            UNITY_VERTEX_INPUT_INSTANCE_ID
-        };
-
-        /*A semantic is a string attached to a shader input or output that conveys information 
-        about the intended use of a parameter. Semantics are required on all variables passed 
-        between shader stages.
-        
-        points to points 
-        nothing to points
-
-        points to quads!
-
-        discrete indices - hashfunction to convert to spiral
-        random sample of space - c
-        */
-
-        /*Output by our vertex shader, passed to our fragment shader.*/
-        struct v2f 
-        {
-            float4 position : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
-            float4 vertexPos : VERTEX;
-            float2 uv : TEXCOORD0;
-            UNITY_VERTEX_INPUT_INSTANCE_ID
-        };
-        float _GalacticDiskRadius;
-        float _GalacticBulgeRadius;
-        float _GalacticHaloRadius;
-        
-        float _PointSize;
-        float _CurTime;
-        float3 _CameraPosition;
-        uniform RWStructuredBuffer<float3> positions : register(u1);
-        
-        uniform int offsetVal;
-        uniform float4 _BaseColour = float4(0.45, 0.25, 0.01, 1.0);
-        ENDHLSL
 
         Pass
         {
@@ -107,6 +34,37 @@ Shader "Custom/GPUInstancingShader"
             #pragma fragment frag
             #pragma multi_compile_instancing
 
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
+
+            struct VertexInput
+            {
+                float4 position : POSITION;
+                float2 uv : TEXCOORD0; 
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct v2f 
+            {
+                float4 position : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
+                float4 vertexPos : VERTEX;
+                float2 uv : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            uniform StructuredBuffer<float3> positions : register(t1);
+            uniform int offsetVal;
+
+            UNITY_INSTANCING_BUFFER_START(GPUInstancedProps)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
+            UNITY_INSTANCING_BUFFER_END(GPUInstancedProps)
+
+
+
             v2f vert(VertexInput i)
             {
                 v2f o;
@@ -115,7 +73,7 @@ Shader "Custom/GPUInstancingShader"
                 o.position = TransformObjectToHClip(i.position);//
                 o.uv = i.uv;
                 #ifdef UNITY_INSTANCING_ENABLED
-                    o.position += float4(positions[unity_InstanceID + offsetVal], 0.0f);
+                o.position += float4(positions[unity_InstanceID + offsetVal], 0.0);
                 #endif
                 o.vertexPos = i.position;
                 return o;
@@ -129,7 +87,7 @@ Shader "Custom/GPUInstancingShader"
                 //float dist = length(i.vertexPos);
                 //float multiplier = min((0.1/pow(dist, 100.0)), 1);
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                return baseTex * _BaseColour;// * multiplier;
+                return baseTex * UNITY_ACCESS_INSTANCED_PROP(GPUInstancedProps, _BaseColour);// * multiplier;
             }
             ENDHLSL
         }

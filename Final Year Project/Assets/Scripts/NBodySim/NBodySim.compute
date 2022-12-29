@@ -3,7 +3,7 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-uniform uint numStars;
+uniform uint numBodies;
 uniform float G = 1.0;
 uniform float timeStep;
 uniform RWStructuredBuffer<float3> positions : register(u1); //We've bound our buffer to a global gpu register so that data can be accessed from it in any shader
@@ -13,8 +13,8 @@ uniform RWStructuredBuffer<float> masses : register(u3);
 [numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float3 resultantForce = float3(0.0, 0.0, 0.0);
-    for(uint i = 0; i < numStars; i++)
+    float3 resultantForce = float3(0.0f, 0.0f, 0.0f);
+    for(uint i = 0; i < numBodies; i++)
     {
 
         if(i != id.x)
@@ -22,16 +22,17 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             float3 displacement = positions[i] - positions[id.x];
             float3 direction = normalize(displacement);
             float sqrDist = displacement.x * displacement.x + displacement.y * displacement.y + displacement.z * displacement.z; //Calculate the square distance directly to avoid square root operations
-            float forceMag = G * masses[i] * masses[id.x]/sqrDist;
-            float3 curForce = displacement * forceMag;
+            float forceMag = (G * masses[i] * masses[id.x])/sqrDist;
+            float3 curForce = direction * forceMag;
             resultantForce += curForce;
         }
     }
     float3 acceleration = resultantForce / masses[id.x];
     //Leapfrog integration used to calculate and update the positions and velocities of the bodies.
     //This is preferred over the Euler method in simulations as the Euler method leads to the energy of the system gradually increasing with time.
-    positions[id.x] = positions[id.x] + velocities[id.x] * timeStep + (acceleration/2.0) * timeStep;
-    velocities[id.x] = velocities[id.x] + acceleration * timeStep;
-
+    //positions[id.x] = positions[id.x] + velocities[id.x] * timeStep + (acceleration/2.0) * timeStep;
+    //velocities[id.x] = velocities[id.x] + acceleration * timeStep;
+    positions[id.x] += velocities[id.x] + acceleration/2.0;
+    velocities[id.x] += acceleration;
 
 }
