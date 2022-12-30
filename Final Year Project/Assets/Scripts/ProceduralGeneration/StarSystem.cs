@@ -5,7 +5,7 @@ using UnityEngine;
 public class StarSystem
 {
     public bool starExists;
-    public float starRadius;
+    public int starRadius;
     public Color starColour;
     private Color[] colours = new Color[6] { Color.white, Color.blue, Color.red, Color.blue, Color.green, Color.yellow };
     private uint nLehmerSeed = 0;
@@ -34,7 +34,7 @@ public class StarSystem
     {
         return (int)(Lehmer32() % (max - min)) + min;
     }
-    private double randDouble(int min, int max) 
+    private double randDouble(double min, double max) 
     {
         return ((double)Lehmer32() / (double)(0x7ffffff)) * (max - min) + min;
     }
