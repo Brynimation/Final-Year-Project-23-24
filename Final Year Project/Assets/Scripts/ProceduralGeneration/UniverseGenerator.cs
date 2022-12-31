@@ -29,7 +29,11 @@ public class UniverseGenerator : MonoBehaviour
         {
             for (int y = 0; y < numStarsY; y++) 
             {
-                StarSystem starSystem = new StarSystem(x, y);
+                Vector3 cameraWorldRotation = Camera.main.transform.rotation.eulerAngles;
+                Vector3 centreWorldPos = Camera.main.ViewportToWorldPoint(new Vector2(0.5f, 0.5f));
+                float xCentre = centreWorldPos.x;
+                float yCentre = centreWorldPos.y;
+                StarSystem starSystem = new StarSystem(x + xCentre, y + yCentre);
                 if (starSystem.starExists)
                 {
                     Vector3 pos = new Vector3(x * sectorDimensions.x + sectorDimensions.x / 2f, y * sectorDimensions.y + sectorDimensions.y / 2f, Camera.main.nearClipPlane + 50f); ;
@@ -58,6 +62,10 @@ public class UniverseGenerator : MonoBehaviour
         {
             for (int y = 0; y < numSectorsY; y++)
             {
+                Vector3 cameraWorldRotation = Camera.main.transform.rotation.eulerAngles;
+                int xRot = (int)cameraWorldRotation.x;
+                int yRot = (int)cameraWorldRotation.y;
+                int zRot = (int)cameraWorldRotation.z;
                 StarSystem starSystem = new StarSystem(x, y);
                 if (starSystem.starExists)
                 {
@@ -95,62 +103,93 @@ public class UniverseGenerator : MonoBehaviour
             }
         }
     }
+
+    private void StartRotation()
+    {
+        prevCamPos = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+    }
+    private void RotateCamera() 
+    {
+        Vector3 dir = prevCamPos - Camera.main.ScreenToViewportPoint(Input.mousePosition); //direction to rotate the camera
+        Camera.main.transform.Rotate(Vector3.right, dir.y * 180); //rotate the camera about its local x axis
+        Camera.main.transform.Rotate(Vector3.up, -dir.x * 180, Space.World);//rotate the camera about the world y axis 
+        prevCamPos = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+    }
     private void Update()
     {
+        if (Input.GetKey(KeyCode.D)) 
         {
-            if (Input.GetKey(KeyCode.D)) 
-            {
-                cameraOffset.x += 25 * Time.fixedDeltaTime;
-                foreach (GameObject go in instantiatedStars)
-                {
-                    GameObject.Destroy(go);
-                }
-            }
-            if (Input.GetKey(KeyCode.A)) 
-            {
-                cameraOffset.x -= 25 * Time.fixedDeltaTime;
-                foreach (GameObject go in instantiatedStars)
-                {
-                    GameObject.Destroy(go);
-                }
-            }
-            if (Input.GetKey(KeyCode.W)) 
-            {
-                cameraOffset.y += 25 * Time.deltaTime;
-            }
-            if (Input.GetKey(KeyCode.S)) 
-            {
-                cameraOffset.y -= 25 * Time.deltaTime;
-            }
-            int numSectorsX = 16;
-            int numSectorsY = 16;
-            int sectorWidth = Camera.main.pixelWidth / numSectorsX;
-            int sectorHeight = Camera.main.pixelHeight / numSectorsY;
+            cameraOffset.x += 25 * Time.fixedDeltaTime;
             foreach (GameObject go in instantiatedStars)
             {
                 GameObject.Destroy(go);
             }
-            instantiatedStars = new List<GameObject>();
-            for (int x = 0; x < numSectorsX; x++)
+            Vector3 camPos = Camera.main.transform.position;
+            camPos.x += 25 * Time.fixedDeltaTime;
+            Camera.main.transform.position = camPos;
+        }
+        if (Input.GetKey(KeyCode.A)) 
+        {
+            cameraOffset.x -= 25 * Time.fixedDeltaTime;
+            foreach (GameObject go in instantiatedStars)
             {
-                for (int y = 0; y < numSectorsY; y++)
+                GameObject.Destroy(go);
+            }
+            Vector3 camPos = Camera.main.transform.position;
+            camPos.x -= 25 * Time.fixedDeltaTime;
+            Camera.main.transform.position = camPos;
+        }
+        if (Input.GetKey(KeyCode.W)) 
+        {
+            cameraOffset.y += 25 * Time.fixedDeltaTime;
+            foreach (GameObject go in instantiatedStars)
+            {
+                GameObject.Destroy(go);
+            }
+            Vector3 camPos = Camera.main.transform.position;
+            camPos.y += 25 * Time.fixedDeltaTime;
+            Camera.main.transform.position = camPos;
+        }
+        if (Input.GetKey(KeyCode.S)) 
+        {
+            cameraOffset.y -= 25 * Time.fixedDeltaTime;
+            foreach (GameObject go in instantiatedStars)
+            {
+                GameObject.Destroy(go);
+            }
+            Vector3 camPos = Camera.main.transform.position;
+            camPos.y -= 25 * Time.fixedDeltaTime;
+            Camera.main.transform.position = camPos;
+        }
+        int numSectorsX = 16;
+        int numSectorsY = 16;
+        int sectorWidth = Camera.main.pixelWidth / numSectorsX;
+        int sectorHeight = Camera.main.pixelHeight / numSectorsY;
+        if (prevCamPos == Camera.main.transform.position) return;
+        foreach (GameObject go in instantiatedStars)
+        {
+            GameObject.Destroy(go);
+        }
+        instantiatedStars = new List<GameObject>();
+        for (int x = 0; x < numSectorsX; x++)
+        {
+            for (int y = 0; y < numSectorsY; y++)
+            {
+                Vector3 centreWorldPos = Camera.main.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, Camera.main.farClipPlane));
+                float xCentre = centreWorldPos.x;
+                float yCentre = centreWorldPos.y;
+                StarSystem starSystem = new StarSystem(xCentre + x, yCentre + y);
+                if (starSystem.starExists)
                 {
-                    StarSystem starSystem = new StarSystem(x + (int) cameraOffset.x, y + (int) cameraOffset.y);
-                    if (starSystem.starExists)
-                    {
-                        Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3((x * sectorWidth), (y * sectorHeight), Camera.main.nearClipPlane + 50f));
-                        GameObject star = Instantiate(starPrefab, worldPos, Quaternion.identity);
-                        star.transform.localScale *= starSystem.starRadius;
-                        star.GetComponent<Renderer>().material.color = starSystem.starColour;
-                        instantiatedStars.Add(star); 
-                    }
+                    Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3((x * sectorWidth), (y * sectorHeight), Camera.main.nearClipPlane + 50f));
+                    GameObject star = Instantiate(starPrefab, worldPos, Quaternion.identity);
+                    star.transform.localScale *= starSystem.starRadius;
+                    star.GetComponent<Renderer>().material.color = starSystem.starColour;
+                    instantiatedStars.Add(star); 
                 }
             }
         }
-        prevCamPos = Camera.main.transform.position;
-
-
-
+        prevCamPos = Camera.main.transform.position; 
     }
     /*private void Update()
     {

@@ -13,6 +13,27 @@ public class StarSystem
     public StarSystem(int xPos, int yPos)
     {
         nLehmerSeed = (uint)((xPos & 0xffff) << 16 | (yPos & 0xffff));
+        //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
+        starExists = (randInt(1, 20) == 1) ? true : false;
+        if (!starExists) return;
+        starRadius = randInt(1, 4);
+        starColour = colours[randInt(0, 5)];
+    }
+    public StarSystem(Vector3 screenCentre) 
+    {
+        nLehmerSeed = (uint)(((uint)screenCentre.x & 0xffff) << 16 | ((int)screenCentre.y & 0xffff));
+        //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
+        starExists = (randInt(1, 20) == 1) ? true : false;
+        if (!starExists) return;
+        starRadius = randInt(1, 4);
+        starColour = colours[randInt(0, 5)];
+    }
+    public StarSystem(float x, float y) 
+    {
+        int xPos = (int)(x * 10);
+        int yPos = (int)(y * 10);
+        nLehmerSeed = (uint)((xPos & 0xffff) << 16 | (yPos & 0xffff));
+        //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
         starExists = (randInt(1, 20) == 1) ? true : false;
         if (!starExists) return;
         starRadius = randInt(1, 4);
