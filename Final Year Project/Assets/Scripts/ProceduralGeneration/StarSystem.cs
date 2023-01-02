@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class StarSystem
 {
     public bool starExists;
     public int starRadius;
     public Color starColour;
+    public static int totalStars;
+    public int starId;
+    public string starName;
     private Color[] colours = new Color[6] { Color.white, Color.blue, Color.red, Color.blue, Color.green, Color.yellow };
     private uint nLehmerSeed = 0;
 
@@ -16,6 +18,8 @@ public class StarSystem
         //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
         starExists = (randInt(1, 20) == 1) ? true : false;
         if (!starExists) return;
+        starId = totalStars;
+        totalStars++;
         starRadius = randInt(1, 4);
         starColour = colours[randInt(0, 5)];
     }
@@ -27,6 +31,8 @@ public class StarSystem
         //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
         starExists = (randInt(1, 20) == 1) ? true : false;
         if (!starExists) return;
+        starId = totalStars;
+        totalStars++;
         starRadius = randInt(1, 4);
         starColour = colours[randInt(0, 5)];
     }
@@ -36,6 +42,8 @@ public class StarSystem
         //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
         starExists = (randInt(1, 20) == 1) ? true : false;
         if (!starExists) return;
+        starId = totalStars;
+        totalStars++;
         starRadius = randInt(1, 4);
         starColour = colours[randInt(0, 5)];
     }
@@ -47,6 +55,8 @@ public class StarSystem
         //nLehmerSeed =  (uint) (nLehmerSeed | ((xRot & 0xffff) | (yRot & 0xffff)));
         starExists = (randInt(1, 20) == 1) ? true : false;
         if (!starExists) return;
+        starId = totalStars;
+        totalStars++;
         starRadius = randInt(1, 4);
         starColour = colours[randInt(0, 5)];
     }

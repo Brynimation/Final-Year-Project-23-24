@@ -8,18 +8,19 @@ public class Endless : MonoBehaviour
     public float renderDistance;
     public Transform viewer;
     [SerializeField] Material mat;
-    [SerializeField] int numCells = 16;
-    [SerializeField] GameObject starPrefab;
+    [SerializeField] int numCells = 4;
+    [SerializeField] Star starPrefab;
+    [SerializeField] bool visualiseChunks;
     Vector3 viewerPosition;
     public int chunkSize;
     int chunksVisibleInViewDist;
-    Dictionary<Vector3, TerrainChunk> terrainChunkDict;
+    Dictionary<Vector3Int, TerrainChunk> terrainChunkDict;
     List<TerrainChunk> terrainChunkVisibleLastUpdate; 
     void Start()
     {
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance/chunkSize);
         Debug.Log(chunksVisibleInViewDist);
-        terrainChunkDict = new Dictionary<Vector3, TerrainChunk>();
+        terrainChunkDict = new Dictionary<Vector3Int, TerrainChunk>();
         terrainChunkVisibleLastUpdate = new List<TerrainChunk>();
     }
 
@@ -44,24 +45,26 @@ public class Endless : MonoBehaviour
             {
                 for (int xOffset = -chunksVisibleInViewDist; xOffset <= chunksVisibleInViewDist; xOffset++)
                 {
-                    Vector3 viewedChunkCoord = new Vector3(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset, currentChunkCoordZ + zOffset);
+                    Vector3Int viewedChunkCoord = new Vector3Int(currentChunkCoordX + xOffset, currentChunkCoordY + yOffset, currentChunkCoordZ + zOffset);
                     //We only want to instantiate a new chunk at a coordinate if we haven't already instantiated one.
                     if (terrainChunkDict.ContainsKey(viewedChunkCoord))
                     {
 
                         terrainChunkDict[viewedChunkCoord].UpdateChunk(viewerPosition, renderDistance);
-                        if (terrainChunkDict[viewedChunkCoord].isVisible())
+                        if (terrainChunkDict[viewedChunkCoord].isVisible(viewerPosition, renderDistance))
                         {
                             terrainChunkVisibleLastUpdate.Add(terrainChunkDict[viewedChunkCoord]);
                         }
                     }
                     else
                     {
-                        TerrainChunk t = new TerrainChunk(viewedChunkCoord, chunkSize, mat, numCells);
+                        TerrainChunk t = new TerrainChunk(viewedChunkCoord, chunkSize, mat, numCells, visualiseChunks);
                         for (int i = 0; i < t.starPositions.Count; i++) 
                         {
                             Vector3 pos = t.starPositions[i];
-                            GameObject star = Instantiate(starPrefab, pos, Quaternion.identity);
+                            Star star = Instantiate(starPrefab, pos, Quaternion.identity);
+                            star.starProperties = t.starSystems[i];
+                            t.instantiatedStars.Add(star);
                             star.transform.localScale = Vector3.one * t.starSystems[i].starRadius;
                             star.GetComponent<Renderer>().material.color = t.starSystems[i].starColour;
                         }
@@ -77,37 +80,47 @@ public class Endless : MonoBehaviour
 
 /*Split Each chunk up into cells*/
 
+
 public class TerrainChunk 
 {
+
+    public List<StarSystem> starSystems;
+    public List<Star> instantiatedStars;
+    public List<Vector3> starPositions;
     Vector3 position;
     GameObject mesh;
     Bounds bounds;
-    public List<StarSystem> starSystems;
-    public List<Vector3> starPositions;
+    float closestViewerDstSqrd;
+    bool chunkVisible;
     int cellSize;
-    public TerrainChunk(Vector3 coord, int chunkSize, Material mat, int numCells) 
+
+    void visualiseChunk(Material mat, Vector3 position, int chunkSize) 
     {
-        starSystems = new List<StarSystem>();
-        starPositions = new List<Vector3>();
-        cellSize = Mathf.RoundToInt(chunkSize / numCells);
-        position = coord * chunkSize;
-        bounds = new Bounds(position, Vector3.one * chunkSize);
-        Vector3 position3D = new Vector3(position.x, position.y, position.z);
         mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
         Renderer r = mesh.GetComponent<Renderer>();
         mesh.gameObject.GetComponent<Collider>().enabled = false;
         r.material = mat;
         mat.color = new Color(1f, 0f, 0f, 0.25f);
-        mesh.transform.position = position3D;
+        mesh.transform.position = position;
         mesh.transform.localScale = Vector3.one * chunkSize;
-
-        for (int x = 0; x < numCells; x++)
+    }
+    public TerrainChunk(Vector3Int coord, int chunkSize, Material mat, int numCells, bool visualise) 
+    {
+        starSystems = new List<StarSystem>();
+        instantiatedStars = new List<Star>();
+        starPositions = new List<Vector3>();
+        cellSize = Mathf.RoundToInt(chunkSize / numCells);
+        position = coord * chunkSize;
+        bounds = new Bounds(position, Vector3.one * chunkSize);
+        chunkVisible = visualise;
+        if(visualise) visualiseChunk(mat, position, chunkSize);
+        for (int x = -numCells/2; x < numCells/2; x++)
         {
-            for (int y = 0; y < numCells; y++)
+            for (int y = -numCells/2; y < numCells/2; y++)
             {
-                for (int z = 0; z < numCells; z++)
+                for (int z = -numCells/2; z < numCells/2; z++)
                 {
-                    StarSystem starSystem = new StarSystem(x * cellSize, y * cellSize, z * cellSize);
+                    StarSystem starSystem = new StarSystem(coord.x + x * cellSize, coord.y + y * cellSize, coord.z +  z * cellSize);
 
                     if (starSystem.starExists) 
                     {
@@ -132,10 +145,18 @@ public class TerrainChunk
     }
     public void SetVisible(bool visible) 
     {
-        mesh.SetActive(visible);
+        if(chunkVisible) mesh.SetActive(visible);
+        foreach (Star star in instantiatedStars)
+        {
+            star.gameObject.SetActive(visible);
+        }
+
+
+
     }
-    public bool isVisible() 
+    public bool isVisible(Vector3 pos, float renderDistance) 
     {
-        return mesh.activeSelf;
+        float closestViewerDstSqrd = bounds.SqrDistance(pos);
+        return closestViewerDstSqrd  <= renderDistance * renderDistance;
     }
 }
