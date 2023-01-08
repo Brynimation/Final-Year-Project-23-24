@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 
 [System.Serializable]
@@ -19,14 +20,14 @@ public class Star2
     public static float G = 6.67f * (float) Mathf.Pow(10, -3);
     public Vector3[] orbitPositions;
 
-    public Star2(Vector3 centre, float semiMajorAxis, float semiMinorAxis, int particleCount, int resolution, float angleAroundEllipse = 0f, float angularOffset = 0f)
+    public Star2(Vector3 centre, float a, float b, int particleCount, int resolution, float angleAroundEllipse = 0f, float offset = 0f)
     {
         angularOffset %= 360f * Mathf.Deg2Rad;
         id = starCount++;
-        this.semiMajorAxis = semiMajorAxis;
-        this.semiMinorAxis = semiMinorAxis;
+        semiMajorAxis = a;
+        semiMinorAxis = b;
         theta0 = angleAroundEllipse;
-        this.angularOffset = angularOffset;
+        angularOffset = offset;
         //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
         //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
         position = calcPosition(centre, semiMajorAxis, semiMinorAxis, angleAroundEllipse, angularOffset);
@@ -45,9 +46,7 @@ public class Star2
                 points[i] = pos;
                 lr.SetPosition((id/25) * resolution + i, pos);
             }
-        }
-
-        
+        } 
     }
     private Vector3 calcPosition(Vector3 centre, float semiMajorAxis, float semiMinorAxis, float theta = 0f, float angularOffset = 0f) 
     {
@@ -83,8 +82,28 @@ public class Star2
         return position + dir;
     }
 }
+
+struct StarVertex 
+{
+    public Vector3 position;
+    public Vector2 uv;
+    public int id;
+    public float eccentricity;
+    public float theta;
+    public float angleOffset;
+    public StarVertex(Vector3 pos, Vector2 uv, int id, float eccentricity, float theta, float angleOffset) 
+    {
+        this.id = id;
+        this.position = pos;
+        this.uv = uv;
+        this.eccentricity = eccentricity;
+        this.theta = theta;
+        this.angleOffset = angleOffset;
+    }
+}
 public class ParticleDistributor : MonoBehaviour
 {
+    [SerializeField] Material galaxyMaterial;
     [SerializeField] AnimationCurve distributionCurve;
     [SerializeField] int particleCount;
     [SerializeField] AnimationCurve velocityCurve;
@@ -98,9 +117,9 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] float offsetMultiplier;
     [SerializeField] Material lineMat;
     [SerializeField] int resolution = 20;
-    LineRenderer lineRenderer;
     float angularOffsetIncrement;
     Star2[] stars;
+    StarVertex[] starVertices;
     int[] indices;
     Vector3[] verts;
     MeshFilter mf;
@@ -108,15 +127,30 @@ public class ParticleDistributor : MonoBehaviour
     void Start()
     {
         mf = GetComponent<MeshFilter>();
+        galaxyMaterial = GetComponent<MeshRenderer>().material;
         verts = new Vector3[particleCount];
         stars = new Star2[particleCount];
+        starVertices = new StarVertex[particleCount];
         Vector3[] uvs = new Vector3[particleCount];
         indices = new int[particleCount];
         angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
         float currentAngularDisplacement = 0f;
-        lineRenderer = gameObject.AddComponent<LineRenderer>();
-        lineRenderer.startWidth = lineRenderer.endWidth = 0.01f;
-        lineRenderer.positionCount = particleCount * resolution;
+
+        VertexAttributeDescriptor[] customVertexStreams = new[] {
+            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, stream:0),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, stream:0),
+            new VertexAttributeDescriptor(format: VertexAttributeFormat.SInt32, dimension:1, stream:0), 
+            new VertexAttributeDescriptor(format: VertexAttributeFormat.Float32, dimension:1, stream:0),
+            new VertexAttributeDescriptor(format: VertexAttributeFormat.Float32, dimension:1, stream:0), 
+            new VertexAttributeDescriptor(format: VertexAttributeFormat.Float32,dimension:1, stream:0)
+        };
+
+        mesh = new Mesh();
+        mesh.SetVertexBufferParams(particleCount * 3, customVertexStreams);
+        
+
+        /*Initialise stars with a random initial rotation and distance from the galactic centre
+         governed by the DistributionCurve.*/
         for (int i = 0; i < particleCount; i++) 
         {
             //float theta = (i * numArms/ (float) particleCount) * 360 * Mathf.Deg2Rad * turnFraction;
@@ -125,17 +159,31 @@ public class ParticleDistributor : MonoBehaviour
             float eccentricity = getEccentricity(r);
             float a = r;
             float b = r * eccentricity;
-
             stars[i] = new Star2(transform.position, a, b, particleCount, resolution, theta, currentAngularDisplacement);
-            
+            //eccentricities[i] = getEccentricity(r);
             verts[i] = stars[i].position;
             indices[i] = i;
             currentAngularDisplacement = angularOffsetIncrement * i;
-            
+            starVertices[i] = new StarVertex(verts[i], Vector2.zero, i, getEccentricity(r), theta, currentAngularDisplacement);
+            if (i == 100) 
+            {
+                Debug.Log(starVertices[i].eccentricity);
+            }
         }
-        mesh = new Mesh();
-        mesh.vertices = verts;
+        /*Each star is a vertex. Send all this data to the vertex shader.*/
+
+
+        mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream:0);
         mesh.SetIndices(indices, MeshTopology.Points, 0);
+        Debug.Log(Time.fixedDeltaTime);
+        galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
+        galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);
+        galaxyMaterial.SetFloat("_GalacticDiskRadius", galaxyRadius);
+        galaxyMaterial.SetFloat("_GalacticHaloRadius", haloRadius);
+        galaxyMaterial.SetInt("_NumParticles", particleCount);
+        
+        
+        
         mf.mesh = mesh;
         
     }
@@ -167,7 +215,7 @@ public class ParticleDistributor : MonoBehaviour
         float rH = coreRadius;   //Radius at which the centre has fallen to half // Radius auf dem die Dichte um die Hälfte gefallen ist
         return (float)centreDensity * (float)Mathf.Exp(-r / rH) * (r * r) * Mathf.PI * d;
     }
-    void FixedUpdate()
+    void FixedUpdate2()
     {
         for (int i = 0; i < stars.Length; i++) 
         {

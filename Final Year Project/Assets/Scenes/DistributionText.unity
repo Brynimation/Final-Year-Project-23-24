@@ -154,18 +154,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ca48a6debea1024daaee9c8bcb6a0b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  galaxyMaterial: {fileID: 0}
   distributionCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.042253524
+      outSlope: -0.042253524
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.44375
     - serializedVersion: 3
       time: 1
       value: 1
@@ -178,7 +179,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  particleCount: 5000
+  particleCount: 500000
   velocityCurve:
     serializedVersion: 2
     m_Curve: []
@@ -191,7 +192,7 @@ MonoBehaviour:
   galaxyRadius: 5
   haloRadius: 10
   maxEccentricity: 1
-  minEccentricity: 0.8
+  minEccentricity: 0.5
   offsetMultiplier: 2
   lineMat: {fileID: 0}
   resolution: 100

@@ -15,7 +15,6 @@ Shader "Custom/ShaderForURP"
         _BaseColour ("Base Colour", Color) = (1,1,1,1)
         //_NumVertices("NumVertices", Integer) = 1000
         _PointSize("Point Size", float) = 2.0
-        _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
         _CurTime("Time", float) = 0.0
         _GalacticBulgeRadius("Galactic Bulge Radius", float) = 10.0
         _GalacticDiskRadius("Galactic Disk Radius", float) = 30.0
@@ -56,7 +55,7 @@ Shader "Custom/ShaderForURP"
         {
             float4 position : POSITION;
             float2 uv : TEXCOORD0; 
-
+            float eccentricity : ECCENTRICITY; 
             uint index : SV_VertexId;
         };
 
