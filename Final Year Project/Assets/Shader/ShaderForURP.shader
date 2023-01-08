@@ -52,8 +52,6 @@ Shader "Custom/ShaderForURP"
          will output a 2D screenspace position for each of these vertices. We must first create a
          struct that is passed as input to our VertexShader*/
 
-        
-
         struct VertexInput
         {
             float4 position : POSITION;
