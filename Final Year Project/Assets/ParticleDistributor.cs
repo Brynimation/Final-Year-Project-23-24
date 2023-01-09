@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -132,6 +134,7 @@ public class ParticleDistributor : MonoBehaviour
         stars = new Star2[particleCount];
         starVertices = new StarVertex[particleCount];
         Vector3[] uvs = new Vector3[particleCount];
+        //NativeArray<StarVertex> starVerts = new NativeArray<StarVertex>();
         indices = new int[particleCount];
         angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
         float currentAngularDisplacement = 0f;
@@ -147,7 +150,6 @@ public class ParticleDistributor : MonoBehaviour
 
         mesh = new Mesh();
         mesh.SetVertexBufferParams(particleCount * 3, customVertexStreams);
-        
 
         /*Initialise stars with a random initial rotation and distance from the galactic centre
          governed by the DistributionCurve.*/
@@ -155,6 +157,7 @@ public class ParticleDistributor : MonoBehaviour
         {
             //float theta = (i * numArms/ (float) particleCount) * 360 * Mathf.Deg2Rad * turnFraction;
             float theta = Random.Range(0, 360) * Mathf.Deg2Rad;
+            Debug.Log(theta);
             float r = distributionCurve.Evaluate(i / (float)particleCount) * galaxyRadius;
             float eccentricity = getEccentricity(r);
             float a = r;
@@ -164,19 +167,17 @@ public class ParticleDistributor : MonoBehaviour
             verts[i] = stars[i].position;
             indices[i] = i;
             currentAngularDisplacement = angularOffsetIncrement * i;
-            starVertices[i] = new StarVertex(verts[i], Vector2.zero, i, getEccentricity(r), theta, currentAngularDisplacement);
-            if (i == 100) 
-            {
-                Debug.Log(starVertices[i].eccentricity);
-            }
+            StarVertex star = new StarVertex(verts[i], Vector2.zero, i, getEccentricity(r), theta, currentAngularDisplacement);
+            starVertices[i] = star;
         }
         /*Each star is a vertex. Send all this data to the vertex shader.*/
-
-
-        mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream:0);
+        mesh.SetVertices(verts, 0, particleCount);
+        //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
+        //mesh.vertices = verts;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
         Debug.Log(Time.fixedDeltaTime);
         galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
+        galaxyMaterial.SetVector("_GalacticCentre", transform.position);
         galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);
         galaxyMaterial.SetFloat("_GalacticDiskRadius", galaxyRadius);
         galaxyMaterial.SetFloat("_GalacticHaloRadius", haloRadius);

@@ -124,13 +124,33 @@ Shader "Custom/SpiralGalaxy"
                 float3 forceDir = normalize(i.position);
                 float3 r = length(i.position);
                 float3 velocityDir = float3(-forceDir.y, forceDir.x, 0);
-                float velocityMagnitude = sqrt((i.id * 50) /(float) (_NumParticles - 1));
+                float velocityMagnitude = sqrt((i.id * 50) /(float) (_NumParticles - 1)/r);
                 float angularVelocity = velocityMagnitude / (float) r;
                 i.theta += (angularVelocity * _Time);
                 //i.theta = i.theta + 10.0;
                 i.position = calculatePosition(i);
                 return i.position;
             }
+      /*     
+
+    public Vector3 GetPointOnEllipse(Vector3 centre, int starCount, float timeStep) 
+    {
+        theta0 = (theta0 > 360f * Mathf.Deg2Rad) ? theta0 - 360f * Mathf.Deg2Rad : theta0; //
+        Vector3 displacement = centre - position;
+        float r = displacement.magnitude;
+        Vector3 forceDir = displacement.normalized;
+        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);
+        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
+        Vector3 orbitalVelocity = velocityDir * velocityMagnitude;
+        angularVelocity = velocityMagnitude / r;
+        theta0 += (angularVelocity * timeStep * 1f);
+        //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
+        //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
+        position = calcPosition(centre, semiMajorAxis, semiMinorAxis, theta0, angularOffset);
+
+     
+        return position;
+    }*/
             v2f vert(StarVertex i)
             {
                 v2f o;
