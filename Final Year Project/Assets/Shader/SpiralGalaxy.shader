@@ -58,9 +58,9 @@ Shader "Custom/SpiralGalaxy"
            float3 position : POSITION;
            float2 uv : TEXCOORD0;
            uint id : SV_VERTEXID;
-           float eccentricity : TEXCOORD1;
-           float theta : TEXCOORD2;
-           float angleOffset : TEXCOORD3;
+           float2 majorAndMinorAxes : TEXCOORD1;
+           float2 angles : TEXCOORD2;
+           float2 angularVelocity: TEXCOORD3;
         };
 
         /*A semantic is a string attached to a shader input or output that conveys information 
@@ -106,13 +106,14 @@ Shader "Custom/SpiralGalaxy"
             //float _PointSize;
              float3 calculatePosition(StarVertex i)
             {
-                float r = length(i.position);
-                float a = r; //semi major axis
-                float b = r * i.eccentricity; //semi minor axis
-                float cosTheta = cos(i.theta);
-                float sinTheta = sin(i.theta);
-                float cosOffset = cos(i.angleOffset);
-                float sinOffset = sin(i.angleOffset);
+                float theta = i.angles.x;
+                float angleOffset = i.angles.y;
+                float a = i.majorAndMinorAxes.x;
+                float b = i.majorAndMinorAxes.y;
+                float cosTheta = cos(theta);
+                float sinTheta = sin(theta);
+                float cosOffset = cos(angleOffset);
+                float sinOffset = sin(angleOffset);
 
                 float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
@@ -120,13 +121,8 @@ Shader "Custom/SpiralGalaxy"
             }
              float3 GetPointOnEllipse(StarVertex i)
             {
-                i.theta = (i.theta > radians(360)) ? i.theta - radians(360) : i.theta;
-                float3 forceDir = normalize(i.position);
-                float3 r = length(i.position);
-                float3 velocityDir = float3(-forceDir.y, forceDir.x, 0);
-                float velocityMagnitude = sqrt((i.id * 50) /(float) (_NumParticles - 1)/r);
-                float angularVelocity = velocityMagnitude / (float) r;
-                i.theta += (angularVelocity * _Time);
+                i.angles.x = (i.angles.x > radians(360)) ? i.angles.x - radians(360) : i.angles.x;
+                i.angles.x += (i.angularVelocity * _Time);
                 //i.theta = i.theta + 10.0;
                 i.position = calculatePosition(i);
                 return i.position;

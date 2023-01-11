@@ -179,7 +179,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  particleCount: 50000
+  particleCount: 5000
   velocityCurve:
     serializedVersion: 2
     m_Curve: []
@@ -239,7 +239,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ba061a42c31bbc340aac410dcee3faf5, type: 2}
+  - {fileID: 2100000, guid: be6114ce5418960448ccdbca4b391f5e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -22,13 +22,15 @@ public class Star2
     public static float G = 6.67f * (float) Mathf.Pow(10, -3);
     public Vector3[] orbitPositions;
 
-    public Star2(Vector3 centre, float a, float b, int particleCount, int resolution, float angleAroundEllipse = 0f, float offset = 0f)
+    public Star2(Vector3 centre, float a, float b, int particleCount, float angleAroundEllipse = 0f, float offset = 0f)
     {
         angularOffset %= 360f * Mathf.Deg2Rad;
         id = starCount++;
         semiMajorAxis = a;
         semiMinorAxis = b;
         theta0 = angleAroundEllipse;
+        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float)a);
+        angularVelocity = velocityMagnitude / a; 
         angularOffset = offset;
         //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
         //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
@@ -62,13 +64,13 @@ public class Star2
     public Vector3 GetPointOnEllipse(Vector3 centre, int starCount, float timeStep) 
     {
         theta0 = (theta0 > 360f * Mathf.Deg2Rad) ? theta0 - 360f * Mathf.Deg2Rad : theta0; //
-        Vector3 displacement = centre - position;
+       /* Vector3 displacement = centre - position;
         float r = displacement.magnitude;
         Vector3 forceDir = displacement.normalized;
-        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);
-        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
+        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);*/
+/*        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
         Vector3 orbitalVelocity = velocityDir * velocityMagnitude;
-        angularVelocity = velocityMagnitude / r;
+        angularVelocity = velocityMagnitude / r;*/
         theta0 += (angularVelocity * timeStep * 1f);
         //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
         //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
@@ -120,6 +122,9 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] Material lineMat;
     [SerializeField] int resolution = 20;
     float angularOffsetIncrement;
+    Vector2[] majorAndMinorAxes;
+    Vector2[] angles;
+    Vector2[] angularVelocities;
     Star2[] stars;
     StarVertex[] starVertices;
     int[] indices;
@@ -131,11 +136,15 @@ public class ParticleDistributor : MonoBehaviour
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
         verts = new Vector3[particleCount];
+        angles = new Vector2[particleCount];
+        majorAndMinorAxes = new Vector2[particleCount];
         stars = new Star2[particleCount];
         starVertices = new StarVertex[particleCount];
         Vector3[] uvs = new Vector3[particleCount];
         //NativeArray<StarVertex> starVerts = new NativeArray<StarVertex>();
+        
         indices = new int[particleCount];
+        angularVelocities = new Vector2[particleCount];
         angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
         float currentAngularDisplacement = 0f;
 
@@ -162,16 +171,23 @@ public class ParticleDistributor : MonoBehaviour
             float eccentricity = getEccentricity(r);
             float a = r;
             float b = r * eccentricity;
-            stars[i] = new Star2(transform.position, a, b, particleCount, resolution, theta, currentAngularDisplacement);
+            currentAngularDisplacement = angularOffsetIncrement * i;
+            stars[i] = new Star2(transform.position, a, b, particleCount,theta, currentAngularDisplacement);
+            angles[i] = new Vector2(theta, currentAngularDisplacement);
+            majorAndMinorAxes[i] = new Vector2(a, b);
             //eccentricities[i] = getEccentricity(r);
+            angularVelocities[i] = new Vector2(Mathf.Sqrt((i * 50) / (float)(particleCount - 1) / r), 0f);
             verts[i] = stars[i].position;
             indices[i] = i;
-            currentAngularDisplacement = angularOffsetIncrement * i;
             StarVertex star = new StarVertex(verts[i], Vector2.zero, i, getEccentricity(r), theta, currentAngularDisplacement);
             starVertices[i] = star;
         }
         /*Each star is a vertex. Send all this data to the vertex shader.*/
         mesh.SetVertices(verts, 0, particleCount);
+        mesh.SetUVs(0, uvs);
+        mesh.SetUVs(1, majorAndMinorAxes);
+        mesh.SetUVs(2, angles);
+        mesh.SetUVs(3, angularVelocities);
         //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
         //mesh.vertices = verts;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
