@@ -111,7 +111,6 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] AnimationCurve distributionCurve;
     [SerializeField] int particleCount;
     [SerializeField] AnimationCurve velocityCurve;
-    [SerializeField] int numArms;
     [SerializeField] float turnFraction = 1.618f;
     [SerializeField] float coreRadius = 2.0f;
     [SerializeField] float galaxyRadius = 10f;
@@ -119,18 +118,26 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] float maxEccentricity = 1f;
     [SerializeField] float minEccentricity;
     [SerializeField] float offsetMultiplier;
-    [SerializeField] Material lineMat;
-    [SerializeField] int resolution = 20;
+    [SerializeField] float WeinDisplacementConstant = 2.898f * Mathf.Pow(10, -3);
+    [SerializeField] Gradient visibleSpectrum;
     float angularOffsetIncrement;
     Vector2[] majorAndMinorAxes;
     Vector2[] angles;
     Vector2[] angularVelocities;
+    Vector2[] temperaturesAndColours;
     Star2[] stars;
     StarVertex[] starVertices;
     int[] indices;
     Vector3[] verts;
     MeshFilter mf;
     Mesh mesh;
+
+    private Color calculateColour(float temperature) 
+    {
+        float peakWavelength = WeinDisplacementConstant / temperature;
+        return Color.black;
+        
+    }
     void Start()
     {
         mf = GetComponent<MeshFilter>();
@@ -166,7 +173,10 @@ public class ParticleDistributor : MonoBehaviour
         {
             //float theta = (i * numArms/ (float) particleCount) * 360 * Mathf.Deg2Rad * turnFraction;
             float theta = Random.Range(0, 360) * Mathf.Deg2Rad;
-            Debug.Log(theta);
+            //Determine surface colour using Wein's law: k = Ymax * T;
+            float temperature = Random.Range(3000, 30000);// Range of temperatures of main sequence stars is roughly [3000, 30000]
+            float peakWavelength = WeinDisplacementConstant / temperature;
+            Debug.Log(peakWavelength);
             float r = distributionCurve.Evaluate(i / (float)particleCount) * galaxyRadius;
             float eccentricity = getEccentricity(r);
             float a = r;
@@ -191,7 +201,6 @@ public class ParticleDistributor : MonoBehaviour
         //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
         //mesh.vertices = verts;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
-        Debug.Log(Time.fixedDeltaTime);
         galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
         galaxyMaterial.SetVector("_GalacticCentre", transform.position);
         galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);

@@ -161,12 +161,12 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: -0.042253524
-      outSlope: -0.042253524
+      inSlope: 0
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.44375
+      outWeight: 0
     - serializedVersion: 3
       time: 1
       value: 1
@@ -186,16 +186,14 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  numArms: 2
   turnFraction: 1.618
   coreRadius: 2
   galaxyRadius: 5
   haloRadius: 10
   maxEccentricity: 1
   minEccentricity: 0
-  offsetMultiplier: 2
-  lineMat: {fileID: 0}
-  resolution: 100
+  offsetMultiplier: 0
+  WeinDisplacementConstant: 0.0028980002
 --- !u!4 &914408827
 Transform:
   m_ObjectHideFlags: 0
