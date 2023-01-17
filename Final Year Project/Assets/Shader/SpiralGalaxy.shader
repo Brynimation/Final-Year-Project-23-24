@@ -61,6 +61,26 @@ Shader "Custom/SpiralGalaxy"
            float2 majorAndMinorAxes : TEXCOORD1;
            float2 angles : TEXCOORD2;
            float2 angularVelocity: TEXCOORD3;
+           float2 type : TEXCOORD4;
+           float4 colour : COLOR;
+        };
+
+        struct GeomData
+        {
+            float4 positionOS : POSITION;
+            //float size : PSIZE;
+            float4 colour : COLOR;
+            float2 uv : TEXCOORD0;
+            float3 positionWS : TEXCOORD1;
+        };
+
+         struct Interpolators 
+        {
+            float4 positionHCS : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
+            //float size : PSIZE; //Size of each vertex.
+            float4 colour : COLOR;
+            float2 uv : TEXCOORD0;
+            float3 positionWS : TEXCOORD1;
         };
 
         /*A semantic is a string attached to a shader input or output that conveys information 
@@ -77,12 +97,7 @@ Shader "Custom/SpiralGalaxy"
         */
 
         /*Output by our vertex shader, passed to our fragment shader.*/
-        struct v2f 
-        {
-            float4 position : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
-            float size : PSIZE; //Size of each vertex.
-            float2 uv : TEXCOORD0;
-        };
+
         uniform int _NumParticles;
         uniform float3 _GalacticCentre;
         uniform float _GalacticDiskRadius;
@@ -100,6 +115,7 @@ Shader "Custom/SpiralGalaxy"
             HLSLPROGRAM
             //pragma directives
             #pragma vertex vert
+            #pragma geometry geom
             #pragma fragment frag
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
@@ -127,6 +143,7 @@ Shader "Custom/SpiralGalaxy"
                 i.position = calculatePosition(i);
                 return i.position;
             }
+
       /*     
 
     public Vector3 GetPointOnEllipse(Vector3 centre, int starCount, float timeStep) 
@@ -147,13 +164,70 @@ Shader "Custom/SpiralGalaxy"
      
         return position;
     }*/
-            v2f vert(StarVertex i)
+            GeomData vert(StarVertex i)
             {
-                v2f o;
-                o.position = TransformObjectToHClip(GetPointOnEllipse(i));
+                GeomData o;
+                float size = 2.0;
+                float3 posObjectSpace = GetPointOnEllipse(i);
+                /*if(i.type.x == 1.0)
+                {
+                   i.majorAndMinorAxes.x += _GalacticDiskRadius;
+                   float3 pos2ObjectSpace = GetPointOnEllipse(i);
+                   float dst = distance(posObjectSpace, pos2ObjectSpace);
+                   size = (_GalacticDiskRadius - dst);
+                   i.colour *= float4(1.0, 0.0, 0.0, 0.0);
+                }*/
+
+                o.positionOS = float4(posObjectSpace, 1.0);
+                o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
                 o.uv = i.uv;
-                o.size = 2.0;
+                //o.size = size;
+                o.colour = i.colour;
                 return o;
+            }
+
+            [maxvertexcount(24)]
+            void geom(point GeomData inputs[1], inout TriangleStream<Interpolators> outputstream)
+            {
+        
+                const int numPoints = 8;
+                float angleIncrement = radians(360)/(float) numPoints;
+
+                float3 centreOS = inputs[0].positionOS;
+                float3 centreWS = inputs[0].positionWS;
+                float2 centreUV = inputs[0].uv;
+
+
+                Interpolators centre;
+                centre.positionWS = centreWS;
+                centre.uv = centreUV;
+                centre.positionHCS = TransformObjectToHClip(centreOS);
+                centre.colour = inputs[0].colour;
+                Interpolators positions[numPoints];
+                for(int i = 0; i < numPoints; i++)
+                {
+                    Interpolators o;
+                    float angle = angleIncrement * i;
+                    float r = 2.0;
+                    float x = r * cos(angle);
+                    float y = r * sin(angle);
+                    float3 os = centreOS + float3(x,y,0);
+                    o.positionWS = mul(unity_ObjectToWorld, os);//centreWS + os;
+                    o.positionHCS = TransformObjectToHClip(os);
+                    o.uv = centreUV;
+                    o.colour = inputs[0].colour;
+
+                    positions[i] = o;
+                }
+                for(int i = 0; i < numPoints; i++)
+                {
+                    outputstream.Append(positions[i]);
+                    outputstream.Append(positions[(i + 1)%numPoints]);
+                    outputstream.Append(centre);
+                    
+                    outputstream.RestartStrip();
+                }
+                
             }
 
             
@@ -162,12 +236,14 @@ Shader "Custom/SpiralGalaxy"
             on screen and turns them to fragments. Our fragment shader will operate on every one of these and 
             return a colour : the final colour of those fragments.
             */
-            float4 frag(v2f i) : SV_Target 
+            float4 frag(GeomData i) : SV_Target 
             {
                 //Sample the main texture at the correct uv coordinate using the SAMPLE_TEXTURE_2D macro, and 
                 //then passing in the main texture, its sampler and the specified uv coordinate
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                return baseTex * _BaseColour;
+                /*Here we blur the edges of each star*/
+
+                return baseTex * i.colour; //_BaseColour;
             }
             ENDHLSL
         }

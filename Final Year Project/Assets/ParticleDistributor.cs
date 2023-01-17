@@ -120,11 +120,14 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] float offsetMultiplier;
     [SerializeField] float WeinDisplacementConstant = 2.898f * Mathf.Pow(10, -3);
     [SerializeField] Gradient visibleSpectrum;
+    [SerializeField] int numH2Regions;
     float angularOffsetIncrement;
     Vector2[] majorAndMinorAxes;
     Vector2[] angles;
     Vector2[] angularVelocities;
+    Vector2[] types;
     Vector2[] temperaturesAndColours;
+    Color[] colours;
     Star2[] stars;
     StarVertex[] starVertices;
     int[] indices;
@@ -145,9 +148,11 @@ public class ParticleDistributor : MonoBehaviour
         verts = new Vector3[particleCount];
         angles = new Vector2[particleCount];
         majorAndMinorAxes = new Vector2[particleCount];
+        types = new Vector2[particleCount];
         stars = new Star2[particleCount];
         starVertices = new StarVertex[particleCount];
         Vector3[] uvs = new Vector3[particleCount];
+        colours = new Color[particleCount];
         //NativeArray<StarVertex> starVerts = new NativeArray<StarVertex>();
         
         indices = new int[particleCount];
@@ -173,11 +178,8 @@ public class ParticleDistributor : MonoBehaviour
         {
             //float theta = (i * numArms/ (float) particleCount) * 360 * Mathf.Deg2Rad * turnFraction;
             float theta = Random.Range(0, 360) * Mathf.Deg2Rad;
-            //Determine surface colour using Wein's law: k = Ymax * T;
-            float temperature = Random.Range(3000, 30000);// Range of temperatures of main sequence stars is roughly [3000, 30000]
-            float peakWavelength = WeinDisplacementConstant / temperature;
-            Debug.Log(peakWavelength);
-            float r = distributionCurve.Evaluate(i / (float)particleCount) * galaxyRadius;
+
+            float r = distributionCurve.Evaluate(i / (float)particleCount) * galaxyRadius; 
             float eccentricity = getEccentricity(r);
             float a = r;
             float b = r * eccentricity;
@@ -187,10 +189,18 @@ public class ParticleDistributor : MonoBehaviour
             majorAndMinorAxes[i] = new Vector2(a, b);
             //eccentricities[i] = getEccentricity(r);
             angularVelocities[i] = new Vector2(Mathf.Sqrt((i * 50) / (float)(particleCount - 1) / r), 0f);
+            colours[i] = Color.Lerp(Color.white, Color.blue * Color.white, r / galaxyRadius);
             verts[i] = stars[i].position;
             indices[i] = i;
             StarVertex star = new StarVertex(verts[i], Vector2.zero, i, getEccentricity(r), theta, currentAngularDisplacement);
             starVertices[i] = star;
+            if (i % (particleCount / numH2Regions) == 0)
+            {
+                types[i] = new Vector2(1, 0);
+            }
+            else {
+                types[i] = new Vector2(0, 0);
+            }
         }
         /*Each star is a vertex. Send all this data to the vertex shader.*/
         mesh.SetVertices(verts, 0, particleCount);
@@ -198,6 +208,8 @@ public class ParticleDistributor : MonoBehaviour
         mesh.SetUVs(1, majorAndMinorAxes);
         mesh.SetUVs(2, angles);
         mesh.SetUVs(3, angularVelocities);
+        mesh.SetUVs(4, types);
+        mesh.SetColors(colours);
         //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
         //mesh.vertices = verts;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
