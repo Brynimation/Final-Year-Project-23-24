@@ -7,7 +7,7 @@
 /*In spiral galaxies the velocities of stars in the outer orbits are much faster than expected.- https://sites.ualberta.ca/~pogosyan/teaching/ASTRO_122/lect24/lecture24.html*/
 
 
-Shader "Custom/SpiralGalaxy"
+Shader "Custom/SpiralGalaxy2"
 {
     Properties
     {
@@ -17,9 +17,15 @@ Shader "Custom/SpiralGalaxy"
         _PointSize("Point Size", float) = 2.0
         _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
         _TimeStep("Time Step", float) = 0.0
-        _GalacticBulgeRadius("Galactic Bulge Radius", float) = 2
+        _GalacticBulgeRadius("Galactic Bulge Radius", float) = 2 
         _GalacticDiskRadius("Galactic Disk Radius", float) = 5
         _GalacticHaloRadius("Galactic Halo Radius", float) = 10.0
+        _AngularOffsetIncrement("Angular Offset", float) = 1.0
+        _MinEccentricity("Minimum Eccentricity", float) = 0.5
+        _MaxEccentricity("Maximum Eccentricity", float) = 1.0
+        _CentreColour("Centre Colour", Color) = (1,1,1,1)
+        _EdgeColour("Edge Colour", Color) = (0.3, 1, 0)
+        _AngularOffsetMultiplier("Angular offset", Int) = 1
      }
     SubShader
     {
@@ -58,11 +64,8 @@ Shader "Custom/SpiralGalaxy"
            float3 position : POSITION;
            float2 uv : TEXCOORD0;
            uint id : SV_VERTEXID;
-           float2 majorAndMinorAxes : TEXCOORD1;
-           float2 angles : TEXCOORD2;
-           float2 angularVelocity: TEXCOORD3;
-           float2 type : TEXCOORD4;
            float4 colour : COLOR;
+           
         };
 
         struct GeomData
@@ -106,6 +109,11 @@ Shader "Custom/SpiralGalaxy"
         uniform float _PointSize;
         uniform float _TimeStep;
         uniform float3 _CameraPosition;
+        uniform float _MinEccentricity;
+        uniform float _MaxEccentricity;
+        uniform float4 _CentreColour;
+        uniform float4 _EdgeColour;
+        uniform int _AngularOffsetMultiplier;
 
         ENDHLSL
 
@@ -121,12 +129,8 @@ Shader "Custom/SpiralGalaxy"
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
             //float _PointSize;
-             float3 calculatePosition(StarVertex i)
+             float3 calculatePosition(float theta, float angleOffset, float a, float b)
             {
-                float theta = i.angles.x;
-                float angleOffset = i.angles.y;
-                float a = i.majorAndMinorAxes.x;
-                float b = i.majorAndMinorAxes.y;
                 float cosTheta = cos(theta);
                 float sinTheta = sin(theta);
                 float cosOffset = cos(angleOffset);
@@ -136,52 +140,77 @@ Shader "Custom/SpiralGalaxy"
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
                 return float3(xPos, yPos, 0);
             }
+            float GetSemiMajorAxis(float x)
+            {
+                return(x * x * x * _GalacticDiskRadius);
+            }
+
+            float GetEccentricity(float r)
+            {
+                 if (r < _GalacticBulgeRadius)
+                {
+                    return lerp(_MaxEccentricity, _MinEccentricity, r / _GalacticBulgeRadius);
+                }
+                else if (r >= _GalacticBulgeRadius && r < _GalacticDiskRadius)
+                {
+                    return lerp(_MinEccentricity, _MaxEccentricity, (r - _GalacticBulgeRadius) / (_GalacticDiskRadius - _GalacticBulgeRadius));
+                }
+                else if (r >= _GalacticDiskRadius && r < _GalacticHaloRadius)
+                {
+                    return lerp(_MaxEccentricity, 1.0, (r - _GalacticDiskRadius) /(_GalacticHaloRadius - _GalacticDiskRadius));
+                }
+                else {
+                    return 1.0;
+                }
+            }
+            float GenerateRandom(int x)
+            {
+                float2 p = float2(x, sqrt(x));
+                return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+            }
+            
+            float GetRandomAngle(int id)
+            {
+                return radians((GenerateRandom(id) * 360));
+            }
+
+            float GetAngularVelocity(int i, float r)
+            {
+                return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
+            }
+
+            float GetColour(float r)
+            {
+                float lerpPercent = r/(float)_GalacticDiskRadius;
+                return lerp(_CentreColour, _EdgeColour, float4(lerpPercent, lerpPercent, lerpPercent, lerpPercent));
+            }
+            float GetAngularOffset(int id)
+            {
+                int multiplier = id * _AngularOffsetMultiplier;
+                int finalParticle = _NumParticles - 1;
+                return radians((multiplier/(float)finalParticle) * 360);
+            }
              float3 GetPointOnEllipse(StarVertex i)
             {
-                i.angles.x = (i.angles.x > radians(360)) ? i.angles.x - radians(360) : i.angles.x;
-                i.angles.x += (i.angularVelocity * _Time.w);
-                //i.theta = i.theta + 10.0;
-                i.position = calculatePosition(i);
+                float semiMajorAxis = GetSemiMajorAxis(i.id/(float)_NumParticles);
+                float eccentricity = GetEccentricity(semiMajorAxis); 
+                float angularVelocity = GetAngularVelocity(i.id, semiMajorAxis);
+                float semiMinorAxis = eccentricity * semiMajorAxis;   
+                float currentAngularOffset = GetAngularOffset(i.id);
+                float theta = GetRandomAngle(i.id) + angularVelocity * _Time.w;
+                i.colour = GetColour(semiMajorAxis);
+                i.position = calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis);
                 return i.position;
             }
 
-      /*     
 
-    public Vector3 GetPointOnEllipse(Vector3 centre, int starCount, float timeStep) 
-    {
-        theta0 = (theta0 > 360f * Mathf.Deg2Rad) ? theta0 - 360f * Mathf.Deg2Rad : theta0; //
-        Vector3 displacement = centre - position;
-        float r = displacement.magnitude;
-        Vector3 forceDir = displacement.normalized;
-        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);
-        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
-        Vector3 orbitalVelocity = velocityDir * velocityMagnitude;
-        angularVelocity = velocityMagnitude / r;
-        theta0 += (angularVelocity * timeStep * 1f);
-        //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
-        //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
-        position = calcPosition(centre, semiMajorAxis, semiMinorAxis, theta0, angularOffset);
-
-     
-        return position;
-    }*/
             GeomData vert(StarVertex i)
             {
                 GeomData o;
                 float3 posObjectSpace = GetPointOnEllipse(i);
-                /*if(i.type.x == 1.0)
-                {
-                   i.majorAndMinorAxes.x += _GalacticDiskRadius;
-                   float3 pos2ObjectSpace = GetPointOnEllipse(i);
-                   float dst = distance(posObjectSpace, pos2ObjectSpace);
-                   size = (_GalacticDiskRadius - dst);
-                   i.colour *= float4(1.0, 0.0, 0.0, 0.0);
-                }*/
-
                 o.positionOS = float4(posObjectSpace, 1.0);
                 o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
                 o.uv = i.uv;
-                //o.size = size;
                 o.colour = i.colour;
                 return o;
             }

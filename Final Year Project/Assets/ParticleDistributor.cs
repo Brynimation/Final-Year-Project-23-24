@@ -117,9 +117,11 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] float haloRadius = 20f;
     [SerializeField] float maxEccentricity = 1f;
     [SerializeField] float minEccentricity;
-    [SerializeField] float offsetMultiplier;
+    [SerializeField] int offsetMultiplier;
     [SerializeField] float WeinDisplacementConstant = 2.898f * Mathf.Pow(10, -3);
     [SerializeField] Gradient visibleSpectrum;
+    [SerializeField] Color centreColour;
+    [SerializeField] Color edgeColour;
     [SerializeField] int numH2Regions;
     float angularOffsetIncrement;
     Vector2[] majorAndMinorAxes;
@@ -141,7 +143,48 @@ public class ParticleDistributor : MonoBehaviour
         return Color.black;
         
     }
-    void Start()
+    private void Start()
+    {
+        mf = GetComponent<MeshFilter>();
+        galaxyMaterial = GetComponent<MeshRenderer>().material;
+        verts = new Vector3[particleCount];
+        indices = new int[particleCount];
+        angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
+
+        mesh = new Mesh();
+        for (int i = 0; i < particleCount; i++)
+        {
+            indices[i] = i;
+        }
+        /*Each star is a vertex. Send all this data to the vertex shader.*/
+        mesh.SetVertices(verts, 0, particleCount);
+        mesh.SetIndices(indices, MeshTopology.Points, 0);
+        galaxyMaterial.SetInt("_AngularOffsetMultiplier", offsetMultiplier);
+        galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
+        galaxyMaterial.SetVector("_GalacticCentre", transform.position);
+        galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);
+        galaxyMaterial.SetFloat("_GalacticDiskRadius", galaxyRadius);
+        galaxyMaterial.SetFloat("_GalacticHaloRadius", haloRadius);
+        galaxyMaterial.SetInt("_NumParticles", particleCount);
+        galaxyMaterial.SetFloat("_MinEccentricity", minEccentricity);
+        galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
+        galaxyMaterial.SetColor("_CentreColour", centreColour);
+        galaxyMaterial.SetColor("_EdgeColour", edgeColour) ;
+
+        mf.mesh = mesh;
+    }
+    private void Update()
+    {
+        galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
+        galaxyMaterial.SetFloat("_MinEccentricity", minEccentricity);
+        galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);
+        galaxyMaterial.SetFloat("_GalacticDiskRadius", galaxyRadius);
+        galaxyMaterial.SetFloat("_GalacticHaloRadius", haloRadius);
+        galaxyMaterial.SetInt("_AngularOffsetMultiplier", offsetMultiplier);
+        galaxyMaterial.SetColor("_CentreColour", centreColour);
+        galaxyMaterial.SetColor("_EdgeColour", edgeColour);
+    }
+    void Start2()
     {
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
@@ -174,6 +217,7 @@ public class ParticleDistributor : MonoBehaviour
 
         /*Initialise stars with a random initial rotation and distance from the galactic centre
          governed by the DistributionCurve.*/
+
         for (int i = 0; i < particleCount; i++) 
         {
             //float theta = (i * numArms/ (float) particleCount) * 360 * Mathf.Deg2Rad * turnFraction;
@@ -204,21 +248,23 @@ public class ParticleDistributor : MonoBehaviour
         }
         /*Each star is a vertex. Send all this data to the vertex shader.*/
         mesh.SetVertices(verts, 0, particleCount);
-        mesh.SetUVs(0, uvs);
+        mesh.SetIndices(indices, MeshTopology.Points, 0);
+       /* mesh.SetUVs(0, uvs);
         mesh.SetUVs(1, majorAndMinorAxes);
         mesh.SetUVs(2, angles);
         mesh.SetUVs(3, angularVelocities);
         mesh.SetUVs(4, types);
-        mesh.SetColors(colours);
+        mesh.SetColors(colours); */
         //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
         //mesh.vertices = verts;
-        mesh.SetIndices(indices, MeshTopology.Points, 0);
         galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
         galaxyMaterial.SetVector("_GalacticCentre", transform.position);
         galaxyMaterial.SetFloat("_GalacticBulgeRadius", coreRadius);
         galaxyMaterial.SetFloat("_GalacticDiskRadius", galaxyRadius);
         galaxyMaterial.SetFloat("_GalacticHaloRadius", haloRadius);
         galaxyMaterial.SetInt("_NumParticles", particleCount);
+        galaxyMaterial.SetFloat("_MinEccentricity", minEccentricity);
+        galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
         
         
         
