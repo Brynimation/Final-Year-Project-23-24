@@ -281,7 +281,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 75000
+  far clip plane: 750000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -357,7 +357,7 @@ PrefabInstance:
     - target: {fileID: 4581982607190194256, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 4814154d42badb14f870376cd85b487c, type: 2}
+      objectReference: {fileID: 2100000, guid: bf3f6ecff6ee6674ab942f1778a5c586, type: 2}
     - target: {fileID: 4581982607190194260, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
       propertyPath: m_Name
       value: GalaxyParticleDistributor
@@ -407,8 +407,40 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: cameraT
+      value: 
+      objectReference: {fileID: 1855644861}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: starTexture
+      value: 
+      objectReference: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: edgeColour.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: edgeColour.g
+      value: 0.15199709
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: edgeColour.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
       propertyPath: particleCount
       value: 50000
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: centreColour.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: centreColour.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: centreColour.r
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
       propertyPath: offsetMultiplier

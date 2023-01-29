@@ -107,6 +107,8 @@ struct StarVertex
 }
 public class ParticleDistributor : MonoBehaviour
 {
+    [SerializeField] Texture2D starTexture;
+    [SerializeField] Transform cameraT;
     [SerializeField] Material galaxyMaterial;
     [SerializeField] AnimationCurve distributionCurve;
     [SerializeField] int particleCount;
@@ -147,6 +149,7 @@ public class ParticleDistributor : MonoBehaviour
     {
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
+        galaxyMaterial.mainTexture = starTexture;
         verts = new Vector3[particleCount];
         indices = new int[particleCount];
         angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
@@ -170,6 +173,8 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
         galaxyMaterial.SetColor("_CentreColour", centreColour);
         galaxyMaterial.SetColor("_EdgeColour", edgeColour) ;
+        galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
+        galaxyMaterial.SetVector("_CameraUp", cameraT.up);
 
         mf.mesh = mesh;
     }
@@ -183,6 +188,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetInt("_AngularOffsetMultiplier", offsetMultiplier);
         galaxyMaterial.SetColor("_CentreColour", centreColour);
         galaxyMaterial.SetColor("_EdgeColour", edgeColour);
+        galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
     }
     void Start2()
     {

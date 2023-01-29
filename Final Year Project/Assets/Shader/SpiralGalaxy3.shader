@@ -1,17 +1,20 @@
 //ShaderLab is a Unity specific language that bridges the gap between HLSL and Unity. Everything
 //defined outside of the Passes is written in ShaderLab. Everything within the passes
 //is written in HLSL.
+
+//https://www.braynzarsoft.net/viewtutorial/q16390-36-billboarding-geometry-shader - billboarding in geometry shader tutorial
 //https://www.youtube.com/watch?v=gY1Mx4kkZPU&t=603s
 //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics
 
 /*In spiral galaxies the velocities of stars in the outer orbits are much faster than expected.- https://sites.ualberta.ca/~pogosyan/teaching/ASTRO_122/lect24/lecture24.html*/
 
 
-Shader "Custom/SpiralGalaxy2"
+Shader "Custom/SpiralGalaxy3"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _CameraUp("Camera Up", vector) = (0.0,0.0,0.0)
         _BaseColour ("Base Colour", Color) = (1,1,1,1)
         _NumParticles("NumParticles", Int) = 1000
         _PointSize("Point Size", float) = 2.0
@@ -30,6 +33,8 @@ Shader "Custom/SpiralGalaxy2"
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+        Blend SrcAlpha OneMinusSrcAlpha
+        cull off
         LOD 100
 
         //Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
@@ -74,7 +79,7 @@ Shader "Custom/SpiralGalaxy2"
             //float size : PSIZE;
             float4 colour : COLOR;
             float2 uv : TEXCOORD0;
-            float3 positionWS : TEXCOORD1;
+            float4 positionWS : TEXCOORD1;
         };
 
          struct Interpolators 
@@ -84,6 +89,7 @@ Shader "Custom/SpiralGalaxy2"
             float4 colour : COLOR;
             float2 uv : TEXCOORD0;
             float3 positionWS : TEXCOORD1;
+            float4 centreHCS : TEXCOORD2;
         };
 
         /*A semantic is a string attached to a shader input or output that conveys information 
@@ -108,12 +114,14 @@ Shader "Custom/SpiralGalaxy2"
         uniform float _GalacticHaloRadius;
         uniform float _PointSize;
         uniform float _TimeStep;
+        uniform float3 _CameraUp;
         uniform float3 _CameraPosition;
         uniform float _MinEccentricity;
         uniform float _MaxEccentricity;
         uniform float4 _CentreColour;
         uniform float4 _EdgeColour;
         uniform int _AngularOffsetMultiplier;
+
 
         ENDHLSL
 
@@ -129,7 +137,8 @@ Shader "Custom/SpiralGalaxy2"
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
             //float _PointSize;
-             float3 calculatePosition(float theta, float angleOffset, float a, float b)
+            #pragma region vertexShaderHelpers
+             float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
             {
                 float cosTheta = cos(theta);
                 float sinTheta = sin(theta);
@@ -138,7 +147,7 @@ Shader "Custom/SpiralGalaxy2"
 
                 float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-                return float3(xPos, yPos, 0);
+                return float3(xPos, yPos, (float)id/_NumParticles);
             }
             float GetSemiMajorAxis(float x)
             {
@@ -199,9 +208,10 @@ Shader "Custom/SpiralGalaxy2"
                 float currentAngularOffset = GetAngularOffset(i.id);
                 float theta = GetRandomAngle(i.id) + angularVelocity * _Time.w;
                 i.colour = GetColour(semiMajorAxis);
-                i.position = calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis);
+                i.position = calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, i.id);
                 return i.position;
             }
+            #pragma endregion vertexShaderHelpers
 
 
             GeomData vert(StarVertex i)
@@ -215,51 +225,52 @@ Shader "Custom/SpiralGalaxy2"
                 return o;
             }
 
-            [maxvertexcount(24)]
-            void geom(point GeomData inputs[1], inout TriangleStream<Interpolators> outputstream)
+
+            [maxvertexcount(4)]
+            void geom(point GeomData inputs[1], inout TriangleStream<Interpolators> outputStream)
             {
-        
-                const int numPoints = 8;
-                float angleIncrement = radians(360)/(float) numPoints;
-
-                float3 centreOS = inputs[0].positionOS;
-                float3 centreWS = inputs[0].positionWS;
-                float2 centreUV = inputs[0].uv;
-
-                //Define the input vertex as the centre vertex.
-                Interpolators centre;
-                centre.positionWS = centreWS;
-                centre.uv = centreUV;
-                centre.positionHCS = TransformObjectToHClip(centreOS);
-               
-                float r = 200.0; //radius of the sprite
-                centre.colour = inputs[0].colour;
+                float radius = 200;
+                GeomData centre = inputs[0];
                 
+                float3 forward = -(_CameraPosition - centre.positionWS);
+                forward.y = 0.0f;
+                forward = normalize(forward);
 
-                Interpolators positions[numPoints];
-                for(int i = 0; i < numPoints; i++)
+                float3 up = float3(0.0f, 1.0f, 0.0f);
+                float3 right = normalize(cross(forward, up));
+
+                float3 WSPositions[4];
+                float2 uvs[4];
+
+
+                up.y *= radius/2;
+                right *= radius/2;
+
+                                                // We get the points by using the billboards right vector and the billboards height
+                WSPositions[0] = centre.positionWS - right - up; // Get bottom left vertex
+                WSPositions[1] = centre.positionWS + right - up; // Get bottom right vertex
+                WSPositions[2] = centre.positionWS - right + up; // Get top left vertex
+                WSPositions[3] = centre.positionWS + right + up; // Get top right vertex
+
+                // Get billboards texture coordinates
+                float2 texCoord[4];
+                uvs[0] = float2(0, 0);
+                uvs[1] = float2(1, 0);
+                uvs[2] = float2(0, 1);
+                uvs[3] = float2(1, 1);
+
+                
+                for(int i = 0; i < 4; i++)
                 {
                     Interpolators o;
-                    float angle = angleIncrement * i;
-                    
-                    float x = r * cos(angle);
-                    float y = r * sin(angle);
-                    float3 os = centreOS + float3(x,y,0);
-                    //multiply by the model matrix to get the world space position of the vertex
-                    o.positionWS = mul(unity_ObjectToWorld, os);//centreWS + os;
-                    o.positionHCS = TransformObjectToHClip(os);
-                    o.uv = centreUV;
-                    o.colour = inputs[0].colour;
+                    o.centreHCS = mul(UNITY_MATRIX_VP, centre.positionWS);
+                    o.positionHCS = mul(UNITY_MATRIX_VP, float4(WSPositions[i], 1.0f));
+                    o.positionWS = float4(WSPositions[i], 0.0f);
+                    o.uv = uvs[i];
+                    o.colour = centre.colour;
 
-                    positions[i] = o;
-                }
-                for(int i = 0; i < numPoints; i++)
-                {
-                    outputstream.Append(positions[i]);
-                    outputstream.Append(positions[(i + 1)%numPoints]);
-                    outputstream.Append(centre);
-                    
-                    outputstream.RestartStrip();
+
+                    outputStream.Append(o);
                 }
                 
             }
@@ -270,14 +281,20 @@ Shader "Custom/SpiralGalaxy2"
             on screen and turns them to fragments. Our fragment shader will operate on every one of these and 
             return a colour : the final colour of those fragments.
             */
-            float4 frag(GeomData i) : SV_Target 
+            float4 frag(Interpolators i) : SV_Target 
             {
                 //Sample the main texture at the correct uv coordinate using the SAMPLE_TEXTURE_2D macro, and 
                 //then passing in the main texture, its sampler and the specified uv coordinate
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                
+                float4 colour = i.colour;
+                /*float radius = 0.002;
+                float dist = distance(i.positionHCS, i.centreHCS);
+                clip(radius - dist);
+                float4 colour = lerp(float4(1.0, 1.0, 1.0, 1.0), float4(1.0, 1.0, 1.0, 0.0), dist/radius);*/
                 /*Here we blur the edges of each star*/
 
-                return baseTex * i.colour; //_BaseColour;
+                return baseTex * colour; //_BaseColour;
             }
             ENDHLSL
         }
