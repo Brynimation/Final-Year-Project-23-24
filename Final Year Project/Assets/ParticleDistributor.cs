@@ -159,6 +159,7 @@ public class ParticleDistributor : MonoBehaviour
         {
             indices[i] = i;
         }
+        mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius * 100000);
         /*Each star is a vertex. Send all this data to the vertex shader.*/
         mesh.SetVertices(verts, 0, particleCount);
         mesh.SetIndices(indices, MeshTopology.Points, 0);
@@ -177,6 +178,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetVector("_CameraUp", cameraT.up);
 
         mf.mesh = mesh;
+        mf.mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius);
     }
     private void Update()
     {

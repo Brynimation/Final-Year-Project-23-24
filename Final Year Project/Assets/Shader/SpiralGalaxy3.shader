@@ -32,8 +32,9 @@ Shader "Custom/SpiralGalaxy3"
      }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        Blend SrcAlpha OneMinusSrcAlpha
+        Tags { "RenderType"="Transparent" }
+        ZWrite off //contents of the depth buffer are not updated.
+        Blend One One
         cull off
         LOD 100
 
@@ -147,7 +148,7 @@ Shader "Custom/SpiralGalaxy3"
 
                 float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-                return float3(xPos, yPos, (float)id/_NumParticles);
+                return float3(xPos, yPos, 0);
             }
             float GetSemiMajorAxis(float x)
             {
