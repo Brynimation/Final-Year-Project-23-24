@@ -82,12 +82,13 @@ Shader "Custom/SpiralGalaxy3"
         {
             float4 positionOS : POSITION;
             //float size : PSIZE;
-        
+            
             float4 colour : COLOR;
             float2 uv : TEXCOORD0;
             float4 positionWS : TEXCOORD1;
             float radius : TEXCOORD2;
             uint id : TEXCOORD3;
+            uint sphere : TEXCOORD4;
         };
 
          struct Interpolators 
@@ -156,7 +157,6 @@ Shader "Custom/SpiralGalaxy3"
                 float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
                 float3 pos = float3(xPos, yPos, 0);
-                data[id] = (distance(_CameraPosition, pos) > _MinCamDist) ? 0 : 1;
                 return pos;
             }
             float GetSemiMajorAxis(float x)
@@ -232,6 +232,7 @@ Shader "Custom/SpiralGalaxy3"
                 float3 posObjectSpace = GetPointOnEllipse(i);
                 o.positionOS = float4(posObjectSpace, 1.0);
                 o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
+                o.sphere = (distance(_CameraPosition, o.positionWS) > _MinCamDist) ? 0 : 1;
                 o.uv = i.uv;
                 o.colour = i.colour;
                 o.radius = i.radius;
@@ -280,7 +281,7 @@ Shader "Custom/SpiralGalaxy3"
                     o.positionWS = float4(WSPositions[i], 0.0f);
                     o.uv = uvs[i];
                     o.colour = centre.colour;
-                    if(data[centre.id] == 1) o.colour = float4(0.0,1.0,0.0,1.0);
+                    if(centre.sphere == 1) o.colour = float4(0.0,1.0,0.0,1.0);
                     outputStream.Append(o);
                 }
                 
@@ -298,8 +299,10 @@ Shader "Custom/SpiralGalaxy3"
                 //Sample the main texture at the correct uv coordinate using the SAMPLE_TEXTURE_2D macro, and 
                 //then passing in the main texture, its sampler and the specified uv coordinate
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                
+                if(baseTex.a == 0.0)discard; //No pixels that are transparent are drawn.
                 float4 colour = i.colour;
+                //data[0] = 1;
+                
                 /*float radius = 0.002;
                 float dist = distance(i.positionHCS, i.centreHCS);
                 clip(radius - dist);

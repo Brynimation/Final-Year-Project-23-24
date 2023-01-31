@@ -140,6 +140,7 @@ public class ParticleDistributor : MonoBehaviour
     Vector3[] verts;
     MeshFilter mf;
     Mesh mesh;
+    int[] testArray;
 
     private Color calculateColour(float temperature) 
     {
@@ -149,7 +150,8 @@ public class ParticleDistributor : MonoBehaviour
     }
     private void Start()
     {
-        data = new GraphicsBuffer(0, particleCount, sizeof(int));
+        data = new GraphicsBuffer(GraphicsBuffer.Target.Index, particleCount, sizeof(int));
+        testArray = new int[particleCount];
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
         galaxyMaterial.SetBuffer("data", data);
@@ -197,6 +199,12 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetColor("_EdgeColour", edgeColour);
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
         galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
+        data.GetData(testArray);
+        foreach (int i in testArray) 
+        {
+            if (i == 2) Debug.Log("Got one!");
+        }
+
     }
     void Start2()
     {
