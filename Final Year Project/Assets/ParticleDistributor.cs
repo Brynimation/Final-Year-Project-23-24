@@ -107,6 +107,7 @@ struct StarVertex
 }
 public class ParticleDistributor : MonoBehaviour
 {
+    GraphicsBuffer data;
     [SerializeField] Texture2D starTexture;
     [SerializeField] Transform cameraT;
     [SerializeField] Material galaxyMaterial;
@@ -125,6 +126,7 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] Color centreColour;
     [SerializeField] Color edgeColour;
     [SerializeField] int numH2Regions;
+    [SerializeField] float minCamDist;
     float angularOffsetIncrement;
     Vector2[] majorAndMinorAxes;
     Vector2[] angles;
@@ -147,8 +149,10 @@ public class ParticleDistributor : MonoBehaviour
     }
     private void Start()
     {
+        data = new GraphicsBuffer(0, particleCount, sizeof(int));
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
+        galaxyMaterial.SetBuffer("data", data);
         galaxyMaterial.mainTexture = starTexture;
         verts = new Vector3[particleCount];
         indices = new int[particleCount];
@@ -176,6 +180,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetColor("_EdgeColour", edgeColour) ;
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
         galaxyMaterial.SetVector("_CameraUp", cameraT.up);
+        galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
 
         mf.mesh = mesh;
         mf.mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius);
@@ -191,6 +196,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetColor("_CentreColour", centreColour);
         galaxyMaterial.SetColor("_EdgeColour", edgeColour);
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
+        galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
     }
     void Start2()
     {
@@ -273,9 +279,10 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetInt("_NumParticles", particleCount);
         galaxyMaterial.SetFloat("_MinEccentricity", minEccentricity);
         galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
-        
-        
-        
+        galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
+
+
+
         mf.mesh = mesh;
         
     }

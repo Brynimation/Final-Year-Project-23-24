@@ -420,6 +420,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1855644861}
     - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
+      propertyPath: minCamDist
+      value: 20000
+      objectReference: {fileID: 0}
+    - target: {fileID: 4581982607190194263, guid: da97a09e215ebc84989887fccd3ad515, type: 3}
       propertyPath: starTexture
       value: 
       objectReference: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}

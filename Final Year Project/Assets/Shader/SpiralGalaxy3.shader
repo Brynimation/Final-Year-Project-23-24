@@ -29,6 +29,7 @@ Shader "Custom/SpiralGalaxy3"
         _CentreColour("Centre Colour", Color) = (1,1,1,1)
         _EdgeColour("Edge Colour", Color) = (0.3, 1, 0)
         _AngularOffsetMultiplier("Angular offset", Int) = 1
+        _MinCamDist("Minimum Camera Distance", float) = 200
      }
     SubShader
     {
@@ -41,6 +42,8 @@ Shader "Custom/SpiralGalaxy3"
         //Between HLSLINCLUDE and ENDHLSL, we're going to set up everything we need to use 
         //in our HLSL pass. Everything within this block will be available to all the passes we define*/
         HLSLINCLUDE
+        #pragma target 5.0
+        uniform RWStructuredBuffer<int> data : register(u1);
         static const float PI = 3.14159265f;
         static const float angleStep = 180;
         //static const float DegToRad = 1 / PI;
@@ -69,6 +72,7 @@ Shader "Custom/SpiralGalaxy3"
         {
            float3 position : POSITION;
            float2 uv : TEXCOORD0;
+           float radius : TEXCOORD1;
            uint id : SV_VERTEXID;
            float4 colour : COLOR;
            
@@ -78,9 +82,12 @@ Shader "Custom/SpiralGalaxy3"
         {
             float4 positionOS : POSITION;
             //float size : PSIZE;
+        
             float4 colour : COLOR;
             float2 uv : TEXCOORD0;
             float4 positionWS : TEXCOORD1;
+            float radius : TEXCOORD2;
+            uint id : TEXCOORD3;
         };
 
          struct Interpolators 
@@ -122,10 +129,10 @@ Shader "Custom/SpiralGalaxy3"
         uniform float4 _CentreColour;
         uniform float4 _EdgeColour;
         uniform int _AngularOffsetMultiplier;
+        uniform float _MinCamDist;
 
 
         ENDHLSL
-
         Pass
         {
             Cull Back
@@ -148,7 +155,9 @@ Shader "Custom/SpiralGalaxy3"
 
                 float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
                 float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-                return float3(xPos, yPos, 0);
+                float3 pos = float3(xPos, yPos, 0);
+                data[id] = (distance(_CameraPosition, pos) > _MinCamDist) ? 0 : 1;
+                return pos;
             }
             float GetSemiMajorAxis(float x)
             {
@@ -208,7 +217,7 @@ Shader "Custom/SpiralGalaxy3"
                 float semiMinorAxis = eccentricity * semiMajorAxis;   
                 float currentAngularOffset = GetAngularOffset(i.id);
                 float theta = GetRandomAngle(i.id) + angularVelocity * _Time.w;
-                i.colour = GetColour(semiMajorAxis);
+                //i.colour = GetColour(semiMajorAxis);
                 i.position = calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, i.id);
                 return i.position;
             }
@@ -218,11 +227,14 @@ Shader "Custom/SpiralGalaxy3"
             GeomData vert(StarVertex i)
             {
                 GeomData o;
+                i.colour = (i.id % 20 == 0) ? float4(1.0,0.0,0.0,1.0) : float4(1.0,1.0,1.0,1.0); //make every tenth star an H2 region 
+                i.radius = (i.id % 20 == 0) ? 750 : 200;
                 float3 posObjectSpace = GetPointOnEllipse(i);
                 o.positionOS = float4(posObjectSpace, 1.0);
                 o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
                 o.uv = i.uv;
                 o.colour = i.colour;
+                o.radius = i.radius;
                 return o;
             }
 
@@ -230,7 +242,6 @@ Shader "Custom/SpiralGalaxy3"
             [maxvertexcount(4)]
             void geom(point GeomData inputs[1], inout TriangleStream<Interpolators> outputStream)
             {
-                float radius = 200;
                 GeomData centre = inputs[0];
                 
                 float3 forward = -(_CameraPosition - centre.positionWS);
@@ -244,8 +255,8 @@ Shader "Custom/SpiralGalaxy3"
                 float2 uvs[4];
 
 
-                up.y *= radius/2;
-                right *= radius/2;
+                up.y *= inputs[0].radius/2;
+                right *= inputs[0].radius/2;
 
                                                 // We get the points by using the billboards right vector and the billboards height
                 WSPositions[0] = centre.positionWS - right - up; // Get bottom left vertex
@@ -269,10 +280,10 @@ Shader "Custom/SpiralGalaxy3"
                     o.positionWS = float4(WSPositions[i], 0.0f);
                     o.uv = uvs[i];
                     o.colour = centre.colour;
-
-
+                    if(data[centre.id] == 1) o.colour = float4(0.0,1.0,0.0,1.0);
                     outputStream.Append(o);
                 }
+                
                 
             }
 
