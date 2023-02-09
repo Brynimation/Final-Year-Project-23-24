@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 
-[System.Serializable]
+/*[System.Serializable]
 public class Star2 
 {
     public Vector3 position;
@@ -64,13 +64,13 @@ public class Star2
     public Vector3 GetPointOnEllipse(Vector3 centre, int starCount, float timeStep) 
     {
         theta0 = (theta0 > 360f * Mathf.Deg2Rad) ? theta0 - 360f * Mathf.Deg2Rad : theta0; //
-       /* Vector3 displacement = centre - position;
+        Vector3 displacement = centre - position;
         float r = displacement.magnitude;
         Vector3 forceDir = displacement.normalized;
-        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);*/
-/*        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
+        Vector3 velocityDir = new Vector3(-forceDir.y, forceDir.x, 0f);
+        float velocityMagnitude = Mathf.Sqrt((id * 50 / (starCount - 1f)) / (float) r);
         Vector3 orbitalVelocity = velocityDir * velocityMagnitude;
-        angularVelocity = velocityMagnitude / r;*/
+        angularVelocity = velocityMagnitude / r;
         theta0 += (angularVelocity * timeStep * 1f);
         //position = new Vector3(semiMajorAxis * Mathf.Sin(theta0), semiMinorAxis * Mathf.Cos(theta0)) + centre;
         //position = getRotatedPoint(position, Quaternion.Euler(0f, 0f, angularOffset));
@@ -85,29 +85,9 @@ public class Star2
         dir = rot * dir;
         return position + dir;
     }
-}
-
-struct StarVertex 
-{
-    public Vector3 position;
-    public Vector2 uv;
-    public int id;
-    public float eccentricity;
-    public float theta;
-    public float angleOffset;
-    public StarVertex(Vector3 pos, Vector2 uv, int id, float eccentricity, float theta, float angleOffset) 
-    {
-        this.id = id;
-        this.position = pos;
-        this.uv = uv;
-        this.eccentricity = eccentricity;
-        this.theta = theta;
-        this.angleOffset = angleOffset;
-    }
-}
+} */
 public class ParticleDistributor : MonoBehaviour
 {
-    GraphicsBuffer data;
     [SerializeField] Texture2D starTexture;
     [SerializeField] Transform cameraT;
     [SerializeField] Material galaxyMaterial;
@@ -127,6 +107,12 @@ public class ParticleDistributor : MonoBehaviour
     [SerializeField] Color edgeColour;
     [SerializeField] int numH2Regions;
     [SerializeField] float minCamDist;
+    int[] indices;
+    Vector3[] verts;
+    MeshFilter mf;
+    Mesh mesh;
+
+    /*
     float angularOffsetIncrement;
     Vector2[] majorAndMinorAxes;
     Vector2[] angles;
@@ -136,37 +122,29 @@ public class ParticleDistributor : MonoBehaviour
     Color[] colours;
     Star2[] stars;
     StarVertex[] starVertices;
-    int[] indices;
-    Vector3[] verts;
-    MeshFilter mf;
-    Mesh mesh;
-    int[] testArray;
 
-    private Color calculateColour(float temperature) 
+    int[] testArray;
+    */
+
+   /* private Color calculateColour(float temperature)
     {
         float peakWavelength = WeinDisplacementConstant / temperature;
         return Color.black;
-        
-    }
+
+    } */
     private void Start()
     {
-        data = new GraphicsBuffer(GraphicsBuffer.Target.Index, particleCount, sizeof(int));
-        testArray = new int[particleCount];
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
-        galaxyMaterial.SetBuffer("data", data);
         galaxyMaterial.mainTexture = starTexture;
         verts = new Vector3[particleCount];
         indices = new int[particleCount];
-        angularOffsetIncrement = (1f * offsetMultiplier / (particleCount - 1f)) * 360 * Mathf.Deg2Rad;
 
         mesh = new Mesh();
         for (int i = 0; i < particleCount; i++)
         {
             indices[i] = i;
         }
-        mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius * 100000);
-        /*Each star is a vertex. Send all this data to the vertex shader.*/
         mesh.SetVertices(verts, 0, particleCount);
         mesh.SetIndices(indices, MeshTopology.Points, 0);
         galaxyMaterial.SetInt("_AngularOffsetMultiplier", offsetMultiplier);
@@ -179,7 +157,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetFloat("_MinEccentricity", minEccentricity);
         galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
         galaxyMaterial.SetColor("_CentreColour", centreColour);
-        galaxyMaterial.SetColor("_EdgeColour", edgeColour) ;
+        galaxyMaterial.SetColor("_EdgeColour", edgeColour);
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
         galaxyMaterial.SetVector("_CameraUp", cameraT.up);
         galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
@@ -187,6 +165,8 @@ public class ParticleDistributor : MonoBehaviour
         mf.mesh = mesh;
         mf.mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius);
     }
+
+
     private void Update()
     {
         galaxyMaterial.SetFloat("_MaxEccentricity", maxEccentricity);
@@ -199,14 +179,29 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetColor("_EdgeColour", edgeColour);
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
         galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
-        data.GetData(testArray);
-        foreach (int i in testArray) 
-        {
-            if (i == 2) Debug.Log("Got one!");
-        }
 
     }
-    void Start2()
+}
+/*
+    struct StarVertex
+    {
+        public Vector3 position;
+        public Vector2 uv;
+        public int id;
+        public float eccentricity;
+        public float theta;
+        public float angleOffset;
+        public StarVertex(Vector3 pos, Vector2 uv, int id, float eccentricity, float theta, float angleOffset)
+        {
+            this.id = id;
+            this.position = pos;
+            this.uv = uv;
+            this.eccentricity = eccentricity;
+            this.theta = theta;
+            this.angleOffset = angleOffset;
+        }
+    }*/
+   /* void Start2()
     {
         mf = GetComponent<MeshFilter>();
         galaxyMaterial = GetComponent<MeshRenderer>().material;
@@ -237,8 +232,8 @@ public class ParticleDistributor : MonoBehaviour
         mesh = new Mesh();
         mesh.SetVertexBufferParams(particleCount * 3, customVertexStreams);
 
-        /*Initialise stars with a random initial rotation and distance from the galactic centre
-         governed by the DistributionCurve.*/
+        //Initialise stars with a random initial rotation and distance from the galactic centre
+         //governed by the DistributionCurve.
 
         for (int i = 0; i < particleCount; i++) 
         {
@@ -268,15 +263,15 @@ public class ParticleDistributor : MonoBehaviour
                 types[i] = new Vector2(0, 0);
             }
         }
-        /*Each star is a vertex. Send all this data to the vertex shader.*/
+        //Each star is a vertex. Send all this data to the vertex shader
         mesh.SetVertices(verts, 0, particleCount);
         mesh.SetIndices(indices, MeshTopology.Points, 0);
-       /* mesh.SetUVs(0, uvs);
+       // mesh.SetUVs(0, uvs);
         mesh.SetUVs(1, majorAndMinorAxes);
         mesh.SetUVs(2, angles);
         mesh.SetUVs(3, angularVelocities);
         mesh.SetUVs(4, types);
-        mesh.SetColors(colours); */
+        mesh.SetColors(colours); 
         //mesh.SetVertexBufferData(starVertices, 0, 0, starVertices.Length, stream: 0);
         //mesh.vertices = verts;
         galaxyMaterial.SetFloat("_TimeStep", Time.fixedDeltaTime);
@@ -330,7 +325,7 @@ public class ParticleDistributor : MonoBehaviour
             verts[i] = stars[i].position;
         }
 
-        /*for(int i = 0; i < verts.Length; i++) 
+        for(int i = 0; i < verts.Length; i++) 
         {
             Vector3 vert = verts[i];
             Vector3 displacement = this.transform.position - vert;
@@ -345,10 +340,10 @@ public class ParticleDistributor : MonoBehaviour
             vert += (velocityDir * Time.deltaTime * velocityMagnitude);
             verts[i] = vert;
 
-        }*/
+        }
         mesh = new Mesh();
         mesh.vertices = verts;
         mesh.SetIndices(indices, MeshTopology.Points, 0);
         mf.mesh = mesh;
     }
-}
+}*/
