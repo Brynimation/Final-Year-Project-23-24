@@ -141,6 +141,7 @@ public class ParticleDistributor : MonoBehaviour
         indices = new int[particleCount];
 
         mesh = new Mesh();
+        mesh.indexFormat = IndexFormat.UInt32; //Allow meshes to have upto 4 billion (2^32) vertices.
         for (int i = 0; i < particleCount; i++)
         {
             indices[i] = i;
@@ -161,6 +162,7 @@ public class ParticleDistributor : MonoBehaviour
         galaxyMaterial.SetVector("_CameraPosition", cameraT.position);
         galaxyMaterial.SetVector("_CameraUp", cameraT.up);
         galaxyMaterial.SetFloat("_MinCamDist", minCamDist);
+
 
         mf.mesh = mesh;
         mf.mesh.bounds = new Bounds(transform.position, Vector3.one * haloRadius);
