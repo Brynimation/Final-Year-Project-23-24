@@ -146,7 +146,6 @@ Shader "Custom/SpiralGalaxy3"
             //Vertex shader - Meshes are built out of vertices, which are used to construct triangles.
             //Vertex shader runs for every vertex making up a mesh. Runs in parallel on the gpu.
             //float _PointSize;
-            #pragma region vertexShaderHelpers
              float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
             {
                 float cosTheta = cos(theta);
@@ -188,12 +187,12 @@ Shader "Custom/SpiralGalaxy3"
                 return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
             }
             
-            float GetRandomAngle(int id)
+            float GetRandomAngle(uint id)
             {
                 return radians((GenerateRandom(id) * 360));
             }
 
-            float GetAngularVelocity(int i, float r)
+            float GetAngularVelocity(uint i, float r)
             {
                 return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
             }
@@ -203,28 +202,25 @@ Shader "Custom/SpiralGalaxy3"
                 float lerpPercent = r/(float)_GalacticDiskRadius;
                 return lerp(_CentreColour, _EdgeColour, float4(lerpPercent, lerpPercent, lerpPercent, lerpPercent));
             }
-            float GetAngularOffset(int id)
+            float GetAngularOffset(uint id)
             {
                 int multiplier = id * _AngularOffsetMultiplier;
                 int finalParticle = _NumParticles - 1;
                 return radians((multiplier/(float)finalParticle) * 360);
             }
-             float3 GetPointOnEllipse(StarVertex i)
+             float3 GetPointOnEllipse(uint id)
             {
-                float semiMajorAxis = GetSemiMajorAxis(i.id/(float)_NumParticles);
+                float semiMajorAxis = GetSemiMajorAxis(id/(float)_NumParticles);
                 float eccentricity = GetEccentricity(semiMajorAxis); 
-                float angularVelocity = GetAngularVelocity(i.id, semiMajorAxis);
+                float angularVelocity = GetAngularVelocity(id, semiMajorAxis);
                 float semiMinorAxis = eccentricity * semiMajorAxis;   
-                float currentAngularOffset = GetAngularOffset(i.id);
-                float theta = GetRandomAngle(i.id) + angularVelocity * _Time.w;
-                //i.colour = GetColour(semiMajorAxis);
-                i.position = calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, i.id);
-                return i.position;
+                float currentAngularOffset = GetAngularOffset(id);
+                float theta = GetRandomAngle(id) + angularVelocity * _Time.w;
+                return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
             }
-            #pragma endregion vertexShaderHelpers
 
 
-            GeomData vert(StarVertex i)
+            /*GeomData vert(StarVertex i)
             {
                 GeomData o;
                 i.colour = (i.id % 20 == 0) ? float4(1.0,0.0,0.0,1.0) : float4(1.0,1.0,1.0,1.0); //make every tenth star an H2 region 
@@ -236,6 +232,19 @@ Shader "Custom/SpiralGalaxy3"
                 o.uv = i.uv;
                 o.colour = i.colour;
                 o.radius = i.radius;
+                return o;
+            }*/
+
+            GeomData vert(uint id : SV_VERTEXID)
+            {
+                GeomData o;
+
+                float3 posObjectSpace = GetPointOnEllipse(id);
+                o.positionOS = float4(posObjectSpace, 1.0);
+                o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
+                o.sphere = (distance(_CameraPosition, o.positionWS) > _MinCamDist) ? 0 : 1;
+                o.colour = (id % 20 == 0) ? float4(1.0,0.0,0.0,1.0) : float4(1.0,1.0,1.0,1.0); //make every tenth star an H2 region 
+                o.radius = (id % 20 == 0) ? 750 : 200;
                 return o;
             }
 

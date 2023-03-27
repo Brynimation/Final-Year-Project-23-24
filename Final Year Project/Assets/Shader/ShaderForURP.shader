@@ -55,7 +55,7 @@ Shader "Custom/ShaderForURP"
         {
             float4 position : POSITION;
             float2 uv : TEXCOORD0; 
-            float eccentricity : ECCENTRICITY; 
+            float eccentricity : TEXCOORD1; 
             uint index : SV_VertexId;
         };
 
