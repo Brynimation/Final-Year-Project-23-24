@@ -289,7 +289,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 70000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -366,6 +366,7 @@ GameObject:
   m_Component:
   - component: {fileID: 783746724}
   - component: {fileID: 783746723}
+  - component: {fileID: 783746725}
   m_Layer: 0
   m_Name: Dispatcher
   m_TagString: Untagged
@@ -380,7 +381,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 783746722}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec8883becd3ce08489d7d593f062e2b7, type: 3}
   m_Name: 
@@ -392,7 +393,8 @@ MonoBehaviour:
   _GalacticHaloRadius: 10000000
   _GalacticBulgeRadius: 50000
   _AngularOffsetMultiplier: 4
-  _NumParticles: 100000
+  _NumParticles: 1000000
+  maxStarSize: 100
   mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   material: {fileID: 2100000, guid: 46d63b66fed5d6d4596e8173a7e558d4, type: 2}
   computeShader: {fileID: 7200000, guid: 1b71c7b82b6073747958080726f43f10, type: 3}
@@ -404,10 +406,39 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 783746722}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5864718, y: -0.035092592, z: -50000}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &783746725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 783746722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 529e44ad9b3169a4495292cdfd78dfdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _GalacticCentre: {x: 0, y: 0, z: 0}
+  _MinEccentricity: 0
+  _MaxEccentricity: 1
+  _GalacticDiskRadius: 20000
+  _GalacticHaloRadius: 10000000
+  _GalacticBulgeRadius: 50000
+  _AngularOffsetMultiplier: 4
+  _NumParticles: 100000
+  maxStarSize: 0
+  _CameraPosition: {x: 0, y: 0, z: 0}
+  LODSwitchDist: 500
+  mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  mesh2: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  material:
+  - {fileID: 2100000, guid: 46d63b66fed5d6d4596e8173a7e558d4, type: 2}
+  - {fileID: 2100000, guid: 53c2b83c19f67154085c5dbc6cfc989f, type: 2}
+  computeShader: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}

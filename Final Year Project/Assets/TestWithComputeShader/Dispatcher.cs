@@ -14,6 +14,7 @@ public class Dispatcher : MonoBehaviour
     public float _GalacticBulgeRadius;
     public float _AngularOffsetMultiplier;
     public int _NumParticles;
+    public float maxStarSize;
     ComputeBuffer _Positions;
 
     public Mesh mesh;
@@ -28,6 +29,7 @@ public class Dispatcher : MonoBehaviour
     Bounds bounds;
     void Start()
     {
+        
         _Positions = new ComputeBuffer(_NumParticles, POSITION_BUFFER_STRIDE);
          bounds = new Bounds(_GalacticCentre, Vector3.one * _GalacticHaloRadius);
         indirectArgsBuffer = new ComputeBuffer(1, 5* sizeof(int), ComputeBufferType.IndirectArguments);
@@ -45,6 +47,7 @@ public class Dispatcher : MonoBehaviour
         Debug.Log(threadGroupSizeX);
         computeShader.SetBuffer(kernelHandle, "_Positions", _Positions);
         material.SetBuffer("_Positions", _Positions);
+        material.SetFloat("_MaxStarSize", maxStarSize);
         computeShader.SetVector("_GalacticCentre", _GalacticCentre);
         computeShader.SetFloat("_MinEccentricity", _MinEccentricity);
         computeShader.SetFloat("_MaxEccentricity", _MaxEccentricity);
