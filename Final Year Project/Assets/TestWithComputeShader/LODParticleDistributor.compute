@@ -2,8 +2,11 @@
 #pragma kernel CSMain
 
 
-AppendStructuredBuffer<float3> _PositionsLOD0;
-AppendStructuredBuffer<float3> _PositionsLOD1;
+//AppendStructuredBuffer<float3> _PositionsLOD0;
+//AppendStructuredBuffer<float3> _PositionsLOD1;
+
+RWStructuredBuffer<float3> _PositionsLOD0;
+RWStructuredBuffer<float3> _PositionsLOD1;
 
 uniform float3 _GalacticCentre;
 uniform float _MinEccentricity;
@@ -86,17 +89,26 @@ float3 GetPointOnEllipse(uint id)
     float theta = GetRandomAngle(id) + angularVelocity * _time;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
-[numthreads(256,1,1)]
+[numthreads(1024,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {   
+    _PositionsLOD0[id.x] = 0;
+    _PositionsLOD1[id.x] = 0;
     float3 posObjectSpace = GetPointOnEllipse(id.x);
     float dist = length(posObjectSpace - _CameraPosition);
     //_PositionsLOD1.Append(posObjectSpace);
-    if(dist < _LODSwitchDist)
+    /*if(dist < _LODSwitchDist)
     {
         _PositionsLOD0.Append(posObjectSpace);
     }else{
         _PositionsLOD1.Append(posObjectSpace);
+
+    }*/
+    if(dist < _LODSwitchDist)
+    {
+        _PositionsLOD0[id.x] = posObjectSpace;
+    }else{
+        _PositionsLOD1[id.x] = posObjectSpace;
     }
     
 }

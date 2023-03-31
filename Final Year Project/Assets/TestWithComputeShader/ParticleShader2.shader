@@ -16,26 +16,15 @@ Shader "Custom/ParticleShader2"
         _MainTex ("Texture", 2D) = "white" {}
         _CameraUp("Camera Up", vector) = (0.0,0.0,0.0)
         _BaseColour ("Base Colour", Color) = (1,1,1,1)
-        _NumParticles("NumParticles", Int) = 1000
-        _PointSize("Point Size", float) = 2.0
+        _MaxStarSize("Point Size", float) = 2.0
         _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
-        _TimeStep("Time Step", float) = 0.0
-        _GalacticBulgeRadius("Galactic Bulge Radius", float) = 2 
-        _GalacticDiskRadius("Galactic Disk Radius", float) = 5
-        _GalacticHaloRadius("Galactic Halo Radius", float) = 10.0
-        _AngularOffsetIncrement("Angular Offset", float) = 1.0
-        _MinEccentricity("Minimum Eccentricity", float) = 0.5
-        _MaxEccentricity("Maximum Eccentricity", float) = 1.0
-        _CentreColour("Centre Colour", Color) = (1,1,1,1)
-        _EdgeColour("Edge Colour", Color) = (0.3, 1, 0)
-        _AngularOffsetMultiplier("Angular offset", Int) = 1
-        _MinCamDist("Minimum Camera Distance", float) = 200
      }
     SubShader
     {
-        Tags { "RenderType"="Transparent"}
-        Blend One One
-        zWrite On
+        Tags { "RenderType"="Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
+		Cull Off
+		//ZTest Always
+		ZWrite Off
         LOD 100
         Pass
         {
@@ -44,26 +33,27 @@ Shader "Custom/ParticleShader2"
             #pragma vertex vert 
             #pragma geometry geom 
             #pragma fragment frag
+            #pragma multi_compile_instancing
             #pragma target 5.0
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            CBUFFER_START(UnityPerMaterial) 
-                float4 _BaseColour;
-            CBUFFER_END
+
+            UNITY_INSTANCING_BUFFER_START(MyProps)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
+            UNITY_INSTANCING_BUFFER_END(MyProps)
 
             //Textures don't need to go within the cbuffer
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
             float3 _CameraPosition;
+            float _MaxStarSize;
             StructuredBuffer<float3> _PositionsLOD1;
 
             struct GeomData
             {
-                float4 positionOS : POSITION;
                 //float size : PSIZE;
-            
+                float4 positionWS : POSITION;
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
-                float4 positionWS : TEXCOORD1;
                 float radius : TEXCOORD2;
                 uint id : TEXCOORD3;
             };
@@ -78,15 +68,28 @@ Shader "Custom/ParticleShader2"
                 float4 centreHCS : TEXCOORD2;
             };
 
+            float4x4 CreateMatrix(float3 pos, float3 dir, float3 up, uint id) {
+                float3 zaxis = normalize(dir);
+                float3 xaxis = normalize(cross(up, zaxis));
+                float3 yaxis = cross(zaxis, xaxis);
+                //float scale = GenerateRandom(id) * _MaxStarSize;
+                //Transform the vertex into the object space of the currently drawn mesh using a Transform Rotation Scale matrix.
+                return float4x4(
+                    xaxis.x, yaxis.x, zaxis.x, pos.x,
+                    xaxis.y, yaxis.y, zaxis.y, pos.y,
+                    xaxis.z, yaxis.z, zaxis.z, pos.z,
+                    0, 0, 0, 1
+                );
+            }
+
             GeomData vert(uint id : SV_INSTANCEID)
             {
                 GeomData o;
-
-                float3 posObjectSpace = _PositionsLOD1[id];
-                o.positionOS = float4(posObjectSpace, 1.0);
-                o.positionWS = mul(unity_ObjectToWorld, posObjectSpace);
-                o.colour = float4(1.0,1.0,1.0,1.0); //make every tenth star an H2 region 
-                o.radius = 200;
+                //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
+                //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
+                o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[id], 1.0));
+                o.colour = float4(1.0,1.0,1.0,1.0);
+                o.radius = _MaxStarSize;
                 return o;
             }
 
@@ -95,7 +98,7 @@ Shader "Custom/ParticleShader2"
             {
                 GeomData centre = inputs[0];
                 
-                float3 forward = -(_CameraPosition - centre.positionWS);
+                float3 forward = -(GetCameraPositionWS() - centre.positionWS);
                 forward.y = 0.0f;
                 forward = normalize(forward);
 
@@ -128,7 +131,7 @@ Shader "Custom/ParticleShader2"
                     Interpolators o;
                     o.centreHCS = mul(UNITY_MATRIX_VP, centre.positionWS);
                     o.positionHCS = mul(UNITY_MATRIX_VP, float4(WSPositions[i], 1.0f));
-                    o.positionWS = float4(WSPositions[i], 0.0f);
+                    o.positionWS = float4(WSPositions[i], 1.0f);
                     o.uv = uvs[i];
                     o.colour = centre.colour;
                     outputStream.Append(o);
@@ -147,6 +150,7 @@ Shader "Custom/ParticleShader2"
             {
 
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                if(baseTex.a == 0.0)discard;
                 float4 colour = i.colour;
 
                 return baseTex * colour; //_BaseColour;

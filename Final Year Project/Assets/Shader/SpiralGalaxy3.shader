@@ -33,7 +33,7 @@ Shader "Custom/SpiralGalaxy3"
      }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
         ZWrite off //contents of the depth buffer are not updated.
         Blend One One
         cull off

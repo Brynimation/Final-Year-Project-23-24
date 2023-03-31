@@ -3,13 +3,14 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-AppendStructuredBuffer<float3> _PositionsLOD0;
-AppendStructuredBuffer<float3> _PositionsLOD1;
+RWStructuredBuffer<float3> _PositionsLOD0;
+RWStructuredBuffer<float3> _PositionsLOD1;
 
 [numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // TODO: insert actual code here!
 
-    
+    _PositionsLOD0[id.x] = 0;
+    _PositionsLOD1[id.x] = 0;
 }

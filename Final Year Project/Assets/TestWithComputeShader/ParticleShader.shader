@@ -3,7 +3,7 @@ Shader "Custom/ParticleShader" {
    Properties {
 		_Colour ("Color", Color) = (1,1,1,1)
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
-		_MaxStarSize("Float", float) = 1000.0
+        _StarScale("Star size", float) = 100.0
         _BumpMap ("Bumpmap", 2D) = "bump" {}
 		_MetallicGlossMap("Metallic", 2D) = "white" {}
 		_Metallic ("Metallic", Range(0,1)) = 0.0
@@ -37,7 +37,7 @@ Shader "Custom/ParticleShader" {
             struct Attributes
             {
                 float4 positionOS : POSITION;
-                //float4 colour : COLOR;
+                float4 colour : COLOR;
                 float3 normalOS : NORMAL0;
                 float2 uv : TEXCOORD0;
                 uint instanceId : SV_InstanceID;
@@ -59,15 +59,17 @@ Shader "Custom/ParticleShader" {
 
             StructuredBuffer<float3> _PositionsLOD0; 
 
+
             float4x4 CreateMatrix(float3 pos, float3 dir, float3 up, uint id) {
                 float3 zaxis = normalize(dir);
                 float3 xaxis = normalize(cross(up, zaxis));
                 float3 yaxis = cross(zaxis, xaxis);
                 float scale = GenerateRandom(id) * _MaxStarSize;
+                //Transform the vertex into the object space of the currently drawn mesh using a Transform Rotation Scale matrix.
                 return float4x4(
                     xaxis.x * _MaxStarSize, yaxis.x, zaxis.x, pos.x,
                     xaxis.y, yaxis.y * _MaxStarSize, zaxis.y, pos.y,
-                    xaxis.z, yaxis.z, zaxis.z *_MaxStarSize, pos.z,
+                    xaxis.z, yaxis.z, zaxis.z * _MaxStarSize, pos.z,
                     0, 0, 0, 1
                 );
             }
@@ -75,14 +77,14 @@ Shader "Custom/ParticleShader" {
                 VertexOut vert(Attributes i)
             {
                 VertexOut o;
-                //Calculate the position of an instance based on its id
+                //Calculate the position of an instance based on its id. This position is the centre of the mesh we draw
                 _BodyPosition = _PositionsLOD0[i.instanceId];
                 _Matrix = CreateMatrix(_PositionsLOD0[i.instanceId], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), i.instanceId);
-                float4 posOS = mul(_Matrix, i.positionOS);
-                float4 posWS = mul(unity_ObjectToWorld, posOS);
-                o.positionHCS = mul(UNITY_MATRIX_VP, posWS);
+                float4 posOS = mul(_Matrix, i.positionOS); //transform the current vertex position so it is positioned and rotated relative to our the centre of the mesh
+                float4 posWS = mul(unity_ObjectToWorld, posOS); //transform the transformed position to world space 
+                o.positionHCS = mul(UNITY_MATRIX_VP, posWS); //transform the world space position to homogeneous clip space
                 o.uv = i.uv;
-                //o.colour = (i.instanceId % 1000 == 0) ? float4(1.0,1.0,1.0,1.0) : _Colour; 
+                o.colour = (i.instanceId % 100 == 0) ? float4(1.0, 1.0, 1.0, 1.0) : _Colour;
                 //convert vertex normal to world space. The UniversalFragmentBlinnPhong expects normals in WS.
                 //It's good to calculate normals in the vertex shader since its run fewer times than the fragment shader'
                 float4 normalOS = mul(_Matrix, i.normalOS);
@@ -102,8 +104,8 @@ Shader "Custom/ParticleShader" {
                 
                 lightingInput.normalWS = normalize(i.normalWS);
 
-                surfaceInput.albedo = texel.rgb * _Colour.rgb;//i.colour.rgb;
-                surfaceInput.alpha = texel.a * _Colour.a;//i.colour.rgb;
+                surfaceInput.albedo = texel.rgb * i.colour;
+                surfaceInput.alpha = texel.a * i.colour;
                 return UniversalFragmentBlinnPhong(lightingInput, surfaceInput);
             }
             ENDHLSL
