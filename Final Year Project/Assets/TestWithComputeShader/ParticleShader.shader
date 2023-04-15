@@ -4,10 +4,10 @@ Shader "Custom/ParticleShader" {
 		_Colour ("Color", Color) = (1,1,1,1)
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
         _StarScale("Star size", float) = 100.0
-        _BumpMap ("Bumpmap", 2D) = "bump" {}
-		_MetallicGlossMap("Metallic", 2D) = "white" {}
-		_Metallic ("Metallic", Range(0,1)) = 0.0
-		_Glossiness ("Smoothness", Range(0,1)) = 1.0
+        //_BumpMap ("Bumpmap", 2D) = "bump" {}
+		//_MetallicGlossMap("Metallic", 2D) = "white" {}
+		//_Metallic ("Metallic", Range(0,1)) = 0.0
+		//_Glossiness ("Smoothness", Range(0,1)) = 1.0
 	}
 
    SubShader {
@@ -41,6 +41,7 @@ Shader "Custom/ParticleShader" {
                 float3 normalOS : NORMAL0;
                 float2 uv : TEXCOORD0;
                 uint instanceId : SV_InstanceID;
+                
             };
 	        struct VertexOut 
             {
@@ -48,7 +49,6 @@ Shader "Custom/ParticleShader" {
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
-
 	        };
             float4x4 _Matrix;
             float3 _BodyPosition;
@@ -77,8 +77,8 @@ Shader "Custom/ParticleShader" {
                 VertexOut vert(Attributes i)
             {
                 VertexOut o;
+
                 //Calculate the position of an instance based on its id. This position is the centre of the mesh we draw
-                _BodyPosition = _PositionsLOD0[i.instanceId];
                 _Matrix = CreateMatrix(_PositionsLOD0[i.instanceId], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), i.instanceId);
                 float4 posOS = mul(_Matrix, i.positionOS); //transform the current vertex position so it is positioned and rotated relative to our the centre of the mesh
                 float4 posWS = mul(unity_ObjectToWorld, posOS); //transform the transformed position to world space 
@@ -88,7 +88,7 @@ Shader "Custom/ParticleShader" {
                 //convert vertex normal to world space. The UniversalFragmentBlinnPhong expects normals in WS.
                 //It's good to calculate normals in the vertex shader since its run fewer times than the fragment shader'
                 float4 normalOS = mul(_Matrix, i.normalOS);
-                o.normalWS = mul(unity_ObjectToWorld, normalOS);
+                o.normalWS = mul(unity_ObjectToWorld, normalOS);  
                 return o;
             }
 

@@ -38,9 +38,9 @@ public class NBodyDispatcher : MonoBehaviour
         Shader.SetGlobalBuffer(Shader.PropertyToID("masses"), massesBuffer);
 
         kernelIndex = computeShader.FindKernel("CSMain");
-        //computeShader.SetBuffer(kernelIndex, "positions", positionsBuffer);
-        //computeShader.SetBuffer(kernelIndex, "velocities", velocitiesBuffer);
-        //computeShader.SetBuffer(kernelIndex, "masses", massesBuffer);
+        //computeShader.SetBuffer(SphereGeneratorHandle, "positions", positionsBuffer);
+        //computeShader.SetBuffer(SphereGeneratorHandle, "velocities", velocitiesBuffer);
+        //computeShader.SetBuffer(SphereGeneratorHandle, "masses", massesBuffer);
         computeShader.SetInt("numBodies", numBodies);
         Debug.Log(Time.fixedDeltaTime * timeStepMultiplier);
         computeShader.SetFloat("timeStep", Time.fixedDeltaTime * timeStepMultiplier);

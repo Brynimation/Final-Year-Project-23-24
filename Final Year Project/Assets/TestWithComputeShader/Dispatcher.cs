@@ -19,7 +19,7 @@ public class Dispatcher : MonoBehaviour
 
     public Mesh mesh;
     public Material material;
-    public ComputeShader computeShader;
+    public ComputeShader positionCalculator;
     
     const int POSITION_BUFFER_STRIDE = sizeof(float) * 3;
     ComputeBuffer indirectArgsBuffer;
@@ -33,7 +33,7 @@ public class Dispatcher : MonoBehaviour
         _Positions = new ComputeBuffer(_NumParticles, POSITION_BUFFER_STRIDE);
          bounds = new Bounds(_GalacticCentre, Vector3.one * _GalacticHaloRadius);
         indirectArgsBuffer = new ComputeBuffer(1, 5* sizeof(int), ComputeBufferType.IndirectArguments);
-        kernelHandle = computeShader.FindKernel("CSMain");
+        kernelHandle = positionCalculator.FindKernel("CSMain");
         if (mesh != null) 
         {
             indirectArgs[0] = mesh.GetIndexCount(0);
@@ -41,36 +41,36 @@ public class Dispatcher : MonoBehaviour
         }
         indirectArgsBuffer.SetData(indirectArgs);
         uint threadGroupSizeX;
-        computeShader.GetKernelThreadGroupSizes(kernelHandle, out threadGroupSizeX, out _, out _);
+        positionCalculator.GetKernelThreadGroupSizes(kernelHandle, out threadGroupSizeX, out _, out _);
         Debug.Log(_NumParticles);
         groupSizeX = Mathf.CeilToInt((float)_NumParticles / threadGroupSizeX);
         Debug.Log(threadGroupSizeX);
-        computeShader.SetBuffer(kernelHandle, "_Positions", _Positions);
+        positionCalculator.SetBuffer(kernelHandle, "_Positions", _Positions);
         material.SetBuffer("_Positions", _Positions);
         material.SetFloat("_MaxStarSize", maxStarSize);
-        computeShader.SetVector("_GalacticCentre", _GalacticCentre);
-        computeShader.SetFloat("_MinEccentricity", _MinEccentricity);
-        computeShader.SetFloat("_MaxEccentricity", _MaxEccentricity);
-        computeShader.SetFloat("_GalacticDiskRadius", _GalacticDiskRadius);
-        computeShader.SetFloat("_GalacticHaloRadius", _GalacticHaloRadius);
-        computeShader.SetFloat("_GalacticBulgeRadius", _GalacticBulgeRadius);
-        computeShader.SetFloat("_AngularOffsetMultiplier", _AngularOffsetMultiplier);
-        computeShader.SetInt("_NumParticles", _NumParticles);
+        positionCalculator.SetVector("_GalacticCentre", _GalacticCentre);
+        positionCalculator.SetFloat("_MinEccentricity", _MinEccentricity);
+        positionCalculator.SetFloat("_MaxEccentricity", _MaxEccentricity);
+        positionCalculator.SetFloat("_GalacticDiskRadius", _GalacticDiskRadius);
+        positionCalculator.SetFloat("_GalacticHaloRadius", _GalacticHaloRadius);
+        positionCalculator.SetFloat("_GalacticBulgeRadius", _GalacticBulgeRadius);
+        positionCalculator.SetFloat("_AngularOffsetMultiplier", _AngularOffsetMultiplier);
+        positionCalculator.SetInt("_NumParticles", _NumParticles);
     }
 
     // Update is called once per frame
     void Update()
     {
-        computeShader.SetVector("_GalacticCentre", _GalacticCentre);
-        computeShader.SetFloat("_MinEccentricity", _MinEccentricity);
-        computeShader.SetFloat("_MaxEccentricity", _MaxEccentricity);
-        computeShader.SetFloat("_GalacticDiskRadius", _GalacticDiskRadius);
-        computeShader.SetFloat("_GalacticHaloRadius", _GalacticHaloRadius);
-        computeShader.SetFloat("_GalacticBulgeRadius", _GalacticBulgeRadius);
-        computeShader.SetFloat("_AngularOffsetMultiplier", _AngularOffsetMultiplier);
-        computeShader.SetInt("_NumParticles", _NumParticles);
-        computeShader.SetFloat("_time", Time.time);
-        computeShader.Dispatch(kernelHandle, groupSizeX, 1, 1);
+        positionCalculator.SetVector("_GalacticCentre", _GalacticCentre);
+        positionCalculator.SetFloat("_MinEccentricity", _MinEccentricity);
+        positionCalculator.SetFloat("_MaxEccentricity", _MaxEccentricity);
+        positionCalculator.SetFloat("_GalacticDiskRadius", _GalacticDiskRadius);
+        positionCalculator.SetFloat("_GalacticHaloRadius", _GalacticHaloRadius);
+        positionCalculator.SetFloat("_GalacticBulgeRadius", _GalacticBulgeRadius);
+        positionCalculator.SetFloat("_AngularOffsetMultiplier", _AngularOffsetMultiplier);
+        positionCalculator.SetInt("_NumParticles", _NumParticles);
+        positionCalculator.SetFloat("_time", Time.time);
+        positionCalculator.Dispatch(kernelHandle, groupSizeX, 1, 1);
         Graphics.DrawMeshInstancedIndirect(mesh, 0, material, bounds, indirectArgsBuffer);
     }
 }

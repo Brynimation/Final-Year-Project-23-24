@@ -89,9 +89,10 @@ float3 GetPointOnEllipse(uint id)
     float theta = GetRandomAngle(id) + angularVelocity * _time;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
-[numthreads(1024,1,1)]
+[numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {   
+    if(id.x >= _NumParticles) return;
     _PositionsLOD0[id.x] = 0;
     _PositionsLOD1[id.x] = 0;
     float3 posObjectSpace = GetPointOnEllipse(id.x);

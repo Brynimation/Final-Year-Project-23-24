@@ -44,6 +44,7 @@ Shader "Custom/ParticleShader2"
             //Textures don't need to go within the cbuffer
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+
             float3 _CameraPosition;
             float _MaxStarSize;
             StructuredBuffer<float3> _PositionsLOD1;
@@ -88,7 +89,7 @@ Shader "Custom/ParticleShader2"
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
                 o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[id], 1.0));
-                o.colour = float4(1.0,1.0,1.0,1.0);
+                o.colour = (id % 100 == 0) ? float4(1.0,1.0,1.0,1.0) : float4(0.0,0.0,1.0, 1.0);
                 o.radius = _MaxStarSize;
                 return o;
             }

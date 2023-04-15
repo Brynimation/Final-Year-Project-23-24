@@ -29,7 +29,7 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 }
 float GetSemiMajorAxis(float x)
 {
-    return(x * x * x * _GalacticDiskRadius);
+    return (x * x * x * _GalacticDiskRadius);
 }
 
 float GetEccentricity(float r)
@@ -74,7 +74,7 @@ float GetAngularOffset(uint id)
 }
 float3 GetPointOnEllipse(uint id)
 {
-    float semiMajorAxis = GetSemiMajorAxis(id/(float)_NumParticles);
+    float semiMajorAxis = (id/(float)_NumParticles) * _GalacticDiskRadius;//GetSemiMajorAxis(id/(float)_NumParticles);
     float eccentricity = GetEccentricity(semiMajorAxis); 
     float angularVelocity = GetAngularVelocity(id, semiMajorAxis);
     float semiMinorAxis = eccentricity * semiMajorAxis;   
