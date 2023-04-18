@@ -5,17 +5,12 @@
 //AppendStructuredBuffer<float3> _PositionsLOD0;
 //AppendStructuredBuffer<float3> _PositionsLOD1;
 
-struct Plane
-{
-    float3 normal;
-    float distance;
+struct ThreadIdentifier{
+    float3 position;
+    uint id;
 };
-
-AppendStructuredBuffer<float3> _PositionsLODAppend0;
-AppendStructuredBuffer<float3> _PositionsLODAppend1;
-RWStructuredBuffer<float3> _PositionsLOD0;
-RWStructuredBuffer<float3> _PositionsLOD1;
-StructuredBuffer<Plane> _ViewFrustumPlanes;
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD1;
 
 uniform float3 _GalacticCentre;
 uniform float _MinEccentricity;
@@ -29,11 +24,7 @@ uniform float _LODSwitchDist;
 uniform int _NumParticles;
 uniform float _time;
 
-float GenerateRandom(int x)
-{
-    float2 p = float2(x, sqrt(x));
-    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
-}
+
 
 float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
 {
@@ -44,8 +35,7 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-    float zPos = GenerateRandom(id) * 100;
-    float3 pos = float3(xPos, yPos, zPos);
+    float3 pos = float3(xPos, yPos, 0);
     return pos;
 }
 float GetSemiMajorAxis(float x)
@@ -72,7 +62,11 @@ float GetEccentricity(float r)
     }
 }
 
-
+float GenerateRandom(int x)
+{
+    float2 p = float2(x, sqrt(x));
+    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
             
 float GetRandomAngle(uint id)
 {
@@ -99,56 +93,31 @@ float3 GetPointOnEllipse(uint id)
     float theta = GetRandomAngle(id) + angularVelocity * _time;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
-
-uint IntersectSphere(float3 centre, float radius)
-{
-
-    for(uint i = 0; i < 6; i++)
-    {
-        Plane plane = _ViewFrustumPlanes[i];
-        float normalDotCentre = dot(plane.normal, centre);
-        float cullDist = plane.distance;
-        if(normalDotCentre + cullDist <= 0)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 [numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {   
-    if(id.x >= _NumParticles) return;
-    /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
-    positions that don't fall inside the view frustum to a position outside the bounds of the object'*/
-    _PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    _PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
+    //if(id.x >= _NumParticles) return;
+    //_PositionsLOD0[id.x] = float3(0, 0, -1000);
+    //_PositionsLOD1[id.x] = float3(0, 0, -1000);
     float3 posObjectSpace = GetPointOnEllipse(id.x);
     float dist = length(posObjectSpace - _CameraPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return; 
+
+    ThreadIdentifier ti;
+    ti.position = posObjectSpace;
+    ti.id = id.x;
+    //_PositionsLOD1.Append(posObjectSpace);
+    /*if(dist < _LODSwitchDist)
+    {
+        _PositionsLOD0.Append(posObjectSpace);
+    }else{
+        _PositionsLOD1.Append(posObjectSpace);
+
+    }*/
     if(dist < _LODSwitchDist)
     {
-        _PositionsLOD0[id.x] = posObjectSpace;
+         _PositionsLOD0.Append(ti);
     }else{
-        _PositionsLOD1[id.x] = posObjectSpace;
+         _PositionsLOD1.Append(ti);
     }
-}
-[numthreads(256,1,1)]
-void CSMain2 (uint3 id : SV_DispatchThreadID)
-{   
-    if(id.x >= _NumParticles) return;
-    //_PositionsLOD0[id.x] = float3(0, 0, -10000);
-    //_PositionsLOD1[id.x] = float3(0, 0, -10000);
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-    float dist = length(posObjectSpace - _CameraPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return; 
-    if(dist < _LODSwitchDist)
-    {
-        _PositionsLODAppend0.Append(posObjectSpace);
-    }else{
-        _PositionsLODAppend1.Append(posObjectSpace);
-    }
+    
 }

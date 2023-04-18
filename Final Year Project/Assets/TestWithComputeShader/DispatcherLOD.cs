@@ -103,7 +103,7 @@ public class DispatcherLOD : MonoBehaviour
 
         //LOD0
        //ComputeBuffer.CopyCount(_PositionsLOD0, indirectArgsBufferLOD0, sizeof(int));
-        //Graphics.DrawMeshInstancedIndirect(mesh, 0, material[0], bounds, indirectArgsBufferLOD0);
+        Graphics.DrawMeshInstancedIndirect(mesh, 0, material[0], bounds, indirectArgsBufferLOD0);
         //_PositionsLOD0.SetCounterValue(0);
         //LOD1
         //ComputeBuffer.CopyCount(_PositionsLOD1, indirectArgsBufferLOD1, sizeof(int));
