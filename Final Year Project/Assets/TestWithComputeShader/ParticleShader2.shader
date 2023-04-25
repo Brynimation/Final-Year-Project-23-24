@@ -18,7 +18,10 @@ Shader "Custom/ParticleShader2"
         _BaseColour ("Base Colour", Color) = (1,1,1,1)
         _MaxStarSize("Point Size", float) = 2.0
         _CameraPosition("Camera Position", vector) = (0.0,0.0,0.0)
-     }
+        _EmissionMap("Emission Map", 2D) = "black"{}
+        [HDR] _EmissionColour("Emission colour", Color) = (0,0,0,0)
+        _Emission("Emission", Range(0, 100)) = 50
+      }
     SubShader
     {
         Tags { "RenderType"="Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
@@ -41,13 +44,24 @@ Shader "Custom/ParticleShader2"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
             UNITY_INSTANCING_BUFFER_END(MyProps)
 
-            //Textures don't need to go within the cbuffer
+             struct InstanceData
+            {
+               float3 position;
+               float4 colour;
+               float radius;
+               uint culled;
+            };
+
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_EmissionMap);
+            SAMPLER(sampler_EmissionMap);
 
+            float4 _EmissionColour;
+            float _Emission;
             float3 _CameraPosition;
             float _MaxStarSize;
-            StructuredBuffer<float3> _PositionsLOD1;
+            StructuredBuffer<InstanceData> _PositionsLOD1;
 
             struct GeomData
             {
@@ -86,19 +100,22 @@ Shader "Custom/ParticleShader2"
             GeomData vert(uint id : SV_INSTANCEID)
             {
                 GeomData o;
+                o.id = id;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[id], 1.0));
-                o.colour = (id % 100 == 0) ? float4(1.0,1.0,1.0,1.0) : float4(0.0,0.0,1.0, 1.0);
-                o.radius = _MaxStarSize;
+                o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[id].position, 1.0));
+                o.colour = _PositionsLOD1[id].colour;
+                o.colour += _EmissionColour;
+                o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }
 
             [maxvertexcount(4)]
             void geom(point GeomData inputs[1], inout TriangleStream<Interpolators> outputStream)
             {
+
                 GeomData centre = inputs[0];
-                
+                if(_PositionsLOD1[centre.id].culled == 0) return;
                 float3 forward = -(GetCameraPositionWS() - centre.positionWS);
                 forward.y = 0.0f;
                 forward = normalize(forward);
@@ -110,8 +127,8 @@ Shader "Custom/ParticleShader2"
                 float2 uvs[4];
 
 
-                up.y *= inputs[0].radius/2;
-                right *= inputs[0].radius/2;
+                up.y *= inputs[0].radius;
+                right *= inputs[0].radius;
 
                                                 // We get the points by using the billboards right vector and the billboards height
                 WSPositions[0] = centre.positionWS - right - up; // Get bottom left vertex

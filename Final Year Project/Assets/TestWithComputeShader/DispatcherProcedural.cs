@@ -1,8 +1,17 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
+//https://forum.unity.com/threads/how-do-i-add-emission-to-a-custom-fragment-shader.1313034/
+public struct InstanceData
+{
+    Vector3 position;
+    Color colour;
+    float radius;
+    uint culled;
+};
 public class DispatcherProcedural : MonoBehaviour
 {
     [Header("Shaders")]
@@ -26,7 +35,12 @@ public class DispatcherProcedural : MonoBehaviour
     [Header("Textures")]
     public Texture2D billboardTexture;
 
+    [Header("Colours")]
+    public Color _EmissionColour;
+    public Color _StandardColour;
+    public Color _H2RegionColour;
     private int positionGroupSizeX;
+    int sphereGeneratorGroupSizeX;
     private int SphereGeneratorHandle;
     private int positionCalculatorHandle;
     private ComputeBuffer sphereArgsBuffer;
@@ -41,6 +55,8 @@ public class DispatcherProcedural : MonoBehaviour
     private ComputeBuffer _PositionsBufferLODAppend0;
     private ComputeBuffer _PositionsBufferLODAppend1;
     private ComputeBuffer _VertexBuffer;
+    private ComputeBuffer _NormalBuffer;
+    private ComputeBuffer _UVBuffer;
     private GraphicsBuffer _IndexBuffer;
 
     
@@ -57,6 +73,10 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_time", Time.time);
         positionCalculator.SetFloat("_LODSwitchDist", LODSwitchDist);
         positionCalculator.SetVector("_CameraPosition", Camera.main.transform.position);
+
+        positionCalculator.SetVector("_StandardColour", _StandardColour);
+        positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
+        
     }
     void Start()
     {
@@ -64,17 +84,23 @@ public class DispatcherProcedural : MonoBehaviour
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
-        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
-        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
+
+        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
+        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
         _PositionsBufferLODAppend0 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Append);
         _PositionsBufferLODAppend1 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Append);
         _VertexBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
+        _NormalBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
+        _UVBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 2, ComputeBufferType.Structured);
         _IndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerInstance * numInstances, sizeof(uint));
-        viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4);
+        viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         //Bind buffers to material
         SphereGeneratorHandle = sphereGenerator.FindKernel("CSMain");
         positionCalculatorHandle = positionCalculator.FindKernel("CSMain");
         material[0].SetBuffer("_VertexBuffer", _VertexBuffer);
+        material[0].SetBuffer("_NormalBuffer", _NormalBuffer);
+        material[0].SetBuffer("_UVBuffer", _UVBuffer);
+        material[0].SetColor("_EmissionColour", _EmissionColour);
         material[0].SetBuffer("_PositionsLOD0", _PositionsBufferLOD0);
 
         //bind relevant buffers to positionCalculator computeShader.
@@ -84,14 +110,23 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend1", _PositionsBufferLODAppend1);
         material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLOD1);
+        material[1].SetColor("_EmissionColour", _EmissionColour);
         material[1].SetTexture("_MainTex", billboardTexture);
+
+        //calculate thread group sizes 
 
         uint threadGroupSizeX;
         positionCalculator.GetKernelThreadGroupSizes(positionCalculatorHandle, out threadGroupSizeX, out _, out _);
         positionGroupSizeX = Mathf.CeilToInt((float)numInstances /(float) threadGroupSizeX);
-        Debug.Log(threadGroupSizeX * numInstances);
+
+
+        uint threadGroupGeneratorX;
+        //sphereGenerator.GetKernelThreadGroupSizes(SphereGeneratorHandle, out threadGroupGeneratorX, out _, out _);
+        //sphereGeneratorGroupSizeX = Mathf.CeilToInt(numVertsPerInstance / threadGroupGeneratorX);
         //Bind relevant buffers to Sphere Generator compute shader and set variables needed to generate the spheres.
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_VertexBuffer", _VertexBuffer);
+        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_NormalBuffer", _NormalBuffer);
+        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_UVBuffer", _UVBuffer);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_Positions", _PositionsBufferLOD0); 
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_IndexBuffer", _IndexBuffer);
         sphereGenerator.SetInt("_Resolution", Resolution);
@@ -120,9 +155,9 @@ public class DispatcherProcedural : MonoBehaviour
 
     private void Update()
     {
-
-        _PositionsBufferLODAppend0.SetCounterValue(0);
-        _PositionsBufferLODAppend1.SetCounterValue(0);
+        material[1].SetColor("_EmissionColour", _EmissionColour);
+        //_PositionsBufferLOD0.SetCounterValue(0);
+        //_PositionsBufferLOD1.SetCounterValue(0);
         if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation) 
         {
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
@@ -131,7 +166,7 @@ public class DispatcherProcedural : MonoBehaviour
 
         int numRows = Resolution;
         positionCalculator.Dispatch(positionCalculatorHandle, positionGroupSizeX, 1, 1);
-        sphereGenerator.Dispatch(SphereGeneratorHandle, Resolution, Resolution, 1);
+        sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
         sphereGenerator.SetInt("_Resolution", Resolution);
         SetPositionCalculatorData();
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres

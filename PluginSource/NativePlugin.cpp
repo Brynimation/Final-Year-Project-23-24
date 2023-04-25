@@ -7,19 +7,12 @@
 #include <assert.h>
 #include <math.h>
 #include <vector>
+#include "D3D11RenderAPI.h"
 
-static IUnityInterfaces* s_UnityInterfaces = NULL;
-static IUnityGraphics* s_Graphics = NULL;
+static IUnityInterfaces* s_UnityInterfaces = nullptr;
+static IUnityGraphics* s_Graphics = nullptr;
 static UnityGfxRenderer s_RenderType = kUnityGfxRendererNull;
 
-struct StarVertex
-{
-	float position[3];
-	float uv[2];
-	float radius;
-	int id;
-	float colour[4];
-};
 
 static void* s_VertexBufferHandle = NULL;
 static int s_VertexBufferCount;
@@ -117,7 +110,25 @@ static void UNITY_INTERFACE_API OnGraphicsDeviceEvent(UnityGfxDeviceEventType ty
 }
 static void Render(IUnityInterfaces* interfaces, int eventId) 
 {
-	
+	ID3D11Device* pDevice = nullptr;
+	IDXGISwapChain* pSwapChain = nullptr;
+	ID3D11DeviceContext* pContext = nullptr;
+
+	/*Create device, front and back buffers, swapchain and the rendering context*/
+	D3D11CreateDeviceAndSwapChain(
+		*pAdapter = nullptr, //IDXGIAdapter - in, optional - leaving this null means it chooses the default adapter
+		DriverType = D3D_DRIVER_TYPE_HARDWARE, //Hardware device
+		Software = nullptr, //HMODULE - A handle to a module - if you want to load a driver
+		Flags = 0, //uint
+		*pFeatureLevels = nullptr, //const D3D_FEATURE_LEVEL, - choose what feature levels we want to allow
+		FeatureLevels = 0, //uint
+		SDKVersion = D3D11_SDK_VERSION, //Macro expand
+		*pSwapChainDesc = &sd, //in, optional - descriptor cons
+		**ppSwapChain = &pSwapChain, //A pointer to a pointer - out, optional
+		**ppDevice = &pDevice, //out, optional
+		*pFeatureLevel = nullptr //out, optional
+		**ppImmediateContext = &pContext
+	);
 }
 ////type alias - a FuncPtr is just a function that takes in a const char*.
 //typedef void(*FuncPtr) (const char*);

@@ -3,8 +3,18 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
+
+struct SphereVertex
+{
+    float3 position;
+    float2 uv;
+    float3 normal;
+};
+
 RWBuffer<uint> _IndexBuffer;
 RWStructuredBuffer<float3> _VertexBuffer;
+RWStructuredBuffer<float3> _NormalBuffer;
+RWStructuredBuffer<float2> _UVBuffer;
 StructuredBuffer<float3> _Positions;
 uint _Resolution;
 uint _NumVertsPerInstance;
@@ -188,9 +198,10 @@ CubeFace GenerateCubeFaceProperties(uint3 id)
 
 uint indexFromId(uint3 id)
 {
-    return id.x + id.y * _Resolution + id.z *_Resolution * _Resolution ;
+    return id.x + id.y * _Resolution + id.z *_Resolution * _Resolution;
     //return _Resolution * (_Resolution * (id.z % 6) + id.x);
 }
+/*
 [numthreads(8,8,6)]
 void CSMain2 (uint3 id : SV_DispatchThreadID)
 {
@@ -201,19 +212,51 @@ void CSMain2 (uint3 id : SV_DispatchThreadID)
     int triStart = index * 6;
     if(id.x < _Resolution && id.y < _Resolution)
     {
-    /*
-                float3 uA = side.uvOrigin + side.uAxis * (float)uCoord / Resolution;
-            float3 uB = side.uvOrigin + side.uAxis * (float)(uCoord + 1) / Resolution;
-    */
+
+        //Set vertex positions 
         float3 p0 = cubeFace.uvOrigin + cubeFace.uAxis * (float) id.x /(float) _Resolution;
         float3 p1 = cubeFace.uvOrigin + cubeFace.uAxis * (float)(id.x + 1)/(float)_Resolution;
         float3 p2 = p0 + cubeFace.vAxis * (float)id.y/(float)_Resolution;
         float3 p3 = p1 + cubeFace.vAxis * (float)id.y/(float) _Resolution;
 
-        _VertexBuffer[vertStart] = p0; 
-        _VertexBuffer[vertStart + 1] = p1;
-        _VertexBuffer[vertStart + 2] = p2;
-        _VertexBuffer[vertStart + 3] = p3;
+        //Set vertex uvs
+        float2 uv0 = float2(0, 0);
+        float2 uv1 = float2(1, 0);
+        float2 uv2 = float2(0, 1);
+        float2 uv3 = float2(1, 1);
+
+        //Set vertex normals
+        float3 n0 = p0;
+        float3 n1 = p1;
+        float3 n2 = p2;
+        float3 n3 = p3;
+
+        //Create vertices 
+        SphereVertex vert0;
+        SphereVertex vert1;
+        SphereVertex vert2;
+        SphereVertex vert3;
+
+        vert0.position = p0;
+        vert0.uv = uv0;
+        vert0.normal = n0;
+
+        vert1.position = p1;
+        vert1.uv = uv1;
+        vert1.normal = n1;
+
+        vert2.position = p2;
+        vert2.uv = uv2;
+        vert2.normal = n2;
+
+        vert3.position = p3;
+        vert3.uv = uv3;
+        vert3.normal = n3;
+
+        _VertexBuffer[vertStart] = vert0; 
+        _VertexBuffer[vertStart + 1] = vert1;
+        _VertexBuffer[vertStart + 2] = vert2;
+        _VertexBuffer[vertStart + 3] = vert3;
 
        /* _IndexBuffer[triStart] = vertStart;
         _IndexBuffer[triStart + 1] = vertStart + 2;
@@ -222,7 +265,7 @@ void CSMain2 (uint3 id : SV_DispatchThreadID)
         _IndexBuffer[triStart + 3] = vertStart + 1;
         _IndexBuffer[triStart + 4] = vertStart + 2;
         _IndexBuffer[triStart + 5] = vertStart + 3;
-    */
+    
         _IndexBuffer[triStart] = vertStart;
         _IndexBuffer[triStart + 1] = vertStart + _Resolution + 1;
         _IndexBuffer[triStart + 2] = vertStart + _Resolution + 2;
@@ -232,20 +275,85 @@ void CSMain2 (uint3 id : SV_DispatchThreadID)
         _IndexBuffer[triStart + 5] = vertStart + 1;
     }
 
-}
+} */
+
+[numthreads(10,10,6)]
+void CSMain2 (uint3 id : SV_DispatchThreadID)
+{
+    //_ModelMatrix = CreateMatrix(float3(5.0, 5.0, 5.0), float3(1,1,1), float3(0, 1, 0), 0);
+    CubeFace cubeFace = GenerateCubeFaceProperties(id);
+    uint index = indexFromId(id);
+    uint vertStart = 4 * _Resolution * (_Resolution * cubeFace.id + id.x + id.y * _Resolution * 4);
+    uint triStart = 6 * _Resolution * (_Resolution * cubeFace.id + id.x + id.y * _Resolution * 6);
+    float3 u0 = cubeFace.uvOrigin + cubeFace.uAxis * (float) id.x /(float) _Resolution;
+    float3 u1 = cubeFace.uvOrigin + cubeFace.uAxis * (float)(id.x + 1)/(float)_Resolution;
+    //set positions 
+    float3 p0 = normalize(u0);
+    float3 p1 = normalize(u1);
+    //Set uvs
+    float2 uv0 = float2(0, 0);
+    float2 uv1 = float2(1, 0);
+    //Set normals
+    float3 n0 = p0;
+    float3 n1 = p1;
+
+
+    if(id.x < _Resolution && id.y > 0 && id.y < _Resolution)
+    {
+        float3 p2 = normalize(u0 + cubeFace.vAxis * (float)id.y/(float)_Resolution);
+        float3 p3 = normalize(u1 + cubeFace.vAxis * (float)id.y/(float) _Resolution);
+
+        float2 uv2 = float2(0, 1);
+        float2 uv3 = float2(1, 1);
+
+        float3 n2 = p2;
+        float3 n3 = p3;
+
+        _VertexBuffer[vertStart] = p0; 
+        _VertexBuffer[vertStart + 1] = p1;
+        _VertexBuffer[vertStart + 2] =  p2;
+        _VertexBuffer[vertStart + 3] =  p3;
+
+        _NormalBuffer[vertStart] = n0;
+        _NormalBuffer[vertStart + 1] = n1;
+        _NormalBuffer[vertStart + 2] = n2; 
+        _NormalBuffer[vertStart + 3] = n3;
+
+        _UVBuffer[vertStart] = uv0;
+        _UVBuffer[vertStart + 1] = uv1;
+        _UVBuffer[vertStart + 2] = uv2;
+        _UVBuffer[vertStart + 3] = uv3;
+
+        _IndexBuffer[triStart] = vertStart;
+        _IndexBuffer[triStart + 1] = vertStart + 2;
+        _IndexBuffer[triStart + 2] = vertStart + 1;
+
+        _IndexBuffer[triStart + 3] = vertStart + 1;
+        _IndexBuffer[triStart + 4] = vertStart + 2;
+        _IndexBuffer[triStart + 5] = vertStart + 3;
+    }
+  }
+
 [numthreads(100,1,6)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    _ModelMatrix = CreateMatrix(float3(5.0, 5.0, 5.0), float3(1,1,1), float3(0, 1, 0), 0);
+    //_ModelMatrix = CreateMatrix(float3(5.0, 5.0, 5.0), float3(1,1,1), float3(0, 1, 0), 0);
     CubeFace cubeFace = GenerateCubeFaceProperties(id);
     uint index = indexFromId(id);
     uint vertStart = 4 * _Resolution * (_Resolution * cubeFace.id + id.x);
     uint triStart = 6 * _Resolution * (_Resolution * cubeFace.id + id.x);
     float3 u0 = cubeFace.uvOrigin + cubeFace.uAxis * (float) id.x /(float) _Resolution;
     float3 u1 = cubeFace.uvOrigin + cubeFace.uAxis * (float)(id.x + 1)/(float)_Resolution;
-
+    //set positions 
     float3 p0 = normalize(u0);
     float3 p1 = normalize(u1);
+    //Set uvs
+    float2 uv0 = float2(0, 0);
+    float2 uv1 = float2(1, 0);
+    //Set normals
+    float3 n0 = p0;
+    float3 n1 = p1;
+
 
     for(int y = 1; y <= _Resolution; y++, vertStart+=4,triStart+=6){
         if(id.x < _Resolution)
@@ -253,10 +361,26 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             float3 p2 = normalize(u0 + cubeFace.vAxis * (float)y/(float)_Resolution);
             float3 p3 = normalize(u1 + cubeFace.vAxis * (float)y/(float) _Resolution);
 
+            float2 uv2 = float2(0, 1);
+            float2 uv3 = float2(1, 1);
+
+            float3 n2 = p2;
+            float3 n3 = p3;
+
             _VertexBuffer[vertStart] = p0; 
             _VertexBuffer[vertStart + 1] = p1;
             _VertexBuffer[vertStart + 2] =  p2;
             _VertexBuffer[vertStart + 3] =  p3;
+
+            _NormalBuffer[vertStart] = n0;
+            _NormalBuffer[vertStart + 1] = n1;
+            _NormalBuffer[vertStart + 2] = n2; 
+            _NormalBuffer[vertStart + 3] = n3;
+
+            _UVBuffer[vertStart] = uv0;
+            _UVBuffer[vertStart + 1] = uv1;
+            _UVBuffer[vertStart + 2] = uv2;
+            _UVBuffer[vertStart + 3] = uv3;
 
             _IndexBuffer[triStart] = vertStart;
             _IndexBuffer[triStart + 1] = vertStart + 2;
@@ -267,10 +391,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             _IndexBuffer[triStart + 5] = vertStart + 3;
             p0 = p2;
             p1 = p3;
+            n0 = n2;
+            n1 = n3;
         }
-  }
+    }
 }
-
+/*
   [numthreads(64,1,6)]
 void CSMain3 (uint3 id : SV_DispatchThreadID)
 {
@@ -309,3 +435,4 @@ void CSMain3 (uint3 id : SV_DispatchThreadID)
         }
   }
 }
+*/
