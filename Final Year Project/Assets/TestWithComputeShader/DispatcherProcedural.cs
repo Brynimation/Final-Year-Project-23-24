@@ -171,27 +171,6 @@ public class DispatcherProcedural : MonoBehaviour
         SetPositionCalculatorData();
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Vector3[] data = new Vector3[numInstances];
-            _PositionsBufferLOD0.GetData(data);
-            Debug.Log("length: " +data.Length);
-            foreach (Vector3 pos in data) 
-            {
-                Debug.Log(pos);
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.Q)) 
-        {
-            Plane[] planesData = new Plane[6];
-            viewFrustumPlanesBuffer.GetData(planesData);
-            foreach (Plane p in planesData) 
-            {
-                Debug.Log(p.distance);
-                Debug.Log(p.normal);
-            }
-            
-        }
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
     }
