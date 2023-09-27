@@ -1,0 +1,123 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+
+//AppendStructuredBuffer<float3> _PositionsLOD0;
+//AppendStructuredBuffer<float3> _PositionsLOD1;
+
+struct ThreadIdentifier{
+    float3 position;
+    uint id;
+};
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD1;
+
+uniform float3 _GalacticCentre;
+uniform float _MinEccentricity;
+uniform float _MaxEccentricity;
+uniform float _GalacticDiskRadius;
+uniform float _GalacticHaloRadius;
+uniform float _GalacticBulgeRadius;
+uniform float _AngularOffsetMultiplier;
+uniform float3 _CameraPosition;
+uniform float _LODSwitchDist;
+uniform int _NumParticles;
+uniform float _time;
+
+
+
+float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
+{
+    float cosTheta = cos(theta);
+    float sinTheta = sin(theta);
+    float cosOffset = cos(angleOffset);
+    float sinOffset = sin(angleOffset);
+
+    float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
+    float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
+    float3 pos = float3(xPos, yPos, 0);
+    return pos;
+}
+float GetSemiMajorAxis(float x)
+{
+    return(x * x * x * _GalacticDiskRadius);
+}
+
+float GetEccentricity(float r)
+{
+    if (r < _GalacticBulgeRadius)
+    {
+       return lerp(_MaxEccentricity, _MinEccentricity, r / _GalacticBulgeRadius);
+    }
+    else if (r >= _GalacticBulgeRadius && r < _GalacticDiskRadius)
+    {
+        return lerp(_MinEccentricity, _MaxEccentricity, (r - _GalacticBulgeRadius) / (_GalacticDiskRadius - _GalacticBulgeRadius));
+    }
+    else if (r >= _GalacticDiskRadius && r < _GalacticHaloRadius)
+    {
+        return lerp(_MaxEccentricity, 1.0, (r - _GalacticDiskRadius) /(_GalacticHaloRadius - _GalacticDiskRadius));
+    }
+    else {
+        return 1.0;
+    }
+}
+
+float GenerateRandom(int x)
+{
+    float2 p = float2(x, sqrt(x));
+    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
+            
+float GetRandomAngle(uint id)
+{
+    return radians((GenerateRandom(id) * 360));
+}
+
+float GetAngularVelocity(uint i, float r)
+{
+    return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
+}
+float GetAngularOffset(uint id)
+{
+    int multiplier = id * _AngularOffsetMultiplier;
+    int finalParticle = _NumParticles - 1;
+    return radians((multiplier/(float)finalParticle) * 360);
+}
+float3 GetPointOnEllipse(uint id)
+{
+    float semiMajorAxis = GetSemiMajorAxis(id/(float)_NumParticles);
+    float eccentricity = GetEccentricity(semiMajorAxis); 
+    float angularVelocity = GetAngularVelocity(id, semiMajorAxis);
+    float semiMinorAxis = eccentricity * semiMajorAxis;   
+    float currentAngularOffset = GetAngularOffset(id);
+    float theta = GetRandomAngle(id) + angularVelocity * _time;
+    return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
+}
+[numthreads(256,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{   
+    //if(id.x >= _NumParticles) return;
+    //_PositionsLOD0[id.x] = float3(0, 0, -1000);
+    //_PositionsLOD1[id.x] = float3(0, 0, -1000);
+    float3 posObjectSpace = GetPointOnEllipse(id.x);
+    float dist = length(posObjectSpace - _CameraPosition);
+
+    ThreadIdentifier ti;
+    ti.position = posObjectSpace;
+    ti.id = id.x;
+    //_PositionsLOD1.Append(posObjectSpace);
+    /*if(dist < _LODSwitchDist)
+    {
+        _PositionsLOD0.Append(posObjectSpace);
+    }else{
+        _PositionsLOD1.Append(posObjectSpace);
+
+    }*/
+    if(dist < _LODSwitchDist)
+    {
+         _PositionsLOD0.Append(ti);
+    }else{
+         _PositionsLOD1.Append(ti);
+    }
+    
+}
