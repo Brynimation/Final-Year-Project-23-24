@@ -26,12 +26,12 @@ Shader "Custom/DrawProceduralShader"
             #pragma multi_compile_instancing
 
 
-            struct InstanceData
+            struct ThreadIdentifier
             {
-               float3 position;
-               float4 colour;
-               float radius;
-               uint culled;
+                float3 position;
+                float4 colour;
+                float radius;
+                uint id;
             };
 
             struct SphereVertex
@@ -42,10 +42,10 @@ Shader "Custom/DrawProceduralShader"
             };
 
             TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
+            SAMPLER(sampler_MainTex);   
 
             uniform float4 _EmissionColour;
-            StructuredBuffer<InstanceData> _PositionsLOD0;
+            RWStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
             StructuredBuffer<float3> _VertexBuffer;
             StructuredBuffer<float3> _NormalBuffer;
             StructuredBuffer<float2> _UVBuffer;
@@ -99,7 +99,7 @@ Shader "Custom/DrawProceduralShader"
                 o.posWS = positionData.positionWS;
                 o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
-                o.positionHCS = (_PositionsLOD0[i.instanceId].culled == 0) ? float4(-1000, -1000, -1000, 1) : o.positionHCS; 
+                //o.positionHCS = (_PositionsLOD0[i.instanceId].culled == 0) ? float4(-1000, -1000, -1000, 1) : o.positionHCS; 
                 o.colour = _PositionsLOD0[i.instanceId].colour + _EmissionColour;
                 o.uv = uv;
                 return o;

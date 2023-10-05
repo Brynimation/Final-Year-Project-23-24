@@ -45,12 +45,12 @@ Shader "Custom/ParticleShader2"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
             UNITY_INSTANCING_BUFFER_END(MyProps)
 
-             struct InstanceData
+            struct ThreadIdentifier
             {
-               float3 position;
-               float4 colour;
-               float radius;
-               uint culled;
+                float3 position;
+                float4 colour;
+                float radius;
+                uint id;
             };
 
             TEXTURE2D(_MainTex);
@@ -62,7 +62,7 @@ Shader "Custom/ParticleShader2"
             float _Emission;
             float3 _CameraPosition;
             float _MaxStarSize;
-            StructuredBuffer<InstanceData> _PositionsLOD1;
+            RWStructuredBuffer<ThreadIdentifier> _PositionsLOD1;
 
             struct GeomData
             {
@@ -104,10 +104,12 @@ Shader "Custom/ParticleShader2"
                 o.id = id;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[id].position, 1.0));
-                o.colour = _PositionsLOD1[id].colour;
+                ThreadIdentifier tid = _PositionsLOD1[id];
+                o.positionWS = mul(unity_ObjectToWorld, float4(tid.position, 1.0));
+                o.colour = tid.colour;//(tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
+                o.radius = tid.radius;//(tid.id % 100 == 0) ? 100 : 50;
                 o.colour += _EmissionColour;
-                o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
+                //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }
 
@@ -116,7 +118,7 @@ Shader "Custom/ParticleShader2"
             {
 
                 GeomData centre = inputs[0];
-                if(_PositionsLOD1[centre.id].culled == 0) return;
+                //if(_PositionsLOD1[centre.id].culled == 0) return;
                 float3 forward = centre.positionWS - GetCameraPositionWS();
                 //forward.y ;
                 forward = normalize(forward);

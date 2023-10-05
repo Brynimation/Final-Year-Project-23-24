@@ -121,10 +121,10 @@ public class DispatcherProcedural : MonoBehaviour
 
         int starCount = UniGenerator.currentGalaxyProperties == null ? numInstances : UniGenerator.currentGalaxyProperties.starCount;
 
-        _PositionsBufferLOD0 = new ComputeBuffer(starCount, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
-        _PositionsBufferLOD1 = new ComputeBuffer(starCount, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
-        _PositionsBufferLODAppend0 = new ComputeBuffer(starCount, sizeof(float) * 3, ComputeBufferType.Append);
-        _PositionsBufferLODAppend1 = new ComputeBuffer(starCount, sizeof(float) * 3, ComputeBufferType.Append);
+        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
+        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
+        _PositionsBufferLODAppend0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
+        _PositionsBufferLODAppend1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
         _VertexBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 3, ComputeBufferType.Structured);
         _NormalBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 3, ComputeBufferType.Structured);
         _UVBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 2, ComputeBufferType.Structured);
@@ -146,7 +146,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend1", _PositionsBufferLODAppend1);
 
-        material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLOD1);
+        material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLODAppend1);
         material[1].SetColor("_EmissionColour", _EmissionColour);
         material[1].SetTexture("_MainTex", billboardTexture);
 
@@ -196,10 +196,10 @@ public class DispatcherProcedural : MonoBehaviour
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
 
-        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
-        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, sizeof(float) * 8 + sizeof(uint), ComputeBufferType.Structured);
-        _PositionsBufferLODAppend0 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Append);
-        _PositionsBufferLODAppend1 = new ComputeBuffer(numInstances, sizeof(float) * 3, ComputeBufferType.Append);
+        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
+        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
+        _PositionsBufferLODAppend0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
+        _PositionsBufferLODAppend1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
         _VertexBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
         _NormalBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
         _UVBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 2, ComputeBufferType.Structured);
@@ -220,7 +220,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLOD1", _PositionsBufferLOD1);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend1", _PositionsBufferLODAppend1);
-        material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLOD1);
+        material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLODAppend1);
         material[1].SetColor("_EmissionColour", _EmissionColour);
         material[1].SetTexture("_MainTex", billboardTexture);
 
@@ -265,9 +265,12 @@ public class DispatcherProcedural : MonoBehaviour
 
     private void Update()
     {
+        _PositionsBufferLODAppend0.SetCounterValue(0);
+        _PositionsBufferLODAppend1.SetCounterValue(0);
         material[1].SetColor("_EmissionColour", _EmissionColour);
         //_PositionsBufferLOD0.SetCounterValue(0);
         //_PositionsBufferLOD1.SetCounterValue(0);
+        //only upload view frustum plane data to gpu if it has changed.
         if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation)
         {
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
@@ -289,8 +292,10 @@ public class DispatcherProcedural : MonoBehaviour
             SetPositionCalculatorData2();
         }
 
+        ComputeBuffer.CopyCount(_PositionsBufferLODAppend1, billboardArgsBuffer, sizeof(uint));
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
+
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
     }

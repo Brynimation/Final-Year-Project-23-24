@@ -18,8 +18,16 @@ struct InstanceData
    float radius;
    uint culled;
 };
-AppendStructuredBuffer<float3> _PositionsLODAppend0;
-AppendStructuredBuffer<float3> _PositionsLODAppend1;
+
+struct ThreadIdentifier
+{
+    float3 position;
+    float4 colour;
+    float radius;
+    uint id;
+};
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
 RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
@@ -195,6 +203,41 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
     //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
+    ThreadIdentifier data;
+    data.id = id.x;
+    data.radius = (id.x % 100) == 0 ? 100 : 50;
+    data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
+
+
+    float3 posObjectSpace = GetPointOnEllipse(id.x);
+    data.position = posObjectSpace;
+
+    //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
+    float semiMajorAxis = GetSemiMajorAxis(id.x/(float)_NumParticles);
+    if(abs(semiMajorAxis - 26080) < 10)
+    {
+        data.radius = 1000;
+        data.colour = float4(1.0, 0.0, 1.0, 1.0);
+    }
+    float dist = length(posObjectSpace - _CameraPosition) - data.radius;
+    uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
+    if(inViewFrustum == 0) return; 
+    if(dist < _LODSwitchDist)
+    {
+        _PositionsLODAppend0.Append(data);
+    }else{
+        _PositionsLODAppend1.Append(data);
+    }
+}
+
+[numthreads(256,1,1)]
+void NOTCSMain (uint3 id : SV_DispatchThreadID)
+{   
+    if(id.x >= _NumParticles) return;
+    /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
+    positions that don't fall inside the view frustum to a position outside the bounds of the object*/
+    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
+    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
     InstanceData data;
     data.radius = (id.x % 100) == 0 ? 100 : 50;
     data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
@@ -257,8 +300,8 @@ void CSMain2 (uint3 id : SV_DispatchThreadID)
     if(inViewFrustum == 0) return; 
     if(dist < _LODSwitchDist)
     {
-        _PositionsLODAppend0.Append(posObjectSpace);
+        //_PositionsLODAppend0.Append(posObjectSpace);
     }else{
-        _PositionsLODAppend1.Append(posObjectSpace);
+        //_PositionsLODAppend1.Append(posObjectSpace);
     }
 }

@@ -1,8 +1,17 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
+
+struct ThreadIdentifier 
+{
+    public Vector3 position;
+    public Color colour;
+    public float radius;
+    public uint id;
+}
 public class ProceduralIndirectAppend : MonoBehaviour
 {
     [Header("Shaders")]
@@ -37,7 +46,10 @@ public class ProceduralIndirectAppend : MonoBehaviour
     private ComputeBuffer _PositionsBufferLOD1;
     private ComputeBuffer _VertexBuffer;
     private GraphicsBuffer _IndexBuffer;
+    private ComputeBuffer viewFrustumPlanesBuffer;
 
+    private Vector3 prevCameraPos;
+    private Quaternion prevCameraRot;
 
     private void SetPositionCalculatorData()
     {
@@ -59,8 +71,8 @@ public class ProceduralIndirectAppend : MonoBehaviour
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
-        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, sizeof(float) * 3 + sizeof(uint), ComputeBufferType.Append);
-        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, sizeof(float) * 3 + sizeof(uint), ComputeBufferType.Append);
+        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
+        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
         _VertexBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
         _IndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerInstance * numInstances, sizeof(uint));
 
@@ -86,6 +98,13 @@ public class ProceduralIndirectAppend : MonoBehaviour
         sphereGenerator.SetInt("_Resolution", Resolution);
         sphereGenerator.SetInt("_NumVertsPerInstance", numVertsPerInstance);
 
+        viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
+        
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+        Debug.Log(planes);
+        Debug.Log(viewFrustumPlanesBuffer);
+        viewFrustumPlanesBuffer.SetData(planes);
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
         bounds = new Bounds(Vector3.zero, new Vector3(10000, 10000, 10000));
@@ -104,6 +123,15 @@ public class ProceduralIndirectAppend : MonoBehaviour
 
     private void Update()
     {
+        _PositionsBufferLOD0.SetCounterValue(0);
+        _PositionsBufferLOD1.SetCounterValue(0);
+        if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation)
+        {
+            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            Debug.Log(planes);
+            Debug.Log(viewFrustumPlanesBuffer);
+            viewFrustumPlanesBuffer.SetData(planes);
+        }
         int numRows = Resolution;
         positionCalculator.Dispatch(positionCalculatorHandle, positionGroupSizeX, 1, 1);
         sphereGenerator.Dispatch(SphereGeneratorHandle, Resolution, Resolution, 1);
@@ -111,29 +139,37 @@ public class ProceduralIndirectAppend : MonoBehaviour
         SetPositionCalculatorData();
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.P))
         {
-            Vector3[] data = new Vector3[numInstances];
+            ThreadIdentifier[] data = new ThreadIdentifier[numInstances];
             _PositionsBufferLOD0.GetData(data);
             Debug.Log("length: " + data.Length);
-            foreach (Vector3 pos in data)
+            foreach (ThreadIdentifier pos in data)
             {
-                Debug.Log(pos);
+                Debug.Log(pos.position);
             }
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            Vector3[] data = new Vector3[numInstances];
+            ThreadIdentifier[] data = new ThreadIdentifier[numInstances];
             _PositionsBufferLOD1.GetData(data);
             Debug.Log("length: " + data.Length);
-            foreach (Vector3 pos in data)
+            foreach (ThreadIdentifier pos in data)
             {
-                Debug.Log(pos);
+                Debug.Log(pos.position);
+            }
+            uint[] billboardThing = new uint[4];
+            billboardArgsBuffer.GetData(billboardThing);
+            for (int i = 0; i < 4; i++) 
+            {
+                Debug.Log($"{i} + {billboardThing[i]}");
             }
 
         }
-        _PositionsBufferLOD0.SetCounterValue(0);
-        _PositionsBufferLOD1.SetCounterValue(0);
+        ComputeBuffer.CopyCount(_PositionsBufferLOD0, sphereArgsBuffer, sizeof(uint));
+        ComputeBuffer.CopyCount(_PositionsBufferLOD1, billboardArgsBuffer, sizeof(uint));
+        prevCameraPos = Camera.main.transform.position;
+        prevCameraRot = Camera.main.transform.rotation;
     }
 
     private void OnDestroy()

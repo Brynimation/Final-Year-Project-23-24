@@ -24,7 +24,7 @@ Shader "Custom/ProceduralAppend2"
         Tags { "RenderType"="Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
 		Cull Off
 		//ZTest Always
-		ZWrite Off
+		//ZWrite Off
         LOD 100
         Pass
         {
@@ -50,9 +50,11 @@ Shader "Custom/ProceduralAppend2"
             struct ThreadIdentifier
             {
                 float3 position;
+                float4 colour;
+                float radius;
                 uint id;
             };
-            StructuredBuffer<ThreadIdentifier> _PositionsLOD1;
+            RWStructuredBuffer<ThreadIdentifier> _PositionsLOD1;
 
             struct GeomData
             {
@@ -93,10 +95,10 @@ Shader "Custom/ProceduralAppend2"
                 GeomData o;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                uint tid = _PositionsLOD1[id].id;
-                o.positionWS = mul(unity_ObjectToWorld, float4(_PositionsLOD1[tid].position, 1.0));
-                o.colour = (id % 100 == 0) ? float4(1.0,1.0,1.0,1.0) : float4(0.0,0.0,1.0, 1.0);
-                o.radius = _MaxStarSize;
+                ThreadIdentifier tid = _PositionsLOD1[id];
+                o.positionWS = mul(unity_ObjectToWorld, float4(tid.position, 1.0));
+                o.colour = (tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
+                o.radius = (tid.id % 100 == 0) ? 100 : 10;
                 return o;
             }
 

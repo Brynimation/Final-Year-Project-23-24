@@ -5,9 +5,17 @@
 //AppendStructuredBuffer<float3> _PositionsLOD0;
 //AppendStructuredBuffer<float3> _PositionsLOD1;
 
-struct ThreadIdentifier{
+struct ThreadIdentifier
+{
     float3 position;
+    float4 colour;
+    float radius;
     uint id;
+};
+struct Plane
+{
+    float3 normal;
+    float distance;
 };
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLOD1;
@@ -23,6 +31,7 @@ uniform float3 _CameraPosition;
 uniform float _LODSwitchDist;
 uniform int _NumParticles;
 uniform float _time;
+StructuredBuffer<Plane> _ViewFrustumPlanes;
 
 
 
@@ -62,6 +71,22 @@ float GetEccentricity(float r)
     }
 }
 
+uint IntersectSphere(float3 centre, float radius)
+{
+
+    for(uint i = 0; i < 6; i++)
+    {
+        Plane plane = _ViewFrustumPlanes[i];
+        float normalDotCentre = dot(plane.normal, centre);
+        float cullDist = plane.distance;
+        if(normalDotCentre + cullDist + radius <= 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 float GenerateRandom(int x)
 {
     float2 p = float2(x, sqrt(x));
@@ -96,7 +121,7 @@ float3 GetPointOnEllipse(uint id)
 [numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {   
-    //if(id.x >= _NumParticles) return;
+    if(id.x >= _NumParticles) return;
     //_PositionsLOD0[id.x] = float3(0, 0, -1000);
     //_PositionsLOD1[id.x] = float3(0, 0, -1000);
     float3 posObjectSpace = GetPointOnEllipse(id.x);
@@ -105,6 +130,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     ThreadIdentifier ti;
     ti.position = posObjectSpace;
     ti.id = id.x;
+    ti.colour = (id.x % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
+    ti.radius = (id.x % 100 == 0) ? 100 : 10;
+    uint inViewFrustum = IntersectSphere(posObjectSpace, ti.radius);
+    if(!inViewFrustum) return;
     //_PositionsLOD1.Append(posObjectSpace);
     /*if(dist < _LODSwitchDist)
     {
