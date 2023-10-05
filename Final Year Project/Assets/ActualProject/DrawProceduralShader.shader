@@ -85,10 +85,34 @@ Shader "Custom/DrawProceduralShader"
                 float3 normWS : TEXCOORD2;
                 float4 colour : COLOR;
             };
-            
-            Interpolators vert(Attributes i)
+
+            /*Interpolators vert(Attributes i)
             {
                 Interpolators o;
+                ThreadIdentifier ti = _PositionsLOD0[i.instanceId];
+                _ModelMatrix = CreateMatrix(ti.position, float3(1.0, 1.0, 1.0), float3(0.0, 1.0, 0.0), i.instanceId, ti.radius);
+                float4 vertexPosOS = float4(ti.position, 0) + mul(_ModelMatrix, _VertexBuffer[i.vertexId], 1.0);
+                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS);
+                VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
+                o.colour = ti.colour + _EmissionColour;
+                o.uv = uv;
+                return o;
+            }*/
+            
+           Interpolators vert(Attributes i)
+            {
+                Interpolators o;
+                ThreadIdentifier ti = _PositionsLOD0[i.instanceId];
+                _ModelMatrix = CreateMatrix(ti.position, float3(1.0, 1.0, 1.0), float3(0.0, 1.0, 0.0), i.instanceId, ti.radius);
+                float4 vertexPosOS = float4(ti.position, 0) + mul(_ModelMatrix, _VertexBuffer[i.vertexId]);
+                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS);
+                VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
+                float2 uv = _UVBuffer[i.vertexId];
+                o.positionHCS = positionData.positionCS;
+                o.colour = ti.colour + _EmissionColour;
+                o.uv = uv;
+                return o;
+               /* Interpolators o;
                 _ModelMatrix = CreateMatrix(_PositionsLOD0[i.instanceId].position, float3(1.0, 1.0, 1.0), float3(0.0, 1.0, 0.0), i.instanceId, _PositionsLOD0[i.instanceId].radius);
                 float4 vertexPosOS = float4(_PositionsLOD0[i.instanceId].position, 0) +  mul(_ModelMatrix, _VertexBuffer[i.vertexId]);//float4(_Positions[i.instanceId] + _VertexBuffer[i.vertexId], 1.0);
                 
@@ -102,7 +126,7 @@ Shader "Custom/DrawProceduralShader"
                 //o.positionHCS = (_PositionsLOD0[i.instanceId].culled == 0) ? float4(-1000, -1000, -1000, 1) : o.positionHCS; 
                 o.colour = _PositionsLOD0[i.instanceId].colour + _EmissionColour;
                 o.uv = uv;
-                return o;
+                return o; */
             }/*
             Interpolators vert(Attributes i)
             {

@@ -137,7 +137,7 @@ public class DispatcherProcedural : MonoBehaviour
         material[0].SetBuffer("_NormalBuffer", _NormalBuffer);
         material[0].SetBuffer("_UVBuffer", _UVBuffer);
         material[0].SetColor("_EmissionColour", _EmissionColour);
-        material[0].SetBuffer("_PositionsLOD0", _PositionsBufferLOD0);
+        material[0].SetBuffer("_PositionsLOD0", _PositionsBufferLODAppend0);
 
         //bind relevant buffers to positionCalculator computeShader.
         positionCalculator.SetBuffer(positionCalculatorHandle, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
@@ -292,6 +292,7 @@ public class DispatcherProcedural : MonoBehaviour
             SetPositionCalculatorData2();
         }
 
+        ComputeBuffer.CopyCount(_PositionsBufferLODAppend0, sphereArgsBuffer, sizeof(uint));
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend1, billboardArgsBuffer, sizeof(uint));
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
