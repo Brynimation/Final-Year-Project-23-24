@@ -18,14 +18,16 @@ public class DispatcherProcedural : MonoBehaviour
     public Material[] material;
     public ComputeShader sphereGenerator;
     public ComputeShader positionCalculator;
-
     [Header("Sphere Generation")]
     [Range(1, 10)]
     public int Resolution = 10;
     public int numInstances = 10000;
+    int prevNumInstances;
+    uint threadGroupSizeX;
     public int LODSwitchDist;
     [Header("Position Calculation")]
     public Vector3 _GalacticCentre;
+    public float _TimeStep = 1.0f;
     public float _MinEccentricity;
     public float _MaxEccentricity;
     public float _GalacticDiskRadius;
@@ -43,13 +45,12 @@ public class DispatcherProcedural : MonoBehaviour
     int sphereGeneratorGroupSizeX;
     private int SphereGeneratorHandle;
     private int positionCalculatorHandle;
-    private ComputeBuffer sphereArgsBuffer;
-    private ComputeBuffer billboardArgsBuffer;
-    private ComputeBuffer viewFrustumPlanesBuffer;
+
     private Bounds bounds;
     private Vector3 prevCameraPos;
     private Quaternion prevCameraRot;
     Vector3[] positions;
+    [Header("Buffers")]
     private ComputeBuffer _PositionsBufferLOD0;
     private ComputeBuffer _PositionsBufferLOD1;
     private ComputeBuffer _PositionsBufferLODAppend0;
@@ -59,6 +60,11 @@ public class DispatcherProcedural : MonoBehaviour
     private ComputeBuffer _UVBuffer;
     private GraphicsBuffer _IndexBuffer;
 
+    private ComputeBuffer sphereArgsBuffer;
+    private ComputeBuffer billboardArgsBuffer;
+    private ComputeBuffer viewFrustumPlanesBuffer;
+    private ComputeBuffer sphereGeneratorDispatchArgsBuffer;
+    private ComputeBuffer positionCalculatorDispatchArgsBuffer;
     private void Awake()
     {
         
@@ -89,7 +95,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_time", Time.time);
         positionCalculator.SetFloat("_LODSwitchDist", LODSwitchDist);
         positionCalculator.SetVector("_CameraPosition", Camera.main.transform.position);
-
+        positionCalculator.SetFloat("_TimeStep", _TimeStep);
         positionCalculator.SetVector("_StandardColour", _StandardColour);
         positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
 
@@ -107,7 +113,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_time", Time.time);
         positionCalculator.SetFloat("_LODSwitchDist", LODSwitchDist);
         positionCalculator.SetVector("_CameraPosition", Camera.main.transform.position);
-
+        positionCalculator.SetFloat("_TimeStep", _TimeStep);
         positionCalculator.SetVector("_StandardColour", _StandardColour);
         positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
         
@@ -116,6 +122,7 @@ public class DispatcherProcedural : MonoBehaviour
     void Start()
     {
         //Create vertex and index buffers 
+        Application.targetFrameRate = 300;
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
@@ -151,8 +158,6 @@ public class DispatcherProcedural : MonoBehaviour
         material[1].SetTexture("_MainTex", billboardTexture);
 
         //calculate thread group sizes 
-
-        uint threadGroupSizeX;
         positionCalculator.GetKernelThreadGroupSizes(positionCalculatorHandle, out threadGroupSizeX, out _, out _);
         positionGroupSizeX = Mathf.CeilToInt((float)numInstances / (float)threadGroupSizeX);
 
@@ -164,7 +169,7 @@ public class DispatcherProcedural : MonoBehaviour
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_VertexBuffer", _VertexBuffer);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_NormalBuffer", _NormalBuffer);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_UVBuffer", _UVBuffer);
-        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_Positions", _PositionsBufferLOD0);
+        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_Positions", _PositionsBufferLODAppend0);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_IndexBuffer", _IndexBuffer);
         sphereGenerator.SetInt("_Resolution", Resolution);
         sphereGenerator.SetInt("_NumVertsPerInstance", numVertsPerInstance);
@@ -175,6 +180,9 @@ public class DispatcherProcedural : MonoBehaviour
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
+        sphereGeneratorDispatchArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 3,ComputeBufferType.IndirectArguments);
+        positionCalculatorDispatchArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 3, ComputeBufferType.IndirectArguments);
+        
         // index 0 : index count per instance
         // index 1 : instance count
         // index 2 : start vertex location
@@ -182,6 +190,8 @@ public class DispatcherProcedural : MonoBehaviour
         // index 4 : start instance location
         sphereArgsBuffer.SetData(new uint[] { (uint)numIndicesPerInstance, (uint)numInstances, 0u, 0u, 0u });
         billboardArgsBuffer.SetData(new uint[] { (uint)1, (uint)numInstances, 0u, 0u });
+        sphereGeneratorDispatchArgsBuffer.SetData(new uint[] { 10u, 10u, 1u });
+        positionCalculatorDispatchArgsBuffer.SetData(new uint[] { (uint)positionGroupSizeX, 1u, 1u });
 
         Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
         Debug.Log(viewFrustumPlanesBuffer);
@@ -230,15 +240,13 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.GetKernelThreadGroupSizes(positionCalculatorHandle, out threadGroupSizeX, out _, out _);
         positionGroupSizeX = Mathf.CeilToInt((float)numInstances /(float) threadGroupSizeX);
 
-
-        uint threadGroupGeneratorX;
         //sphereGenerator.GetKernelThreadGroupSizes(SphereGeneratorHandle, out threadGroupGeneratorX, out _, out _);
         //sphereGeneratorGroupSizeX = Mathf.CeilToInt(numVertsPerInstance / threadGroupGeneratorX);
         //Bind relevant buffers to Sphere Generator compute shader and set variables needed to generate the spheres.
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_VertexBuffer", _VertexBuffer);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_NormalBuffer", _NormalBuffer);
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_UVBuffer", _UVBuffer);
-        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_Positions", _PositionsBufferLOD0); 
+        sphereGenerator.SetBuffer(SphereGeneratorHandle, "_Positions", _PositionsBufferLODAppend0); 
         sphereGenerator.SetBuffer(SphereGeneratorHandle, "_IndexBuffer", _IndexBuffer);
         sphereGenerator.SetInt("_Resolution", Resolution);
         sphereGenerator.SetInt("_NumVertsPerInstance", numVertsPerInstance);
@@ -265,6 +273,11 @@ public class DispatcherProcedural : MonoBehaviour
 
     private void Update()
     {
+        if (numInstances != prevNumInstances) 
+        {
+            positionGroupSizeX = Mathf.CeilToInt((float)numInstances / (float)threadGroupSizeX);
+            positionCalculatorDispatchArgsBuffer.SetData(new uint[] { (uint)positionGroupSizeX, 1u, 1u });
+        }
         _PositionsBufferLODAppend0.SetCounterValue(0);
         _PositionsBufferLODAppend1.SetCounterValue(0);
         material[1].SetColor("_EmissionColour", _EmissionColour);
@@ -280,8 +293,9 @@ public class DispatcherProcedural : MonoBehaviour
         }
 
         int numRows = Resolution;
-        positionCalculator.Dispatch(positionCalculatorHandle, positionGroupSizeX, 1, 1);
-        sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
+        positionCalculator.DispatchIndirect(positionCalculatorHandle, positionCalculatorDispatchArgsBuffer);
+        //sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
+        sphereGenerator.DispatchIndirect(SphereGeneratorHandle, sphereGeneratorDispatchArgsBuffer);
         sphereGenerator.SetInt("_Resolution", Resolution);
         if (UniGenerator.currentGalaxyProperties != null)
         {
@@ -294,11 +308,31 @@ public class DispatcherProcedural : MonoBehaviour
 
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend0, sphereArgsBuffer, sizeof(uint));
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend1, billboardArgsBuffer, sizeof(uint));
+
+        if (Input.GetKeyDown(KeyCode.Space)) 
+        {
+            int[] args = new int[4];
+            billboardArgsBuffer.GetData(args);
+            for(int i = 0; i < args.Length; i++) 
+            {
+                Debug.Log($"Billboard args: {i}.) {args[i]}");
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            int[] args = new int[5];
+            sphereArgsBuffer.GetData(args);
+            for (int i = 0; i < args.Length; i++)
+            {
+                Debug.Log($"Sphere args{i}.) {args[i]}");
+            }
+        }
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
 
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
+        prevNumInstances = numInstances;
     }
     private void Update2()
     {

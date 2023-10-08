@@ -43,6 +43,7 @@ uniform float _GalacticBulgeRadius;
 uniform float _AngularOffsetMultiplier;
 uniform float3 _CameraPosition;
 uniform float _LODSwitchDist;
+uniform float _TimeStep;
 uniform int _NumParticles;
 uniform float _time;
 
@@ -144,7 +145,7 @@ float3 GetPointOnEllipse(uint id)
     float angularVelocity = GetExpectedAngularVelocity(id, semiMajorAxis);
     float semiMinorAxis = eccentricity * semiMajorAxis;   
     float currentAngularOffset = GetAngularOffset(id);
-    float theta = GetRandomAngle(id) + angularVelocity * _time;
+    float theta = GetRandomAngle(id) + angularVelocity * _time * _TimeStep;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
 
@@ -195,7 +196,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 }
 */
 
-[numthreads(256,1,1)]
+[numthreads(1024,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {   
     if(id.x >= _NumParticles) return;
