@@ -1,4 +1,4 @@
-Shader "Custom/StaticQuadTree"
+Shader "Custom/InstancingShader"
 {
     Properties
     {
@@ -23,12 +23,12 @@ Shader "Custom/StaticQuadTree"
             UNITY_INSTANCING_BUFFER_START(MyProps)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _Colour)
             UNITY_INSTANCING_BUFFER_END(MyProps)
+            TEXTURE2D(_MainTex);
             struct MeshProperties
             {
                 float4x4 mat;
             };
-            TEXTURE2D(_MainTex);
-            StructuredBuffer<MeshProperties> _Properties;
+            RWStructuredBuffer<MeshProperties> _Properties;
             SAMPLER(sampler_MainTex);
 
             struct Attributes

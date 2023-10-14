@@ -155,9 +155,9 @@ MonoBehaviour:
   renderDistance: 300
   viewer: {fileID: 923431273}
   mat: {fileID: 2100000, guid: e14c8fdc1218b9b4899ba095f3b2aa9b, type: 2}
-  numCells: 2
+  numCells: 8
   starPrefab: {fileID: 1023513449815005152, guid: 1f93c3e3a3430404aa8ceb6aa03a75c1, type: 3}
-  visualiseChunks: 0
+  visualiseChunks: 1
   chunkSize: 240
 --- !u!4 &285810704
 Transform:
