@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public Material chunkMaterial;
     public GameObject sphere;
     public ComputeShader positionsCalculator;
+    public Texture2D randomTexture;
 
     private int positionsCalculatorIndex;
     private List<MeshProperties> chunkPositions;
@@ -42,13 +43,15 @@ public class GameManager : MonoBehaviour
         argsBuffer.SetData(new uint[] { chunkMesh.GetIndexCount(0), (uint) Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u, 0u });
         chunkMaterial.SetBuffer("_Properties", positionsBuffer);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties", positionsBuffer);
+        positionsCalculator.SetTexture(positionsCalculatorIndex, "_Texture", randomTexture);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_ViewFrustumPlanesBuffer", viewFrustumPlanesBuffer);
         startingPos = viewer.position;
         uint xGroups, yGroups, zGroups;
         positionsCalculator.GetKernelThreadGroupSizes(positionsCalculatorIndex, out xGroups, out yGroups, out zGroups);
-        numThreadGroupsX = Mathf.CeilToInt(chunksVisibleInViewDist / xGroups);
-        numThreadGroupsY = Mathf.CeilToInt(chunksVisibleInViewDist / yGroups);
-        numThreadGroupsZ = Mathf.CeilToInt(chunksVisibleInViewDist / zGroups);
+        numThreadGroupsX = Mathf.CeilToInt((float) chunksVisibleInViewDist / xGroups);
+        numThreadGroupsY = Mathf.CeilToInt((float)chunksVisibleInViewDist / yGroups);
+        numThreadGroupsZ = Mathf.CeilToInt((float)chunksVisibleInViewDist / zGroups);
+        Debug.Log($"{numThreadGroupsX}, {numThreadGroupsY}, {numThreadGroupsZ}");
         go = new List<GameObject>();
         GenerateStars();
 
@@ -69,13 +72,10 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
         positionsCalculator.SetVector("playerPosition", viewer.position);
         positionsCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
         positionsCalculator.SetInt("chunkSize", chunkSize);
-        Debug.Log($"{numThreadGroupsX}, {numThreadGroupsY}, {numThreadGroupsZ}");
         positionsCalculator.Dispatch(positionsCalculatorIndex, numThreadGroupsX, numThreadGroupsY, numThreadGroupsZ);
         if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation)
         {
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            Debug.Log(planes);
-            Debug.Log(viewFrustumPlanesBuffer);
             viewFrustumPlanesBuffer.SetData(planes);
         }
         ComputeBuffer.CopyCount(positionsBuffer, argsBuffer, sizeof(uint));
@@ -91,6 +91,16 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
                 Debug.Log($"Billboard args: {i}.) {args[i]}");
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            Color[] colours = randomTexture.GetPixels();
+            foreach (var col in colours)
+            {
+                Debug.Log(col);
+            }
+        }
+
     }
     void GenerateStars2()
     {

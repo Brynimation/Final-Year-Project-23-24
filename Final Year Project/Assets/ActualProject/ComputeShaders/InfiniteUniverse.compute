@@ -15,6 +15,8 @@ float3 playerPosition;
 int3 playerChunkCoord;
 int chunksVisibleInViewDist;
 StructuredBuffer<Plane> _ViewFrustumPlanesBuffer;
+Texture2D<float4> _Texture;
+SamplerState sampler_Texture;
 
 
 struct MeshProperties
@@ -76,7 +78,43 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
     int seed = viewedChunkCoord.x + viewedChunkCoord.y * chunksVisibleInViewDist + viewedChunkCoord.z * chunksVisibleInViewDist * chunksVisibleInViewDist;
-    if(true /*GenerateRandom(seed) > 0.5*/)
+    uint width;
+    uint height;
+    _Texture.GetDimensions(width, height);
+    float u = frac((float)(id.x & id.z)/ (float) width);
+    float v = frac((float)(id.y & id.z) / (float) height);
+    float val = _Texture.SampleLevel(sampler_Texture, float2(u, v), 0);
+    if(val > 0.2)
+    {
+        float3 actualPosition = viewedChunkCoord * chunkSize;
+        if(IntersectSphere(actualPosition, 1) != 0)
+        {
+            _Properties.Append(GenerateMeshProperties(actualPosition, 1));
+        }
+    }
+}
+
+
+[numthreads(8,8,8)]
+void CSMain3 (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x >= chunksVisibleInViewDist || id.y >= chunksVisibleInViewDist || id.z >= chunksVisibleInViewDist) return;
+    int currentChunkCoordX = round(playerPosition.x / chunkSize);
+    int currentChunkCoordY = round(playerPosition.y / chunkSize);
+    int currentChunkCoordZ = round(playerPosition.z / chunkSize);
+
+    int curXOffset = -chunksVisibleInViewDist/2 + currentChunkCoordX + id.x; 
+    int curYOffset = -chunksVisibleInViewDist/2 + currentChunkCoordY + id.y; 
+    int curZOffset = -chunksVisibleInViewDist/2 + currentChunkCoordZ + id.z; 
+
+    int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
+    int seed = viewedChunkCoord.x + viewedChunkCoord.y * chunksVisibleInViewDist + viewedChunkCoord.z * chunksVisibleInViewDist * chunksVisibleInViewDist;
+    uint width;
+    uint height;
+    _Texture.GetDimensions(width, height);
+    float u = frac((float)curXOffset / (float) width);
+    float v = frac((float)curYOffset / (float) height);
+    if(abs(GenerateRandom(seed)) > 0.2/*_Texture.Load(u, v).x > 0.2*/)
     {
         float3 actualPosition = viewedChunkCoord * chunkSize;
         if(IntersectSphere(actualPosition, 1) != 0)

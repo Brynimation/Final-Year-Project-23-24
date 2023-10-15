@@ -4,6 +4,8 @@ using UnityEngine;
 using TMPro;
 using Unity.VisualScripting;
 
+/*http://kitfox.com/projects/perlinNoiseMaker/*/
+
 public class PersistentUniverseUI : MonoBehaviour
 {
     [SerializeField] TMP_Text coord;

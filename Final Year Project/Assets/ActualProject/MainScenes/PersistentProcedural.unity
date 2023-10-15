@@ -939,14 +939,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc6308f0ba9957f4486c05545576dfa4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderDistance: 100
-  chunkSize: 10
+  renderDistance: 200
+  chunkSize: 50
   playerChunkCoord: {x: 0, y: 0, z: 0}
   viewer: {fileID: 1322359870}
   chunkMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   chunkMaterial: {fileID: 2100000, guid: af78b8b4e5bc7034daf459cbbc260396, type: 2}
   sphere: {fileID: 2941601688723941400, guid: fd1b3722f3655454880d13e026d52f0a, type: 3}
   positionsCalculator: {fileID: 7200000, guid: 627c7cad2c1452849a9d3a4e944a4e74, type: 3}
+  randomTexture: {fileID: 2800000, guid: ef73366e67529004baedf4331ebb29d0, type: 3}
 --- !u!4 &2086999696
 Transform:
   m_ObjectHideFlags: 0
