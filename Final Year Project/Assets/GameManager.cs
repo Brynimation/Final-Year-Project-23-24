@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class GameManager : MonoBehaviour
 {
     public float renderDistance;
+    public float lodSwitchDist = 15.0f;
     public int chunkSize;
     public Vector3Int playerChunkCoord;
     public Transform viewer;
-    public Mesh chunkMesh;
-    public Material chunkMaterial;
     public GameObject sphere;
     public ComputeShader positionsCalculator;
     public Texture2D randomTexture;
@@ -17,8 +17,23 @@ public class GameManager : MonoBehaviour
     private int positionsCalculatorIndex;
     private List<MeshProperties> chunkPositions;
     private int chunksVisibleInViewDist;
+
+    //LOD min
     private ComputeBuffer positionsBuffer;
     private ComputeBuffer argsBuffer;
+    public Mesh chunkMesh;
+    public Material chunkMaterial;
+
+    //LOD min + 1
+    private ComputeBuffer positionsBuffer2;
+    private ComputeBuffer argsBuffer2;
+    public Mesh chunkMesh2;
+    public Material chunkMaterial2;
+    public int starCount = 5000;
+    public bool testing = false;
+    private int[] indices;
+    private Vector3[] verts;
+
     private ComputeBuffer viewFrustumPlanesBuffer;
     private Vector3 prevCameraPos;
     private Quaternion prevCameraRot;
@@ -34,25 +49,57 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
+        VertexAttributeDescriptor[] customVertexStreams = new[] {
+            new VertexAttributeDescriptor(format: VertexAttributeFormat.SInt32, dimension:1, stream:0),
+        };
+        indices = new int[starCount];
+        for (int i = 0; i < starCount; i++) indices[i] = i;
+        verts = new Vector3[starCount];
+        if (!testing) 
+        {
+            chunkMesh2 = new Mesh();
+            //chunkMesh2.SetVertexBufferParams(starCount, customVertexStreams);
+            chunkMesh2.SetVertices(verts);
+            chunkMesh2.SetIndices(indices, MeshTopology.Points, 0);
+            chunkMesh2.GetIndices(0);
+
+            chunkMaterial2.SetInt("_NumParticles", starCount);
+        }
+
+
         positionsCalculatorIndex = positionsCalculator.FindKernel("CSMain");
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
         chunkPositions = new List<MeshProperties>();
+
         positionsBuffer = new ComputeBuffer((int) Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        positionsBuffer2 = new ComputeBuffer((int)Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+
         viewFrustumPlanesBuffer = new ComputeBuffer(6, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Plane)));
+        
         argsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         argsBuffer.SetData(new uint[] { chunkMesh.GetIndexCount(0), (uint) Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u, 0u });
+
+        argsBuffer2 = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
+        argsBuffer2.SetData(new uint[] { chunkMesh2.GetIndexCount(0), (uint)Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u, 0u });
+
         chunkMaterial.SetBuffer("_Properties", positionsBuffer);
+
+        chunkMaterial2.SetBuffer("_Properties", positionsBuffer2);
+
+
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties", positionsBuffer);
+        positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties2", positionsBuffer2);
+
         positionsCalculator.SetTexture(positionsCalculatorIndex, "_Texture", randomTexture);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_ViewFrustumPlanesBuffer", viewFrustumPlanesBuffer);
-        startingPos = viewer.position;
+
         uint xGroups, yGroups, zGroups;
         positionsCalculator.GetKernelThreadGroupSizes(positionsCalculatorIndex, out xGroups, out yGroups, out zGroups);
         numThreadGroupsX = Mathf.CeilToInt((float) chunksVisibleInViewDist / xGroups);
         numThreadGroupsY = Mathf.CeilToInt((float)chunksVisibleInViewDist / yGroups);
         numThreadGroupsZ = Mathf.CeilToInt((float)chunksVisibleInViewDist / zGroups);
-        Debug.Log($"{numThreadGroupsX}, {numThreadGroupsY}, {numThreadGroupsZ}");
-        go = new List<GameObject>();
+
+        startingPos = viewer.position;
         GenerateStars();
 
     }
@@ -68,6 +115,9 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
     void GenerateStars() 
     {
         positionsBuffer.SetCounterValue(0);
+        positionsBuffer2.SetCounterValue(0);
+
+        positionsCalculator.SetFloat("lodSwitchDist", lodSwitchDist);
         positionsCalculator.SetFloat("renderDistance", renderDistance);
         positionsCalculator.SetVector("playerPosition", viewer.position);
         positionsCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
@@ -79,7 +129,8 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
             viewFrustumPlanesBuffer.SetData(planes);
         }
         ComputeBuffer.CopyCount(positionsBuffer, argsBuffer, sizeof(uint));
-        Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, new Bounds(Vector3.zero, Vector3.one * renderDistance*renderDistance), argsBuffer);
+        ComputeBuffer.CopyCount(positionsBuffer2, argsBuffer2, sizeof(uint));
+        //Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, new Bounds(startingPos, Vector3.one * renderDistance*renderDistance), argsBuffer);
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
         if (Input.GetKeyDown(KeyCode.Q))
@@ -91,16 +142,32 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
                 Debug.Log($"Billboard args: {i}.) {args[i]}");
             }
         }
-
-        if (Input.GetKeyDown(KeyCode.R)) 
+        if (Input.GetKeyDown(KeyCode.R))
         {
-            Color[] colours = randomTexture.GetPixels();
-            foreach (var col in colours)
+            int[] args = new int[5];
+            argsBuffer2.GetData(args);
+            for (int i = 0; i < args.Length; i++)
             {
-                Debug.Log(col);
+                Debug.Log($"Billboard args 2: {i}.) {args[i]}");
             }
         }
-
+        if (Input.GetKeyDown(KeyCode.F)) 
+        {
+            List<Vector3> verts = new List<Vector3>();
+            chunkMesh2.GetVertices(verts);
+            foreach (var vert in verts) 
+            {
+                Debug.Log(vert);
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            int[] inds = chunkMesh2.GetIndices(0);
+            foreach (var i in inds)
+            {
+                Debug.Log(i);
+            }
+        }
     }
     void GenerateStars2()
     {
@@ -160,20 +227,29 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one * renderDistance * renderDistance);
+        Gizmos.DrawWireCube(startingPos, Vector3.one * renderDistance * renderDistance);
     }
     private void Update()
     {
+        //startingPos = Vector3.zero;
         GenerateStars();
         /*Vector3 viewerPosition = viewer.position;
         int currentChunkCoordX = Mathf.RoundToInt(viewerPosition.x / chunkSize);
         int currentChunkCoordY = Mathf.RoundToInt(viewerPosition.y / chunkSize);
         int currentChunkCoordZ = Mathf.RoundToInt(viewerPosition.z / chunkSize);
         playerChunkCoord = new Vector3Int(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ);*/
-        if (Vector3.Distance(viewer.position, startingPos) >= renderDistance / 2) 
+        Bounds instancingBounds = new Bounds(Vector3.zero, Vector3.one * renderDistance * renderDistance);
+        if (Vector3.Distance(viewer.position, startingPos) >= renderDistance * renderDistance) 
         {
-            //startingPos = viewer.position;
+            //viewer.position = Vector3.zero;
+            Debug.Log("changing!");
         }
+        //Bounds instancingBounds = new Bounds(startingPos - viewer.position, Vector3.one * renderDistance * renderDistance);
+        // Offset the bounds by the viewer's position relative to the startingPos.
+        //instancingBounds.center += startingPos - viewer.position;
+
+        Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, instancingBounds, argsBuffer);
+        Graphics.DrawMeshInstancedIndirect(chunkMesh2, 0, chunkMaterial2, instancingBounds, argsBuffer2);
         //Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, new Bounds(startingPos, Vector3.one * renderDistance*renderDistance), argsBuffer);
     }
 

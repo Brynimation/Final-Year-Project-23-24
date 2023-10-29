@@ -462,7 +462,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 53c2b83c19f67154085c5dbc6cfc989f, type: 2}
   sphereGenerator: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
-  Resolution: 4
+  Resolution: 8
   numInstances: 100000
   LODSwitchDist: 500
   _GalacticCentre: {x: 0, y: 0, z: 0}

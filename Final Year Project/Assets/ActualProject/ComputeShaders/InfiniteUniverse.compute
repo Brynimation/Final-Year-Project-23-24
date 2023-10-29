@@ -8,7 +8,7 @@ struct Plane
     float distance;
 };
 
-
+float lodSwitchDist;
 float renderDistance;
 int chunkSize;
 float3 playerPosition;
@@ -63,6 +63,7 @@ MeshProperties GenerateMeshProperties(float3 position, float scale)
     return mp;
 }
 AppendStructuredBuffer<MeshProperties> _Properties;
+AppendStructuredBuffer<MeshProperties> _Properties2;
 
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -84,12 +85,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float u = frac((float)(id.x & id.z)/ (float) width);
     float v = frac((float)(id.y & id.z) / (float) height);
     float val = _Texture.SampleLevel(sampler_Texture, float2(u, v), 0);
-    if(val > 0.2)
+    if(val > -100000)
     {
         float3 actualPosition = viewedChunkCoord * chunkSize;
         if(IntersectSphere(actualPosition, 1) != 0)
         {
-            _Properties.Append(GenerateMeshProperties(actualPosition, 1));
+            if(length(actualPosition - playerPosition) < lodSwitchDist)
+            {
+                _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
+            }else{
+                _Properties.Append(GenerateMeshProperties(actualPosition, 1));
+            }
+
         }
     }
 }
