@@ -463,15 +463,18 @@ MonoBehaviour:
   sphereGenerator: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
   Resolution: 8
-  numInstances: 100000
+  numInstances: 50000
   LODSwitchDist: 500
   _GalacticCentre: {x: 0, y: 0, z: 0}
-  _TimeStep: 0.005
+  _TimeStep: 0.0005
   _MinEccentricity: 0.5
   _MaxEccentricity: 1
   _GalacticDiskRadius: 50000
   _GalacticHaloRadius: 100000
   _GalacticBulgeRadius: 10000
+  _Exponent: 1
+  _ProportionOfStarsInBulge: 0.75
+  _ProportionOfStarsInDisk: 0.99
   _AngularOffsetMultiplier: 2
   billboardTexture: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}
   _EmissionColour: {r: 1, g: 1, b: 1, a: 0}

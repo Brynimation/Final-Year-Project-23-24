@@ -33,6 +33,12 @@ public class DispatcherProcedural : MonoBehaviour
     public float _GalacticDiskRadius;
     public float _GalacticHaloRadius;
     public float _GalacticBulgeRadius;
+    [Header("Increase this to increase the proportion of stars with smaller orbital radii")]
+    public float _Bias = 1.0f;
+    [Range(0, 1)]
+    public float _ProportionOfStarsInBulge;
+    [Range(0, 1)]
+    public float _ProportionOfStarsInDisk;
     public float _AngularOffsetMultiplier;
     [Header("Textures")]
     public Texture2D billboardTexture;
@@ -98,6 +104,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_TimeStep", _TimeStep);
         positionCalculator.SetVector("_StandardColour", _StandardColour);
         positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
+        positionCalculator.SetFloat("_Bias", _Bias);
 
     }
     private void SetPositionCalculatorData2() 
@@ -106,6 +113,8 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_MinEccentricity", _MinEccentricity);
         positionCalculator.SetFloat("_MaxEccentricity", _MaxEccentricity);
         positionCalculator.SetFloat("_GalacticDiskRadius", _GalacticDiskRadius);
+        positionCalculator.SetFloat("_ProportionOfStarsInBulge", _ProportionOfStarsInBulge);
+        positionCalculator.SetFloat("_ProprtionOfStarsInDisk", _ProportionOfStarsInDisk);
         positionCalculator.SetFloat("_GalacticHaloRadius", _GalacticHaloRadius);
         positionCalculator.SetFloat("_GalacticBulgeRadius", _GalacticBulgeRadius);
         positionCalculator.SetFloat("_AngularOffsetMultiplier", _AngularOffsetMultiplier);
@@ -116,7 +125,8 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_TimeStep", _TimeStep);
         positionCalculator.SetVector("_StandardColour", _StandardColour);
         positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
-        
+        positionCalculator.SetFloat("_Bias", _Bias);
+
     }
 
     void Start()
@@ -176,7 +186,7 @@ public class DispatcherProcedural : MonoBehaviour
 
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
-        bounds = new Bounds(Vector3.zero, new Vector3(_GalacticHaloRadius, _GalacticHaloRadius, _GalacticHaloRadius));
+        bounds = new Bounds(Vector3.zero, new Vector3(_GalacticHaloRadius * 2, _GalacticHaloRadius * 2, _GalacticHaloRadius * 2));
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);

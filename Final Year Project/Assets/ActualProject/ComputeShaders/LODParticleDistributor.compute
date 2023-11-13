@@ -40,12 +40,17 @@ uniform float _MaxEccentricity;
 uniform float _GalacticDiskRadius;
 uniform float _GalacticHaloRadius;
 uniform float _GalacticBulgeRadius;
+uniform float _Bias;
+uniform float _ProportionOfStarsInBulge;
+uniform float _ProportionOfStarsInDisk;
 uniform float _AngularOffsetMultiplier;
 uniform float3 _CameraPosition;
 uniform float _LODSwitchDist;
 uniform float _TimeStep;
 uniform int _NumParticles;
+uniform float _CentralIntensity;
 uniform float _time;
+uniform float _HalfLightRadius;
 
 float GenerateRandom(int x)
 {
@@ -74,6 +79,38 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
     float3 pos = float3(xPos, yPos, zPos);
     return pos;
 }
+
+float GetAccurateSemiMajorAxis(uint id)
+{
+    // Calculate the corresponding radius
+    float radius = _GalacticHaloRadius * (exp(_Bias* (float)id / (float)_NumParticles) - 1.0);
+    return radius;
+}
+/*float GetAccurateSemiMajorAxis(uint id)
+{
+    int bulgeStarCount = int(_ProportionOfStarsInBulge * _NumParticles);
+    int diskStarCount = int(_ProportionOfStarsInDisk * _NumParticles);
+    //return _GalacticHaloRadius * (exp((float)id/(float)_NumParticles) - 1.0);
+    ;
+    float radiusInBulge = _GalacticBulgeRadius * (exp((float)id/(float)bulgeStarCount) - 1.0);
+    float radiusInDisk = -_GalacticBulgeRadius + _GalacticDiskRadius * (exp((float)(id - bulgeStarCount)/(float)(diskStarCount-bulgeStarCount)) - 1.0);
+    float radiusInHalo = -_GalacticDiskRadius +  _GalacticHaloRadius * exp((float)(id - diskStarCount)/(float)(_NumParticles - diskStarCount) - 1.0);
+    if(id < bulgeStarCount) return radiusInBulge;
+    else if(id >= bulgeStarCount && id < diskStarCount)return radiusInDisk;
+    else return radiusInHalo;
+    /*if(id < bulgeStarCount) //25% particles live within the bulge
+    {
+        float ln = log((float) (bulgeStarCount) / (float) (bulgeStarCount - id));
+        return pow(ln * _GalacticBulgeRadius, 4);
+    }
+    else if(id >= bulgeStarCount && id < diskStarCount)
+    {
+        return _GalacticDiskRadius * log( (float) (diskStarCount / (float) (diskStarCount - bulgeStarCount - id))); //beyond the bulge, in the disk
+    }else{
+        return _GalacticHaloRadius * log( (float) (_NumParticles) / (float) (_NumParticles - id)); //beyond the disk, in the halo
+    }
+
+}*/
 float GetSemiMajorAxis(float x)
 {
     
@@ -109,21 +146,25 @@ float GetRandomAngle(uint id)
 
 float GetExpectedAngularVelocity(uint i, float r)
 {
+    //One simplifying assumption we make here is that, as the nuclear bulge of the galaxy is very densely packed with stars, we consider it to behave as a 
+    //uniformly dense solid sphere.
     //Due to Newton's shell theorem: for a test particle contained within a sphere of constant density, gravitational force (and hence acceleration)
     //increases linearly with distance from the centre (at 0) to the surface of the sphere (at a maximum).  Beyond the sphere, we use Newton's 
     //universal law of gravitation to show that orbital velocity is proportion to 1/sqrt(distance) from the centre of mass, and hence, angular velocity is proportional to 1/distance^(3/2).
     //Here, we make the simplifying assumption that the nuclear bulge is a sphere of constant density that houses the mass of the entire galaxy.
     //We do the lerping so that the transition from the bulge to the disc is more seamless
-    float discSpeed = sqrt((_NumParticles * 50)/ pow(r, 3)) * 500;
-    float constant =  ((float)discSpeed / pow(_GalacticBulgeRadius, 2));//angular velocity = sqrt(4/3 * G * pi * r^2 * sphereDensity); - This constant is needed so that, when r = bulge radius, the speed of the particle in the disc and in the bulge is the same, making the transition smoother
-    float bulgeSpeed = sqrt(constant * pow(r, 2));
-    if(r < _GalacticBulgeRadius)
-    {
-        return bulgeSpeed;
-    }
+    float galaxyMass = _NumParticles * 25000;
+    float discSpeed = sqrt(galaxyMass / pow(r, 3));
+    float bulgeSpeed = 0.5; //angular velocity in the bulge is constant.
+    float interpolationDist = _GalacticBulgeRadius / 2.0;
+    // Calculate a smooth transition factor between bulgeSpeed and discSpeed
+    float t = smoothstep(_GalacticBulgeRadius - interpolationDist, _GalacticBulgeRadius, r);
 
-    //For a keplerian system (where a body follows a circular orbit around some centre of mass), angular velocity = sqrt(G * COM / r^3)
-    return discSpeed;
+    // Calculate the interpolated speed
+    float speed = lerp(bulgeSpeed, discSpeed, t);
+
+    return speed;
+
     //return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
     
     //Using Newton's form of Kepler's third law:
@@ -140,7 +181,7 @@ float GetAngularOffset(uint id)
 }
 float3 GetPointOnEllipse(uint id)
 {
-    float semiMajorAxis = GetSemiMajorAxis(id/(float)_NumParticles);
+    float semiMajorAxis = GetAccurateSemiMajorAxis(id);//GetSemiMajorAxis(id/(float)_NumParticles);
     float eccentricity = GetEccentricity(semiMajorAxis); 
     float angularVelocity = GetExpectedAngularVelocity(id, semiMajorAxis);
     float semiMinorAxis = eccentricity * semiMajorAxis;   
@@ -214,7 +255,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     data.position = posObjectSpace;
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
-    float semiMajorAxis = GetSemiMajorAxis(id.x/(float)_NumParticles);
+    float semiMajorAxis = GetAccurateSemiMajorAxis(id);//GetSemiMajorAxis(id.x/(float)_NumParticles);
     if(abs(semiMajorAxis - 26080) < 10)
     {
         data.radius = 1000;
@@ -248,7 +289,7 @@ void NOTCSMain (uint3 id : SV_DispatchThreadID)
     float3 posObjectSpace = GetPointOnEllipse(id.x);
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
-    float semiMajorAxis = GetSemiMajorAxis(id.x/(float)_NumParticles);
+    float semiMajorAxis = GetSemiMajorAxis(id.x);
     if(abs(semiMajorAxis - 26080) < 10)
     {
         data.radius = 1000;

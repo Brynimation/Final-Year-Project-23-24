@@ -989,7 +989,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderDistance: 200
-  lodSwitchDist: 0
+  lodSwitchDist: 40
   chunkSize: 20
   playerChunkCoord: {x: 0, y: 0, z: 0}
   viewer: {fileID: 1322359870}
