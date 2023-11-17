@@ -76,8 +76,8 @@ public class GameManager : MonoBehaviour
 
         viewFrustumPlanesBuffer = new ComputeBuffer(6, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Plane)));
         
-        argsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
-        argsBuffer.SetData(new uint[] { chunkMesh.GetIndexCount(0), (uint) Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u, 0u });
+        argsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
+        argsBuffer.SetData(new uint[] { 1, (uint) Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u});
 
         argsBuffer2 = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         argsBuffer2.SetData(new uint[] { chunkMesh2.GetIndexCount(0), (uint)Mathf.Pow(chunksVisibleInViewDist, 3), 0u, 0u, 0u });
@@ -248,7 +248,8 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
         // Offset the bounds by the viewer's position relative to the startingPos.
         //instancingBounds.center += startingPos - viewer.position;
 
-        Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, instancingBounds, argsBuffer);
+        //Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, instancingBounds, argsBuffer);
+        Graphics.DrawProceduralIndirect(chunkMaterial, instancingBounds, MeshTopology.Points, argsBuffer);
         Graphics.DrawMeshInstancedIndirect(chunkMesh2, 0, chunkMaterial2, instancingBounds, argsBuffer2);
         //Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, new Bounds(startingPos, Vector3.one * renderDistance*renderDistance), argsBuffer);
     }

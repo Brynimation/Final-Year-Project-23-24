@@ -13,10 +13,10 @@ struct Plane
 
 struct InstanceData
 {
-   float3 position;
-   float4 colour;
-   float radius;
-   uint culled;
+    float3 position;
+    float4 colour;
+    float radius;
+    uint culled;
 };
 
 struct ThreadIdentifier
@@ -62,8 +62,8 @@ float GenerateRandom(int x)
 This function calculates the current position of a star in its orbit. This requires the star's current position in its orbit (theta),
 the angle of inclination of its orbit (angleOffset), the semi-major (a) and semi-minor (b) axes of the ellipse. Obtained from line 425 from
 here: https://github.com/beltoforion/Galaxy-Renderer/blob/master/GalaxyWnd.cpp
-		GLfloat fx = (GLfloat)(x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta));
-		GLfloat fy = (GLfloat)(y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta));
+        GLfloat fx = (GLfloat)(x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta));
+        GLfloat fy = (GLfloat)(y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta));
 */
 
 float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
@@ -83,7 +83,7 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 float GetAccurateSemiMajorAxis(uint id)
 {
     // Calculate the corresponding radius
-    float radius = _GalacticHaloRadius * (exp(_Bias* (float)id / (float)_NumParticles) - 1.0);
+    float radius = _GalacticHaloRadius * (exp(_Bias * (float)id / (float)_NumParticles) - 1.0);
     return radius;
 }
 /*float GetAccurateSemiMajorAxis(uint id)
@@ -113,7 +113,7 @@ float GetAccurateSemiMajorAxis(uint id)
 }*/
 float GetSemiMajorAxis(float x)
 {
-    
+
     return(x * x * x * _GalacticHaloRadius);
 }
 
@@ -121,7 +121,7 @@ float GetEccentricity(float r)
 {
     if (r < _GalacticBulgeRadius)
     {
-       return lerp(_MaxEccentricity, _MinEccentricity, r / _GalacticBulgeRadius);
+        return lerp(_MaxEccentricity, _MinEccentricity, r / _GalacticBulgeRadius);
     }
     else if (r >= _GalacticBulgeRadius && r < _GalacticDiskRadius)
     {
@@ -129,7 +129,7 @@ float GetEccentricity(float r)
     }
     else if (r >= _GalacticDiskRadius && r < _GalacticHaloRadius)
     {
-        return lerp(_MaxEccentricity, 1.0, (r - _GalacticDiskRadius) /(_GalacticHaloRadius - _GalacticDiskRadius));
+        return lerp(_MaxEccentricity, 1.0, (r - _GalacticDiskRadius) / (_GalacticHaloRadius - _GalacticDiskRadius));
     }
     else {
         return 1.0;
@@ -137,7 +137,7 @@ float GetEccentricity(float r)
 }
 
 
-     
+
 /*Generates a random, initial angle based on the id of the star. This angle is known as the true anomaly, and is a measure of how far through its orbit the orbitting body is*/
 float GetRandomAngle(uint id)
 {
@@ -166,25 +166,25 @@ float GetExpectedAngularVelocity(uint i, float r)
     return speed;
 
     //return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
-    
+
     //Using Newton's form of Kepler's third law:
     //T = 4
 }
 
-/*Determines the angle of inclination of the elliptical orbit. Based on this article: https://beltoforion.de/en/spiral_galaxy_renderer/, by 
+/*Determines the angle of inclination of the elliptical orbit. Based on this article: https://beltoforion.de/en/spiral_galaxy_renderer/, by
 having the inclination of the orbit increase with the size of the semi-major axis of the orbit, we produce the desired spiral structure of the galaxy*/
 float GetAngularOffset(uint id)
 {
     int multiplier = id * _AngularOffsetMultiplier;
     int finalParticle = _NumParticles - 1;
-    return radians((multiplier/(float)finalParticle) * 360);
+    return radians((multiplier / (float)finalParticle) * 360);
 }
 float3 GetPointOnEllipse(uint id)
 {
     float semiMajorAxis = GetAccurateSemiMajorAxis(id);//GetSemiMajorAxis(id/(float)_NumParticles);
-    float eccentricity = GetEccentricity(semiMajorAxis); 
+    float eccentricity = GetEccentricity(semiMajorAxis);
     float angularVelocity = GetExpectedAngularVelocity(id, semiMajorAxis);
-    float semiMinorAxis = eccentricity * semiMajorAxis;   
+    float semiMinorAxis = eccentricity * semiMajorAxis;
     float currentAngularOffset = GetAngularOffset(id);
     float theta = GetRandomAngle(id) + angularVelocity * _time * _TimeStep;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
@@ -193,12 +193,12 @@ float3 GetPointOnEllipse(uint id)
 uint IntersectSphere(float3 centre, float radius)
 {
 
-    for(uint i = 0; i < 6; i++)
+    for (uint i = 0; i < 6; i++)
     {
         Plane plane = _ViewFrustumPlanes[i];
         float normalDotCentre = dot(plane.normal, centre);
         float cullDist = plane.distance;
-        if(normalDotCentre + cullDist + radius <= 0)
+        if (normalDotCentre + cullDist + radius <= 0)
         {
             return 0;
         }
@@ -207,7 +207,7 @@ uint IntersectSphere(float3 centre, float radius)
 }
 /*[numthreads(256,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
-{   
+{
     if(id.x >= _NumParticles) return;
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object'
@@ -225,7 +225,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float dist = length(posObjectSpace - _CameraPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return; 
+    if(inViewFrustum == 0) return;
     if(dist < _LODSwitchDist)
     {
          data.position = posObjectSpace;
@@ -237,10 +237,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 }
 */
 
-[numthreads(1024,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{   
-    if(id.x >= _NumParticles) return;
+[numthreads(1024, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _NumParticles) return;
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
@@ -256,26 +256,27 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
     float semiMajorAxis = GetAccurateSemiMajorAxis(id);//GetSemiMajorAxis(id.x/(float)_NumParticles);
-    if(abs(semiMajorAxis - 26080) < 10)
+    if (abs(semiMajorAxis - 26080) < 10)
     {
         data.radius = 1000;
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
     float dist = length(posObjectSpace - _CameraPosition) - data.radius;
     uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
-    if(inViewFrustum == 0) return; 
-    if(dist < _LODSwitchDist)
+    if (inViewFrustum == 0) return;
+    if (dist < _LODSwitchDist)
     {
         _PositionsLODAppend0.Append(data);
-    }else{
+    }
+    else {
         _PositionsLODAppend1.Append(data);
     }
 }
 
-[numthreads(256,1,1)]
-void NOTCSMain (uint3 id : SV_DispatchThreadID)
-{   
-    if(id.x >= _NumParticles) return;
+[numthreads(256, 1, 1)]
+void NOTCSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _NumParticles) return;
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
@@ -283,14 +284,14 @@ void NOTCSMain (uint3 id : SV_DispatchThreadID)
     InstanceData data;
     data.radius = (id.x % 100) == 0 ? 100 : 50;
     data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
-    data.position = float3(0, 0, - _GalacticHaloRadius * 2);
+    data.position = float3(0, 0, -_GalacticHaloRadius * 2);
 
 
     float3 posObjectSpace = GetPointOnEllipse(id.x);
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
     float semiMajorAxis = GetSemiMajorAxis(id.x);
-    if(abs(semiMajorAxis - 26080) < 10)
+    if (abs(semiMajorAxis - 26080) < 10)
     {
         data.radius = 1000;
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
@@ -300,18 +301,19 @@ void NOTCSMain (uint3 id : SV_DispatchThreadID)
     data.culled = inViewFrustum;
     _PositionsLOD0[id.x] = data;
     _PositionsLOD1[id.x] = data;
-    if(inViewFrustum == 0) return; 
-    if(dist < _LODSwitchDist)
+    if (inViewFrustum == 0) return;
+    if (dist < _LODSwitchDist)
     {
         _PositionsLOD0[id.x].position = posObjectSpace;
-    }else{
+    }
+    else {
         _PositionsLOD1[id.x].position = posObjectSpace;
     }
 }
 /*
 [numthreads(256,1,1)]
 void CSMain3 (uint3 id : SV_DispatchThreadID)
-{   
+{
     if(id.x >= _NumParticles) return;
     Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object'
@@ -322,7 +324,7 @@ void CSMain3 (uint3 id : SV_DispatchThreadID)
     float3 posObjectSpace = GetPointOnEllipse(id.x);
     float dist = length(posObjectSpace - _CameraPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return; 
+    if(inViewFrustum == 0) return;
     if(dist < _LODSwitchDist)
     {
         _PositionsLOD0[id.x] = posObjectSpace;
@@ -330,20 +332,21 @@ void CSMain3 (uint3 id : SV_DispatchThreadID)
         _PositionsLOD1[id.x] = posObjectSpace;
     }
 }*/
-[numthreads(256,1,1)]
-void CSMain2 (uint3 id : SV_DispatchThreadID)
-{   
-    if(id.x >= _NumParticles) return;
+[numthreads(256, 1, 1)]
+void CSMain2(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _NumParticles) return;
     //_PositionsLOD0[id.x] = float3(0, 0, -10000);
     //_PositionsLOD1[id.x] = float3(0, 0, -10000);
     float3 posObjectSpace = GetPointOnEllipse(id.x);
     float dist = length(posObjectSpace - _CameraPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return; 
-    if(dist < _LODSwitchDist)
+    if (inViewFrustum == 0) return;
+    if (dist < _LODSwitchDist)
     {
         //_PositionsLODAppend0.Append(posObjectSpace);
-    }else{
+    }
+    else {
         //_PositionsLODAppend1.Append(posObjectSpace);
     }
 }

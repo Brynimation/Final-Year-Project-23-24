@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028334, g: 0.22571328, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -997,7 +997,7 @@ MonoBehaviour:
   positionsCalculator: {fileID: 7200000, guid: 627c7cad2c1452849a9d3a4e944a4e74, type: 3}
   randomTexture: {fileID: 2800000, guid: ef73366e67529004baedf4331ebb29d0, type: 3}
   chunkMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  chunkMaterial: {fileID: 2100000, guid: af78b8b4e5bc7034daf459cbbc260396, type: 2}
+  chunkMaterial: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
   chunkMesh2: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
   chunkMaterial2: {fileID: 2100000, guid: 9af00f358d5d57340af4463892906125, type: 2}
   starCount: 5000

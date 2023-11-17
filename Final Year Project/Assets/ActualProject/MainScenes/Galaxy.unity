@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028334, g: 0.22571328, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -463,7 +463,7 @@ MonoBehaviour:
   sphereGenerator: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
   Resolution: 8
-  numInstances: 50000
+  numInstances: 100
   LODSwitchDist: 500
   _GalacticCentre: {x: 0, y: 0, z: 0}
   _TimeStep: 0.0005
@@ -472,7 +472,7 @@ MonoBehaviour:
   _GalacticDiskRadius: 50000
   _GalacticHaloRadius: 100000
   _GalacticBulgeRadius: 10000
-  _Exponent: 1
+  _Bias: 1
   _ProportionOfStarsInBulge: 0.75
   _ProportionOfStarsInDisk: 0.99
   _AngularOffsetMultiplier: 2
