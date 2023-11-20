@@ -6,7 +6,8 @@ using UnityEngine.Rendering;
 public class GameManager : MonoBehaviour
 {
     public float renderDistance;
-    public float lodSwitchDist = 15.0f;
+    public float lodSwitchDist1 = 2.0f;
+    public float lodSwitchDist2 = 15.0f;
     public int chunkSize;
     public Vector3Int playerChunkCoord;
     public Transform viewer;
@@ -18,13 +19,13 @@ public class GameManager : MonoBehaviour
     private List<MeshProperties> chunkPositions;
     private int chunksVisibleInViewDist;
 
-    //LOD min
+    //LOD sprite
     private ComputeBuffer positionsBuffer;
     private ComputeBuffer argsBuffer;
     public Mesh chunkMesh;
     public Material chunkMaterial;
 
-    //LOD min + 1
+    //LOD mini galaxies
     private ComputeBuffer positionsBuffer2;
     private ComputeBuffer argsBuffer2;
     public Mesh chunkMesh2;
@@ -33,6 +34,20 @@ public class GameManager : MonoBehaviour
     public bool testing = false;
     private int[] indices;
     private Vector3[] verts;
+
+    //LOD galaxy
+    public DispatcherProcedural dispatcherProcedural;
+    private ComputeBuffer galacticCentreBuffer;
+    private ComputeBuffer positionsBuffer3;
+    private ComputeBuffer positionsBuffer4;
+    private ComputeBuffer _VertexBuffer;
+    private ComputeBuffer _NormalBuffer;
+    private ComputeBuffer _UVBuffer;
+    private GraphicsBuffer _IndexBuffer;
+    public Material particleMaterial;
+    public Material starMaterial;
+    public ComputeShader positionCalculator;
+
 
     private ComputeBuffer viewFrustumPlanesBuffer;
     private Vector3 prevCameraPos;
@@ -49,16 +64,12 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
-        VertexAttributeDescriptor[] customVertexStreams = new[] {
-            new VertexAttributeDescriptor(format: VertexAttributeFormat.SInt32, dimension:1, stream:0),
-        };
         indices = new int[starCount];
         for (int i = 0; i < starCount; i++) indices[i] = i;
         verts = new Vector3[starCount];
         if (!testing) 
         {
             chunkMesh2 = new Mesh();
-            //chunkMesh2.SetVertexBufferParams(starCount, customVertexStreams);
             chunkMesh2.SetVertices(verts);
             chunkMesh2.SetIndices(indices, MeshTopology.Points, 0);
             chunkMesh2.GetIndices(0);
@@ -73,6 +84,7 @@ public class GameManager : MonoBehaviour
 
         positionsBuffer = new ComputeBuffer((int) Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
         positionsBuffer2 = new ComputeBuffer((int)Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        galacticCentreBuffer = new ComputeBuffer(10000, sizeof(float) * 3, ComputeBufferType.Append);
 
         viewFrustumPlanesBuffer = new ComputeBuffer(6, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Plane)));
         
@@ -86,10 +98,9 @@ public class GameManager : MonoBehaviour
 
         chunkMaterial2.SetBuffer("_Properties", positionsBuffer2);
 
-
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties", positionsBuffer);
+        positionsCalculator.SetBuffer(positionsCalculatorIndex, "_GalacticCentreBuffer", galacticCentreBuffer);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties2", positionsBuffer2);
-
         positionsCalculator.SetTexture(positionsCalculatorIndex, "_Texture", randomTexture);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_ViewFrustumPlanesBuffer", viewFrustumPlanesBuffer);
 
@@ -116,8 +127,10 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
     {
         positionsBuffer.SetCounterValue(0);
         positionsBuffer2.SetCounterValue(0);
+        galacticCentreBuffer.SetCounterValue(0);
 
-        positionsCalculator.SetFloat("lodSwitchDist", lodSwitchDist);
+        positionsCalculator.SetFloat("lodSwitchDist1", lodSwitchDist1);
+        positionsCalculator.SetFloat("lodSwitchDist2", lodSwitchDist2);
         positionsCalculator.SetFloat("renderDistance", renderDistance);
         positionsCalculator.SetVector("playerPosition", viewer.position);
         positionsCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);

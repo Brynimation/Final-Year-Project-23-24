@@ -989,7 +989,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderDistance: 200
-  lodSwitchDist: 40
+  lodSwitchDist1: 2
+  lodSwitchDist2: 15
   chunkSize: 20
   playerChunkCoord: {x: 0, y: 0, z: 0}
   viewer: {fileID: 1322359870}
@@ -1002,6 +1003,10 @@ MonoBehaviour:
   chunkMaterial2: {fileID: 2100000, guid: 9af00f358d5d57340af4463892906125, type: 2}
   starCount: 5000
   testing: 0
+  dispatcherProcedural: {fileID: 0}
+  particleMaterial: {fileID: 0}
+  starMaterial: {fileID: 0}
+  positionCalculator: {fileID: 0}
 --- !u!4 &2086999696
 Transform:
   m_ObjectHideFlags: 0

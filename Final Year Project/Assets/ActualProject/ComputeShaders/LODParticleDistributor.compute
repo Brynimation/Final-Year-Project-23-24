@@ -205,37 +205,6 @@ uint IntersectSphere(float3 centre, float radius)
     }
     return 1;
 }
-/*[numthreads(256,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
-    if(id.x >= _NumParticles) return;
-    /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
-    positions that don't fall inside the view frustum to a position outside the bounds of the object'
-    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    InstanceData data;
-    data.id = id.x;
-    data.radius = GenerateRandom(id.x);
-    data.colour = (id.x % 100) == 0 ? float4(1,0,0,1) : float4(0,1,0,1);
-    data.position = float3(0, 0, - _GalacticHaloRadius * 2);
-
-    //_PositionsLOD0[id.x] = data;
-    //_PositionsLOD1[id.x] = data;
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-
-    float dist = length(posObjectSpace - _CameraPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return;
-    if(dist < _LODSwitchDist)
-    {
-         data.position = posObjectSpace;
-         InterlockedAdd(_PositionsLOD0, data);
-    }else{
-         data.position = posObjectSpace;
-         InterlockedAdd(_PositionsLOD1, data);
-    }
-}
-*/
 
 [numthreads(1024, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)

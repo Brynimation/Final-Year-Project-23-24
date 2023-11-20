@@ -356,130 +356,6 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
---- !u!1 &783746722
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 783746724}
-  - component: {fileID: 783746723}
-  - component: {fileID: 783746725}
-  - component: {fileID: 783746726}
-  m_Layer: 0
-  m_Name: Dispatcher
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &783746723
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 783746722}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec8883becd3ce08489d7d593f062e2b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _GalacticCentre: {x: 0, y: 0, z: 0}
-  _MinEccentricity: 0
-  _MaxEccentricity: 1
-  _GalacticDiskRadius: 20000
-  _GalacticHaloRadius: 10000000
-  _GalacticBulgeRadius: 50000
-  _AngularOffsetMultiplier: 4
-  _NumParticles: 1000000
-  maxStarSize: 100
-  mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  material: {fileID: 2100000, guid: 46d63b66fed5d6d4596e8173a7e558d4, type: 2}
-  positionCalculator: {fileID: 0}
---- !u!4 &783746724
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 783746722}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &783746725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 783746722}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 529e44ad9b3169a4495292cdfd78dfdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  billboardTexture: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}
-  _GalacticCentre: {x: 0, y: 0, z: 0}
-  _MinEccentricity: 0.5
-  _MaxEccentricity: 1
-  _GalacticDiskRadius: 500000
-  _GalacticHaloRadius: 1000000
-  _GalacticBulgeRadius: 200000
-  _AngularOffsetMultiplier: 4
-  _NumParticles: 100000
-  maxStarSize: 100
-  _CameraPosition: {x: 0, y: 0, z: 0}
-  LODSwitchDist: 500
-  mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  mesh2: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  material:
-  - {fileID: 2100000, guid: 0abb9a251cc78b34f8cb3d31775c81c6, type: 2}
-  - {fileID: 2100000, guid: 53c2b83c19f67154085c5dbc6cfc989f, type: 2}
-  positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
-  clearBufferShader: {fileID: 0}
---- !u!114 &783746726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 783746722}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 960bbdb925d04024d81a6b205b4ef0da, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  material:
-  - {fileID: 2100000, guid: b7507d19421b0ef469aa2a0a6bb903c7, type: 2}
-  - {fileID: 2100000, guid: 53c2b83c19f67154085c5dbc6cfc989f, type: 2}
-  sphereGenerator: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
-  positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
-  Resolution: 8
-  numInstances: 100
-  LODSwitchDist: 500
-  _GalacticCentre: {x: 0, y: 0, z: 0}
-  _TimeStep: 0.0005
-  _MinEccentricity: 0.5
-  _MaxEccentricity: 1
-  _GalacticDiskRadius: 50000
-  _GalacticHaloRadius: 100000
-  _GalacticBulgeRadius: 10000
-  _Bias: 1
-  _ProportionOfStarsInBulge: 0.75
-  _ProportionOfStarsInDisk: 0.99
-  _AngularOffsetMultiplier: 2
-  billboardTexture: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}
-  _EmissionColour: {r: 1, g: 1, b: 1, a: 0}
-  _StandardColour: {r: 0.5492168, g: 0.9622642, b: 0.9459244, a: 0}
-  _H2RegionColour: {r: 1, g: 0, b: 0, a: 0}
 --- !u!1 &785107419
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,3 +543,60 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2430435399663230963
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2430435399164827985, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_Name
+      value: Dispatcher
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2430435399164827991, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b93f2ace4b91eab4589388fff76e4763, type: 3}
