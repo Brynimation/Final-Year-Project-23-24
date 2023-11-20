@@ -200,7 +200,7 @@ public class DispatcherProcedural : MonoBehaviour
         // index 4 : start instance location
         sphereArgsBuffer.SetData(new uint[] { (uint)numIndicesPerInstance, (uint)numInstances, 0u, 0u, 0u });
         billboardArgsBuffer.SetData(new uint[] { (uint)1, (uint)numInstances, 0u, 0u });
-        sphereGeneratorDispatchArgsBuffer.SetData(new uint[] { 10u, 10u, 1u });
+        sphereGeneratorDispatchArgsBuffer.SetData(new uint[] { (uint) Resolution, 1u, 1u });
         positionCalculatorDispatchArgsBuffer.SetData(new uint[] { (uint)positionGroupSizeX, 1u, 1u });
 
         Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
