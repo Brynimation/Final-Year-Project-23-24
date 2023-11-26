@@ -21,6 +21,8 @@ public class DispatcherProcedural : MonoBehaviour
     [Header("Sphere Generation")]
     [Range(1, 10)]
     public int Resolution = 10;
+    public float smallStarRadius;
+    public float largeStarRadius;
     public int numInstances = 10000;
     int prevNumInstances;
     uint threadGroupSizeX;
@@ -109,6 +111,9 @@ public class DispatcherProcedural : MonoBehaviour
     }
     private void SetPositionCalculatorData2() 
     {
+        _GalacticCentre = transform.position;
+        positionCalculator.SetFloat("_SmallStarRadius", smallStarRadius);
+        positionCalculator.SetFloat("_LargeStarRadius" ,largeStarRadius);
         positionCalculator.SetVector("_GalacticCentre", _GalacticCentre);
         positionCalculator.SetFloat("_MinEccentricity", _MinEccentricity);
         positionCalculator.SetFloat("_MaxEccentricity", _MaxEccentricity);
@@ -186,7 +191,7 @@ public class DispatcherProcedural : MonoBehaviour
 
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
-        bounds = new Bounds(Vector3.zero, new Vector3(_GalacticHaloRadius * 2, _GalacticHaloRadius * 2, _GalacticHaloRadius * 2));
+        bounds = new Bounds(_GalacticCentre, new Vector3(_GalacticHaloRadius * 2, _GalacticHaloRadius * 2, _GalacticHaloRadius * 2));
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);

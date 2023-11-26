@@ -32,6 +32,8 @@ RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
 
+uniform float _SmallStarRadius;
+uniform float _LargeStarRadius;
 uniform float4 _StandardColour;
 uniform float4 _H2RegionColour;
 uniform float3 _GalacticCentre;
@@ -75,7 +77,7 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-    float zPos = 0.0;
+    float zPos = _GalacticCentre.z;
     float3 pos = float3(xPos, yPos, zPos);
     return pos;
 }
@@ -153,7 +155,7 @@ float GetExpectedAngularVelocity(uint i, float r)
     //universal law of gravitation to show that orbital velocity is proportion to 1/sqrt(distance) from the centre of mass, and hence, angular velocity is proportional to 1/distance^(3/2).
     //Here, we make the simplifying assumption that the nuclear bulge is a sphere of constant density that houses the mass of the entire galaxy.
     //We do the lerping so that the transition from the bulge to the disc is more seamless
-    float galaxyMass = _NumParticles * 25000;
+    float galaxyMass = _NumParticles * 2500000;
     float discSpeed = sqrt(galaxyMass / pow(r, 3));
     float bulgeSpeed = 0.5; //angular velocity in the bulge is constant.
     float interpolationDist = _GalacticBulgeRadius / 2.0;
@@ -247,7 +249,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
     ThreadIdentifier data;
     data.id = id.x;
-    data.radius = (id.x % 100) == 0 ? 100 : 50;
+    data.radius = (id.x % 100) == 0 ? _LargeStarRadius : _SmallStarRadius;
     data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
 
 
@@ -258,7 +260,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float semiMajorAxis = GetAccurateSemiMajorAxis(id);//GetSemiMajorAxis(id.x/(float)_NumParticles);
     if (abs(semiMajorAxis - 26080) < 10)
     {
-        data.radius = 1000;
+        data.radius = _LargeStarRadius;
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
     float dist = length(posObjectSpace - _CameraPosition) - data.radius;

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -5,6 +6,11 @@ using UnityEngine.Rendering;
 
 public class GameManager : MonoBehaviour
 {
+    //Render Texture
+    public GameObject bigGalaxy;
+    RenderTexture rt;
+    Texture2D texture;
+
     public float renderDistance;
     public float lodSwitchDist = 15.0f;
     public int chunkSize;
@@ -47,11 +53,32 @@ public class GameManager : MonoBehaviour
     {
         public Matrix4x4 mat;
     }
+
+    IEnumerator CheckRenderTextureCoroutine(RenderTexture renderTexture)
+    {
+        // Wait until the end of the frame after all rendering is complete
+        yield return new WaitForEndOfFrame();
+
+        // Now you can safely read from the render texture
+        // Remember that reading from a render texture must happen on the main thread
+        Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height);
+        RenderTexture.active = renderTexture;
+        tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null; // Reset active render texture
+        Color val = tex.GetPixel(0, 0);
+        if (val.r == 1) 
+        {
+            bigGalaxy.SetActive(true);
+        }
+        // Now tex contains the pixel data from the render texture
+        // You can now process this data or pass it to another method for further processing
+    }
     void Start()
     {
-        VertexAttributeDescriptor[] customVertexStreams = new[] {
-            new VertexAttributeDescriptor(format: VertexAttributeFormat.SInt32, dimension:1, stream:0),
-        };
+        rt = new RenderTexture(5, 1, 0);
+        rt.enableRandomWrite  = true;
+        rt.Create();
         indices = new int[starCount];
         for (int i = 0; i < starCount; i++) indices[i] = i;
         verts = new Vector3[starCount];
@@ -90,6 +117,7 @@ public class GameManager : MonoBehaviour
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties", positionsBuffer);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties2", positionsBuffer2);
 
+        positionsCalculator.SetTexture(positionsCalculatorIndex, "_RenderTexture", rt);
         positionsCalculator.SetTexture(positionsCalculatorIndex, "_Texture", randomTexture);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_ViewFrustumPlanesBuffer", viewFrustumPlanesBuffer);
 
@@ -114,6 +142,7 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
      */
     void GenerateStars() 
     {
+        StartCoroutine(CheckRenderTextureCoroutine(rt));
         positionsBuffer.SetCounterValue(0);
         positionsBuffer2.SetCounterValue(0);
 

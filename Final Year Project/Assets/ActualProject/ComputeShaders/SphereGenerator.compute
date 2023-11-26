@@ -338,7 +338,6 @@ void CSMain2 (uint3 id : SV_DispatchThreadID)
 [numthreads(1,1,6)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    //_ModelMatrix = CreateMatrix(float3(5.0, 5.0, 5.0), float3(1,1,1), float3(0, 1, 0), 0);
     CubeFace cubeFace = GenerateCubeFaceProperties(id);
     uint vertStart = 4 * _Resolution * (_Resolution * cubeFace.id + id.x);
     uint triStart = 6 * _Resolution * (_Resolution * cubeFace.id + id.x);
@@ -347,14 +346,14 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //set positions 
     float3 p0 = normalize(u0);
     float3 p1 = normalize(u1);
-    //Set uvs
+    //Set uvs. We're want the texture to repeat with every new quad
     float2 uv0 = float2(0, 0);
     float2 uv1 = float2(1, 0);
-    //Set normals
+    //Set normals (as we're generating a unit sphere, the normal direction at a point p0 is just equal to p0)
     float3 n0 = p0;
     float3 n1 = p1;
 
-
+    //Below we generate a column of quads of one of the planes of our cube
     for(int y = 1; y <= _Resolution; y++, vertStart+=4,triStart+=6){
         if(id.x < _Resolution)
         {
@@ -366,7 +365,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
             float3 n2 = p2;
             float3 n3 = p3;
-
+            
             _VertexBuffer[vertStart] = p0; 
             _VertexBuffer[vertStart + 1] = p1;
             _VertexBuffer[vertStart + 2] =  p2;
@@ -382,6 +381,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             _UVBuffer[vertStart + 2] = uv2;
             _UVBuffer[vertStart + 3] = uv3;
 
+            //Triangles must wind clockwise (unity convention)
             _IndexBuffer[triStart] = vertStart;
             _IndexBuffer[triStart + 1] = vertStart + 2;
             _IndexBuffer[triStart + 2] = vertStart + 1;
@@ -389,6 +389,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             _IndexBuffer[triStart + 3] = vertStart + 1;
             _IndexBuffer[triStart + 4] = vertStart + 2;
             _IndexBuffer[triStart + 5] = vertStart + 3;
+
             p0 = p2;
             p1 = p3;
             n0 = n2;

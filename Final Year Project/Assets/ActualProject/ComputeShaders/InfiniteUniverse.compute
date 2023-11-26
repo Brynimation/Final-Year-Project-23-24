@@ -16,6 +16,7 @@ int3 playerChunkCoord;
 int chunksVisibleInViewDist;
 StructuredBuffer<Plane> _ViewFrustumPlanesBuffer;
 Texture2D<float4> _Texture;
+RWTexture2D<float4> _RenderTexture;
 SamplerState sampler_Texture;
 
 
@@ -92,6 +93,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         {
             if(length(actualPosition - playerPosition) < lodSwitchDist)
             {
+                _RenderTexture[uint2(0,0)] = float4(1.0, 0.0, 0.0, 1.0);
                 _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
             }else{
                 _Properties.Append(GenerateMeshProperties(actualPosition, 1));

@@ -86,12 +86,14 @@ Shader "Custom/DrawProceduralShader"
                 ThreadIdentifier ti = _PositionsLOD0[i.instanceId]; //Sphere centre position 
                 _ModelMatrix = CreateMatrix(ti.position, ti.radius); //Create TRS matrix
                 float4 vertexPosOS = mul(_ModelMatrix, float4(_VertexBuffer[i.vertexId], 1.0)); //transform to object space of sphere 
-                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute clip space position
+
+                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
                 VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
-                float2 uv = _UVBuffer[i.vertexId];
                 o.posWS = positionData.positionWS;
                 o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
+
+                float2 uv = _UVBuffer[i.vertexId];
                 o.colour = ti.colour + _EmissionColour;
                 o.uv = uv;
                 return o;
