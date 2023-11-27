@@ -35,6 +35,7 @@ RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
 
+uniform float _ThresholdDist;
 uniform float4 _StandardColour;
 uniform float _GalaxyDensity;
 uniform float4 _LargeStarRadius;
@@ -50,7 +51,7 @@ uniform float _Bias;
 uniform float _ProportionOfStarsInBulge;
 uniform float _ProportionOfStarsInDisk;
 uniform float _AngularOffsetMultiplier;
-uniform float3 _CameraPosition;
+uniform float3 _PlayerPosition;
 uniform float _LODSwitchDist;
 uniform float _TimeStep;
 uniform int _NumParticles;
@@ -230,7 +231,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //_PositionsLOD1[id.x] = data;
     float3 posObjectSpace = GetPointOnEllipse(id.x);
 
-    float dist = length(posObjectSpace - _CameraPosition);
+    float dist = length(posObjectSpace - _PlayerPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
     if(inViewFrustum == 0) return;
     if(dist < _LODSwitchDist)
@@ -250,13 +251,22 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     if (id.x >= _NumParticles || _MainPositionBufferCount[0] == 0)
         return;
     _GalacticCentre = _MainPositionBuffer[0];
+
+    float curDist = length(_GalacticCentre - _PlayerPosition);
+    float multiplier = exp((float)_ThresholdDist/curDist);
+    _GalacticBulgeRadius = multiplier/2.0;
+    _GalacticDiskRadius = multiplier;
+    _GalacticHaloRadius = multiplier * 2.0;
+
+    float curLargeStarRadius = min(100, multiplier * _LargeStarRadius);
+    float curSmallStarRadius = min(50, multiplier * _SmallStarRadius);
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
     //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
     ThreadIdentifier data;
     data.id = id.x;
-    data.radius = (id.x % 100) == 0 ? _LargeStarRadius : _SmallStarRadius; //100 : 50;
+    data.radius = (id.x % 100) == 0 ? curLargeStarRadius : curSmallStarRadius; //100 : 50;
     data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
 
 
@@ -270,7 +280,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         data.radius = 1000;
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
-    float dist = length(posObjectSpace - _CameraPosition) - data.radius;
+    float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
     uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)
         return;
@@ -308,7 +318,7 @@ void NOTCSMain(uint3 id : SV_DispatchThreadID)
         data.radius = 1000;
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
-    float dist = length(posObjectSpace - _CameraPosition) - data.radius;
+    float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
     uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
     data.culled = inViewFrustum;
     _PositionsLOD0[id.x] = data;
@@ -336,7 +346,7 @@ void CSMain3 (uint3 id : SV_DispatchThreadID)
     _PositionsLOD0[id.x] = float3(0, 0, -15000);
     _PositionsLOD1[id.x] = float3(0, 0, -15000);
     float3 posObjectSpace = GetPointOnEllipse(id.x);
-    float dist = length(posObjectSpace - _CameraPosition);
+    float dist = length(posObjectSpace - _PlayerPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
     if(inViewFrustum == 0) return;
     if(dist < _LODSwitchDist)
@@ -354,7 +364,7 @@ void CSMain2(uint3 id : SV_DispatchThreadID)
     //_PositionsLOD0[id.x] = float3(0, 0, -10000);
     //_PositionsLOD1[id.x] = float3(0, 0, -10000);
     float3 posObjectSpace = GetPointOnEllipse(id.x);
-    float dist = length(posObjectSpace - _CameraPosition);
+    float dist = length(posObjectSpace - _PlayerPosition);
     uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
     if (inViewFrustum == 0)
         return;

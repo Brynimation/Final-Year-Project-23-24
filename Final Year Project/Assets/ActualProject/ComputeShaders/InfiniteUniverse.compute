@@ -91,13 +91,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     if(val > -100000)
     {
         float3 actualPosition = viewedChunkCoord * chunkSize;
-        if(IntersectSphere(actualPosition, 1) != 0)
+        if (length(actualPosition - playerPosition) < lodSwitchDist1)
         {
-            if (length(actualPosition - playerPosition) < lodSwitchDist1)
-            {
-                _MainProperties.Append(actualPosition);
-            }
-            else if(length(actualPosition - playerPosition) < lodSwitchDist2)
+            _MainProperties.Append(actualPosition);
+        }
+        else if(IntersectSphere(actualPosition, 1) != 0)
+        {
+            if(length(actualPosition - playerPosition) < lodSwitchDist2)
             {
                 _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
             }else{

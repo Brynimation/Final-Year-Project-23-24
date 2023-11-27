@@ -19,6 +19,7 @@ public class DispatcherProcedural : MonoBehaviour
     public Material[] material;
     public ComputeShader sphereGenerator;
     public ComputeShader positionCalculator;
+    public PlayerController player;
     [Header("Sphere Generation")]
     [Range(1, 10)]
     public int Resolution = 10;
@@ -29,6 +30,7 @@ public class DispatcherProcedural : MonoBehaviour
     uint threadGroupSizeX;
     public int LODSwitchDist;
     [Header("Position Calculation")]
+    public float _ThresholdDist;
     public Vector3 _GalacticCentre;
     public float _TimeStep = 1.0f;
     public float _MinEccentricity;
@@ -61,6 +63,7 @@ public class DispatcherProcedural : MonoBehaviour
     private Quaternion prevCameraRot;
     Vector3[] positions;
     [Header("Buffers")]
+    bool buffersSet;
     public ComputeBuffer _MainPositionBuffer;
     public ComputeBuffer _MainPositionBufferCount;
     private ComputeBuffer _PositionsBufferLOD0;
@@ -79,7 +82,7 @@ public class DispatcherProcedural : MonoBehaviour
     private ComputeBuffer positionCalculatorDispatchArgsBuffer;
     private void Awake()
     {
-        
+        player = FindObjectOfType<PlayerController>();
     }
 
     private void OnDrawGizmos()
@@ -116,6 +119,7 @@ public class DispatcherProcedural : MonoBehaviour
     private void SetPositionCalculatorData2() 
     {
         //_GalacticCentre = transform.position;
+        positionCalculator.SetFloat("_ThresholdDist", _ThresholdDist);
         positionCalculator.SetFloat("_GalaxyDensity", _GalaxyDensity);
         positionCalculator.SetFloat("_SmallStarRadius", smallStarRadius);
         positionCalculator.SetFloat("_LargeStarRadius" ,largeStarRadius);
@@ -131,7 +135,7 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetInt("_NumParticles", numInstances);
         positionCalculator.SetFloat("_time", Time.time);
         positionCalculator.SetFloat("_LODSwitchDist", LODSwitchDist);
-        positionCalculator.SetVector("_CameraPosition", Camera.main.transform.position);
+        positionCalculator.SetVector("_PlayerPosition", player.transform.position);
         positionCalculator.SetFloat("_TimeStep", _TimeStep);
         positionCalculator.SetVector("_StandardColour", _StandardColour);
         positionCalculator.SetVector("_H2RegionColour", _H2RegionColour);
@@ -146,6 +150,7 @@ public class DispatcherProcedural : MonoBehaviour
         }
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBuffer", _MainPositionBuffer);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBufferCount", _MainPositionBufferCount);
+        buffersSet = true;
     }
     void Start()
     {
@@ -282,7 +287,7 @@ public class DispatcherProcedural : MonoBehaviour
 
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
-        bounds = new Bounds(Vector3.zero, new Vector3(_GalacticHaloRadius, _GalacticHaloRadius, _GalacticHaloRadius));
+        bounds = new Bounds(Vector3.zero, Vector3.one * Mathf.Infinity);
         
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
@@ -316,16 +321,18 @@ public class DispatcherProcedural : MonoBehaviour
         if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation)
         {
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            Debug.Log(planes);
-            Debug.Log(viewFrustumPlanesBuffer);
             viewFrustumPlanesBuffer.SetData(planes);
         }
 
         int numRows = Resolution;
-        positionCalculator.DispatchIndirect(positionCalculatorHandle, positionCalculatorDispatchArgsBuffer);
-        //sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
-        sphereGenerator.DispatchIndirect(SphereGeneratorHandle, sphereGeneratorDispatchArgsBuffer);
-        sphereGenerator.SetInt("_Resolution", Resolution);
+        if (buffersSet) 
+        {
+            positionCalculator.DispatchIndirect(positionCalculatorHandle, positionCalculatorDispatchArgsBuffer);
+            //sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
+            sphereGenerator.DispatchIndirect(SphereGeneratorHandle, sphereGeneratorDispatchArgsBuffer);
+            sphereGenerator.SetInt("_Resolution", Resolution);
+        }
+
         if (UniGenerator.currentGalaxyProperties != null)
         {
             SetPositionCalculatorData();
