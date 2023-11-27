@@ -12,7 +12,8 @@ public class GameManager : MonoBehaviour
     Texture2D texture;
 
     public float renderDistance;
-    public float lodSwitchDist = 15.0f;
+    public float lodSwitchDist1 = 5.0f;
+    public float lodSwitchDist2 = 15.0f;
     public int chunkSize;
     public Vector3Int playerChunkCoord;
     public Transform viewer;
@@ -23,6 +24,11 @@ public class GameManager : MonoBehaviour
     private int positionsCalculatorIndex;
     private List<MeshProperties> chunkPositions;
     private int chunksVisibleInViewDist;
+
+    //LOD main
+    public DispatcherProcedural dispatcherProcedural;
+    private ComputeBuffer mainPositionBuffer;
+    private ComputeBuffer mainPositionBufferCount;
 
     //LOD min
     private ComputeBuffer positionsBuffer;
@@ -70,7 +76,9 @@ public class GameManager : MonoBehaviour
         if (val.r == 1) 
         {
             bigGalaxy.SetActive(true);
+            bigGalaxy.transform.position = new Vector3(val.r, val.g, val.b);
         }
+        
         // Now tex contains the pixel data from the render texture
         // You can now process this data or pass it to another method for further processing
     }
@@ -100,7 +108,11 @@ public class GameManager : MonoBehaviour
 
         positionsBuffer = new ComputeBuffer((int) Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
         positionsBuffer2 = new ComputeBuffer((int)Mathf.Pow(chunksVisibleInViewDist + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        mainPositionBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Append);
+        mainPositionBufferCount = new ComputeBuffer(1, sizeof(uint));
 
+        dispatcherProcedural._MainPositionBuffer = mainPositionBuffer;
+        dispatcherProcedural._MainPositionBufferCount = mainPositionBufferCount;
         viewFrustumPlanesBuffer = new ComputeBuffer(6, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Plane)));
         
         argsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
@@ -113,7 +125,7 @@ public class GameManager : MonoBehaviour
 
         chunkMaterial2.SetBuffer("_Properties", positionsBuffer2);
 
-
+        positionsCalculator.SetBuffer(positionsCalculatorIndex, "_MainProperties", mainPositionBuffer);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties", positionsBuffer);
         positionsCalculator.SetBuffer(positionsCalculatorIndex, "_Properties2", positionsBuffer2);
 
@@ -143,10 +155,12 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
     void GenerateStars() 
     {
         StartCoroutine(CheckRenderTextureCoroutine(rt));
+        mainPositionBuffer.SetCounterValue(0);
         positionsBuffer.SetCounterValue(0);
         positionsBuffer2.SetCounterValue(0);
 
-        positionsCalculator.SetFloat("lodSwitchDist", lodSwitchDist);
+        positionsCalculator.SetFloat("lodSwitchDist1", lodSwitchDist1);
+        positionsCalculator.SetFloat("lodSwitchDist2", lodSwitchDist2);
         positionsCalculator.SetFloat("renderDistance", renderDistance);
         positionsCalculator.SetVector("playerPosition", viewer.position);
         positionsCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
@@ -157,11 +171,20 @@ StructuredBuffer<Plane> _ViewFrustumPlanes;
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
             viewFrustumPlanesBuffer.SetData(planes);
         }
+        ComputeBuffer.CopyCount(mainPositionBuffer, mainPositionBufferCount, 0);
         ComputeBuffer.CopyCount(positionsBuffer, argsBuffer, sizeof(uint));
         ComputeBuffer.CopyCount(positionsBuffer2, argsBuffer2, sizeof(uint));
         //Graphics.DrawMeshInstancedIndirect(chunkMesh, 0, chunkMaterial, new Bounds(startingPos, Vector3.one * renderDistance*renderDistance), argsBuffer);
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            int[] count = new int[1];
+            mainPositionBufferCount.GetData(count);
+            Vector3[] posn = new Vector3[1];
+            mainPositionBuffer.GetData(posn);
+            Debug.Log(count[0] + ", " + posn[0]);
+        }
         if (Input.GetKeyDown(KeyCode.Q))
         {
             int[] args = new int[5];

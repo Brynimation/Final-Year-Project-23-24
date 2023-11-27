@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
@@ -60,6 +61,8 @@ public class DispatcherProcedural : MonoBehaviour
     private Quaternion prevCameraRot;
     Vector3[] positions;
     [Header("Buffers")]
+    public ComputeBuffer _MainPositionBuffer;
+    public ComputeBuffer _MainPositionBufferCount;
     private ComputeBuffer _PositionsBufferLOD0;
     private ComputeBuffer _PositionsBufferLOD1;
     private ComputeBuffer _PositionsBufferLODAppend0;
@@ -112,7 +115,7 @@ public class DispatcherProcedural : MonoBehaviour
     }
     private void SetPositionCalculatorData2() 
     {
-        _GalacticCentre = transform.position;
+        //_GalacticCentre = transform.position;
         positionCalculator.SetFloat("_GalaxyDensity", _GalaxyDensity);
         positionCalculator.SetFloat("_SmallStarRadius", smallStarRadius);
         positionCalculator.SetFloat("_LargeStarRadius" ,largeStarRadius);
@@ -135,7 +138,15 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetFloat("_Bias", _Bias);
 
     }
-
+    IEnumerator InitExternalBuffers() 
+    {
+        while (_MainPositionBuffer == null || _MainPositionBufferCount == null) 
+        {
+            yield return null;
+        }
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBuffer", _MainPositionBuffer);
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBufferCount", _MainPositionBufferCount);
+    }
     void Start()
     {
         //Create vertex and index buffers 
@@ -165,6 +176,7 @@ public class DispatcherProcedural : MonoBehaviour
 
         //bind relevant buffers to positionCalculator computeShader.
         positionCalculator.SetBuffer(positionCalculatorHandle, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
+        StartCoroutine(InitExternalBuffers());
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLOD0", _PositionsBufferLOD0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLOD1", _PositionsBufferLOD1);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);

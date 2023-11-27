@@ -27,6 +27,8 @@ struct ThreadIdentifier
     float radius;
     uint id;
 };
+RWStructuredBuffer<float3> _MainPositionBuffer;
+RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
 RWStructuredBuffer<InstanceData> _PositionsLOD0;
@@ -79,7 +81,7 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-    float zPos = _GalacticCentre;
+    float zPos = _GalacticCentre.z;
     float3 pos = float3(xPos, yPos, zPos);
     return pos;
 }
@@ -245,8 +247,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 [numthreads(1024, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= _NumParticles)
+    if (id.x >= _NumParticles || _MainPositionBufferCount[0] == 0)
         return;
+    _GalacticCentre = _MainPositionBuffer[0];
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);

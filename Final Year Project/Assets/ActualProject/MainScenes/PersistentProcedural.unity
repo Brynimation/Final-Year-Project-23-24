@@ -244,6 +244,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8652540221597869344, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
   m_PrefabInstance: {fileID: 1566587352}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &376799984 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+  m_PrefabInstance: {fileID: 1566587352}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 376799983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 960bbdb925d04024d81a6b205b4ef0da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &567681986
 GameObject:
   m_ObjectHideFlags: 0
@@ -513,7 +524,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869344, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _Bias
@@ -1088,16 +1099,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bigGalaxy: {fileID: 376799983}
   renderDistance: 200
-  lodSwitchDist: 10
+  lodSwitchDist1: 5
+  lodSwitchDist2: 15
   chunkSize: 20
   playerChunkCoord: {x: 0, y: 0, z: 0}
   viewer: {fileID: 1322359870}
   sphere: {fileID: 2941601688723941400, guid: fd1b3722f3655454880d13e026d52f0a, type: 3}
   positionsCalculator: {fileID: 7200000, guid: 627c7cad2c1452849a9d3a4e944a4e74, type: 3}
   randomTexture: {fileID: 2800000, guid: ef73366e67529004baedf4331ebb29d0, type: 3}
-  chunkMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  dispatcherProcedural: {fileID: 376799984}
+  chunkMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 3}
   chunkMaterial: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
-  chunkMesh2: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  chunkMesh2: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 3}
   chunkMaterial2: {fileID: 2100000, guid: 9af00f358d5d57340af4463892906125, type: 2}
   starCount: 5000
   testing: 0

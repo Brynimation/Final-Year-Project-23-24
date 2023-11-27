@@ -8,7 +8,8 @@ struct Plane
     float distance;
 };
 
-float lodSwitchDist;
+float lodSwitchDist1;
+float lodSwitchDist2;
 float renderDistance;
 int chunkSize;
 float3 playerPosition;
@@ -63,6 +64,7 @@ MeshProperties GenerateMeshProperties(float3 position, float scale)
     mp.mat = GenerateTRSMatrix(position, scale);
     return mp;
 }
+AppendStructuredBuffer<float3> _MainProperties;
 AppendStructuredBuffer<MeshProperties> _Properties;
 AppendStructuredBuffer<MeshProperties> _Properties2;
 
@@ -91,9 +93,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float3 actualPosition = viewedChunkCoord * chunkSize;
         if(IntersectSphere(actualPosition, 1) != 0)
         {
-            if(length(actualPosition - playerPosition) < lodSwitchDist)
+            if (length(actualPosition - playerPosition) < lodSwitchDist1)
             {
-                _RenderTexture[uint2(0,0)] = float4(1.0, 0.0, 0.0, 1.0);
+                _MainProperties.Append(actualPosition);
+            }
+            else if(length(actualPosition - playerPosition) < lodSwitchDist2)
+            {
                 _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
             }else{
                 _Properties.Append(GenerateMeshProperties(actualPosition, 1));
