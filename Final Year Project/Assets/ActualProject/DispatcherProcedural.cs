@@ -35,6 +35,7 @@ public class DispatcherProcedural : MonoBehaviour
     public float _GalacticDiskRadius;
     public float _GalacticHaloRadius;
     public float _GalacticBulgeRadius;
+    public float _GalaxyDensity = 1.0f;
     [Header("Increase this to increase the proportion of stars with smaller orbital radii")]
     public float _Bias = 1.0f;
     [Range(0, 1)]
@@ -112,6 +113,7 @@ public class DispatcherProcedural : MonoBehaviour
     private void SetPositionCalculatorData2() 
     {
         _GalacticCentre = transform.position;
+        positionCalculator.SetFloat("_GalaxyDensity", _GalaxyDensity);
         positionCalculator.SetFloat("_SmallStarRadius", smallStarRadius);
         positionCalculator.SetFloat("_LargeStarRadius" ,largeStarRadius);
         positionCalculator.SetVector("_GalacticCentre", _GalacticCentre);
@@ -191,7 +193,7 @@ public class DispatcherProcedural : MonoBehaviour
 
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
-        bounds = new Bounds(_GalacticCentre, new Vector3(_GalacticHaloRadius * 2, _GalacticHaloRadius * 2, _GalacticHaloRadius * 2));
+        bounds = new Bounds(_GalacticCentre, Vector3.one * _GalacticHaloRadius * 2f);
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);

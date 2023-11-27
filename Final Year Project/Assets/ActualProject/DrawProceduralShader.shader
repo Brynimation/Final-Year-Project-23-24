@@ -56,7 +56,7 @@ Shader "Custom/DrawProceduralShader"
                 float2 p = float2(x, sqrt(x));
                 return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
             }
-            float4x4 CreateMatrix(float3 pos, int scale) {
+            float4x4 CreateMatrix(float3 pos, float scale) {
                 return float4x4(
                     scale, 0.0, 0.0, pos.x,
                     0.0, scale, 0.0, pos.y,
