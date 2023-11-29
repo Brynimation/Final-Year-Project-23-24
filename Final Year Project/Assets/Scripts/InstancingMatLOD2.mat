@@ -104,8 +104,8 @@ Material:
     - _DstBlend: 0
     - _Emission: 2.5
     - _EnvironmentReflections: 1
-    - _GalacticBulgeRadius: 0.05
-    - _GalacticDiskRadius: 0.15
+    - _GalacticBulgeRadius: 0.25
+    - _GalacticDiskRadius: 0.5
     - _GalacticHaloRadius: 1
     - _GlossMapScale: 0
     - _Glossiness: 0

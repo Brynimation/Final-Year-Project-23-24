@@ -210,7 +210,7 @@ public class DispatcherProcedural : MonoBehaviour
 
 
         //Additional arguments to DrawProceduralIndirect: bounds and the arguments buffer
-        bounds = new Bounds(_GalacticCentre, Vector3.one * _GalacticHaloRadius * 2f);
+        bounds = new Bounds(Vector3.zero, Vector3.one * 100000);
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);

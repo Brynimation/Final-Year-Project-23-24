@@ -253,13 +253,13 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     _GalacticCentre = _MainPositionBuffer[0];
 
     float curDist = length(_GalacticCentre - _PlayerPosition);
-    float multiplier = exp((float)_ThresholdDist/curDist);
-    _GalacticBulgeRadius = multiplier/2.0;
-    _GalacticDiskRadius = multiplier;
-    _GalacticHaloRadius = multiplier * 2.0;
+    float multiplier = _ThresholdDist < curDist ? 1.0 : exp((float) _ThresholdDist / curDist) - 1.0;
+    _GalacticBulgeRadius = multiplier/4.0;
+    _GalacticDiskRadius = multiplier/2.0;
+    _GalacticHaloRadius = multiplier;
 
-    float curLargeStarRadius = min(100, multiplier * _LargeStarRadius);
-    float curSmallStarRadius = min(50, multiplier * _SmallStarRadius);
+    float curLargeStarRadius = min(10, multiplier * _LargeStarRadius);
+    float curSmallStarRadius = min(5, multiplier * _SmallStarRadius);
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
     //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
@@ -281,7 +281,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
     float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
-    uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
+    uint inViewFrustum = 1;//IntersectSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)
         return;
     if (dist < _LODSwitchDist)
