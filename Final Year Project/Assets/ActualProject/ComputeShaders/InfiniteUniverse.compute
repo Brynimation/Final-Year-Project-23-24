@@ -84,28 +84,23 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     int seed = viewedChunkCoord.x + viewedChunkCoord.y * chunksVisibleInViewDist + viewedChunkCoord.z * chunksVisibleInViewDist * chunksVisibleInViewDist;
     uint width;
     uint height;
-    _Texture.GetDimensions(width, height);
-    float u = frac((float)(id.x & id.z)/ (float) width);
-    float v = frac((float)(id.y & id.z) / (float) height);
-    float val = _Texture.SampleLevel(sampler_Texture, float2(u, v), 0);
-    if(val > -100000)
-    {
-        float3 actualPosition = viewedChunkCoord * chunkSize;
-        if (length(actualPosition - playerPosition) < lodSwitchDist1)
-        {
-            _MainProperties.Append(actualPosition);
-        }
-        else if(IntersectSphere(actualPosition, 1) != 0)
-        {
-            if(length(actualPosition - playerPosition) < lodSwitchDist2)
-            {
-                _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
-            }else{
-                _Properties.Append(GenerateMeshProperties(actualPosition, 1));
-            }
 
-        }
+    float3 actualPosition = viewedChunkCoord * chunkSize;
+    if (length(actualPosition - playerPosition) < lodSwitchDist1)
+    {
+        _MainProperties.Append(actualPosition);
     }
+    else if(IntersectSphere(actualPosition, 1) != 0)
+    {
+        if(length(actualPosition - playerPosition) < lodSwitchDist2)
+        {
+            _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
+        }else{
+            _Properties.Append(GenerateMeshProperties(actualPosition, 1));
+        }
+
+    }
+    
 }
 
 

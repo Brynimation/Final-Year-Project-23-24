@@ -532,7 +532,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _TimeStep
-      value: 0.005
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: LODSwitchDist
