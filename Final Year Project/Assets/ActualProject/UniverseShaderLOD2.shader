@@ -28,7 +28,7 @@ Shader "Custom/UniverseShaderLOD2"
             Tags { "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" "Queue" = "Transparent" }
             Cull Off
             //ZTest Always
-            ZWrite Off
+            ZWrite On
             LOD 100
             Pass
             {
@@ -119,8 +119,8 @@ Shader "Custom/UniverseShaderLOD2"
                     //can't use id to determine properties - let's use position
                     o.positionWS = mul(unity_ObjectToWorld, posOS);
                     int seed = GenerateRandom(o.positionWS.xy);
-                    o.colour = seed % 1035 == 0 ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
-                    o.radius = seed % 1035 == 0 ? 1.0 : 0.2;
+                    o.colour = /*seed % 1035 == 0 ? float4(1, 0, 0, 1) :*/ float4(1, 1, 1, 1);
+                    o.radius = /*seed % 1035 == 0 ? 1.0 :*/ 0.5;
                     o.colour += _EmissionColour;
                     //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                     return o;

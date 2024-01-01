@@ -6,9 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/ActualProject/MainScenes/Universe.unity
-    guid: 5c1825b643ec9f34fa90d94f679a64b4
-  - enabled: 1
-    path: Assets/ActualProject/MainScenes/Galaxy.unity
-    guid: 65aee4afd38aa6a438f73d74ceaa5fdc
+    path: Assets/ActualProject/MainScenes/PersistentProcedural.unity
+    guid: 317acddecc86b564db80440ceed70f30
   m_configObjects: {}

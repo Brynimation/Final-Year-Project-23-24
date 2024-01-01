@@ -1,0 +1,78 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+struct MeshProperties
+{
+    float4x4 mat;
+};
+AppendStructuredBuffer<MeshProperties> _Properties;
+AppendStructuredBuffer<MeshProperties> _Properties2;
+AppendStructuredBuffer<int3> _Positions;
+RWStructuredBuffer<uint> _DispatchBuffer;
+RWStructuredBuffer<int> _ChunksBuffer;
+float renderDistance;
+float lodSwitchDist;
+int chunkSize;
+float3 playerPosition;
+int3 playerChunkCoord;
+int chunksVisibleInViewDist;
+int originalChunksVisibleInViewDist;
+
+float4x4 GenerateTRSMatrix(float3 position, float scale)
+{
+    float4x4 mat = 
+    {
+        scale, 0.0, 0.0, position.x,
+        0.0, scale, 0.0, position.y,
+        0.0, 0.0, scale, position.z,
+        0.0, 0.0, 0.0, 1.0
+    };
+    return mat;
+}
+MeshProperties GenerateMeshProperties(float3 position, float scale)
+{
+    MeshProperties mp = (MeshProperties)0;
+    mp.mat = GenerateTRSMatrix(position, scale);
+    return mp;
+}
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if(id.x >= _ChunksBuffer[0] || id.y >= _ChunksBuffer[0] || id.z >= _ChunksBuffer[0]) return;
+    int currentChunkCoordX = round(playerPosition.x / float(chunkSize));
+    int currentChunkCoordY = round(playerPosition.y / float(chunkSize));
+    int currentChunkCoordZ = round(playerPosition.z / float(chunkSize));
+
+    int curXOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordX + id.x; 
+    int curYOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordY + id.y; 
+    int curZOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordZ + id.z; 
+
+    int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
+    uint width;
+    uint height;
+
+    float3 actualPosition = viewedChunkCoord * chunkSize;
+    float dist = length(actualPosition - playerPosition);
+    uint numThreadGroupsX = ceil(_ChunksBuffer[0]/8);
+    uint numThreadGroupsY = ceil(_ChunksBuffer[0]/8);
+    uint numThreadGroupsZ = ceil(_ChunksBuffer[0]/8);
+    if (dist < lodSwitchDist)
+    {
+        _Properties.Append(GenerateMeshProperties(actualPosition, 1));
+        _ChunksBuffer[0] = chunksVisibleInViewDist;// * 2;
+        _DispatchBuffer[0] = 1;//numThreadGroupsX;
+        _DispatchBuffer[1] = 1;//numThreadGroupsY;
+        _DispatchBuffer[2] = 1;//numThreadGroupsZ;
+    }else{
+        _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
+        //_DispatchBuffer[0] = numThreadGroupsX;
+        //_DispatchBuffer[1] = numThreadGroupsY;
+        //_DispatchBuffer[2] = numThreadGroupsZ;
+    }
+
+}
+
