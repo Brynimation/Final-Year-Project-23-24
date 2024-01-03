@@ -7,12 +7,25 @@
 struct MeshProperties
 {
     float4x4 mat;
+    int lodLevel;
+};
+
+struct ChunkIdentifier 
+{ 
+    int chunksInViewDist;
+    int chunkSize;
+    int chunkType;
+    float3 pos;
 };
 AppendStructuredBuffer<MeshProperties> _Properties;
 AppendStructuredBuffer<MeshProperties> _Properties2;
-AppendStructuredBuffer<int3> _Positions;
+AppendStructuredBuffer<MeshProperties> _Properties3;
+AppendStructuredBuffer<MeshProperties> _Properties4;
+AppendStructuredBuffer<MeshProperties> _Properties5;
+
 RWStructuredBuffer<uint> _DispatchBuffer;
-RWStructuredBuffer<int> _ChunksBuffer;
+RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
+RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 float renderDistance;
 float lodSwitchDist;
 int chunkSize;
@@ -32,47 +45,113 @@ float4x4 GenerateTRSMatrix(float3 position, float scale)
     };
     return mat;
 }
-MeshProperties GenerateMeshProperties(float3 position, float scale)
+MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel)
 {
     MeshProperties mp = (MeshProperties)0;
     mp.mat = GenerateTRSMatrix(position, scale);
+    mp.lodLevel = lodLevel;
     return mp;
 }
 
+//actualPosition, 1, _ChunksBuffer[0].chunkType)
+void AppendToAppropriateBuffer(float3 actualPosition, float scale, int chunkType)
+{
+    MeshProperties mp = GenerateMeshProperties(actualPosition, scale, chunkType);
+
+    switch(chunkType)
+    {
+        case 0:
+            _Properties.Append(mp);
+            break;
+        case 1:
+            _Properties2.Append(mp);
+            break;
+        case 2:
+            _Properties3.Append(mp);
+            break;
+        case 3:
+            _Properties4.Append(mp);
+            break;
+        case 4:
+            _Properties5.Append(mp);
+            break;
+    }
+}
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    if(id.x >= _ChunksBuffer[0] || id.y >= _ChunksBuffer[0] || id.z >= _ChunksBuffer[0]) return;
-    int currentChunkCoordX = round(playerPosition.x / float(chunkSize));
-    int currentChunkCoordY = round(playerPosition.y / float(chunkSize));
-    int currentChunkCoordZ = round(playerPosition.z / float(chunkSize));
+    if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
+    int index = id.x + id.y * 8 + id.z * 8 * 8;
+    int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
 
-    int curXOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordX + id.x; 
-    int curYOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordY + id.y; 
-    int curZOffset = -round(_ChunksBuffer[0]/2) + currentChunkCoordZ + id.z; 
+    int curXOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordX + id.x; 
+    int curYOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordY + id.y; 
+    int curZOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordZ + id.z; 
 
     int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
     uint width;
     uint height;
 
-    float3 actualPosition = viewedChunkCoord * chunkSize;
+    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
     float dist = length(actualPosition - playerPosition);
-    uint numThreadGroupsX = ceil(_ChunksBuffer[0]/8);
-    uint numThreadGroupsY = ceil(_ChunksBuffer[0]/8);
-    uint numThreadGroupsZ = ceil(_ChunksBuffer[0]/8);
+    uint numThreadGroupsX = ceil(_ChunksBuffer[0].chunksInViewDist/8);
+    uint numThreadGroupsY = ceil(_ChunksBuffer[0].chunksInViewDist/8);
+    uint numThreadGroupsZ = ceil(_ChunksBuffer[0].chunksInViewDist/8);
+    ChunkIdentifier cid;
+    cid.pos = actualPosition;
+    cid.chunksInViewDist = chunksVisibleInViewDist;
     if (dist < lodSwitchDist)
     {
-        _Properties.Append(GenerateMeshProperties(actualPosition, 1));
-        _ChunksBuffer[0] = chunksVisibleInViewDist;// * 2;
-        _DispatchBuffer[0] = 1;//numThreadGroupsX;
-        _DispatchBuffer[1] = 1;//numThreadGroupsY;
-        _DispatchBuffer[2] = 1;//numThreadGroupsZ;
+
+        //chunk currently in the chunk buffer 
+        ChunkIdentifier prevCid = _ChunksBuffer[0];
+        //If the chunk currently in the buffer equals the currently viewed chunk then add it to our properties list with an lod level of 0
+        if(prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z)
+        {
+            //_Properties.Append(GenerateMeshProperties(actualPosition, 1, 0));
+        }else{
+        //Otherwise, we need to put a new chunk into the chunk buffer, and increase the number of threads we spawn.
+             cid.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, chunksVisibleInViewDist * 5);
+             cid.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, 1);
+             cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 0);
+            _ChunksBuffer[0] = cid;
+            _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 8);
+            _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 8);
+            _DispatchBuffer[2] = min(2 * _DispatchBuffer[2], 8);
+            
+        }
+
     }else{
-        _Properties2.Append(GenerateMeshProperties(actualPosition, 1));
+        //If we're not close enough to add another chunk to the buffer, then grab whatever ic currently in the buffer'
+        ChunkIdentifier prevCid = _ChunksBuffer[0];
+        if(prevCid.pos.x == -0.1 && prevCid.pos.y == -0.1 && prevCid.pos.z == -0.1 || prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z ) //if there is currently nothing in the buffer OR we've just moved away from a chunk enough such that we want to drop its level of detail
+        {
+            //reduce the number of threads we wish to spawn, and add the current position to our properties list with an lod of 2
+            /* cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist/2, chunksVisibleInViewDist);// chunksVisibleInViewDist;
+             cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
+             cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 5);
+             _ChunksBuffer[0] = cid;
+            _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
+            _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
+            _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);*/
+
+
+            //if the chunk we added to the chunk list in our previous frame equals the one we're looking at currently, that means we need to remove it from the buffer as we're no longer close enough to view it at a higher lod'
+            if(_ChunksBufferPrevFrame[0].pos.x == cid.pos.x && _ChunksBufferPrevFrame[0].pos.y == cid.pos.y && _ChunksBufferPrevFrame[0].pos.z == cid.pos.z)
+            {
+                _ChunksBuffer[0].pos  = float3(-0.1, -0.1, -0.1);
+            }
+
+        }
+
+        AppendToAppropriateBuffer(actualPosition, 1, _ChunksBuffer[0].chunkType);
         //_DispatchBuffer[0] = numThreadGroupsX;
         //_DispatchBuffer[1] = numThreadGroupsY;
         //_DispatchBuffer[2] = numThreadGroupsZ;
     }
+    _ChunksBufferPrevFrame[0] = _ChunksBuffer[0];
 
 }
 

@@ -329,12 +329,16 @@ MonoBehaviour:
   _EmissionColour2: {r: 0.0048109293, g: 1, b: 0, a: 0}
   positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   playerPosition: {fileID: 1538453083}
-  chunkSize: 10
-  renderDistance: 40
-  lodSwitchDist: 1
+  chunkSize: 80
+  renderDistance: 160
+  lodSwitchDist: 0.5
   shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
-  material2: {fileID: 2100000, guid: af0cd03d29b5fda4186a027bdfee5b0e, type: 2}
+  material2: {fileID: 2100000, guid: 42b2cd426dd15234893f3817a6f26c34, type: 2}
+  material3: {fileID: 2100000, guid: af0cd03d29b5fda4186a027bdfee5b0e, type: 2}
+  material4: {fileID: 2100000, guid: c75b576fde5e93f4484e5db17901b84c, type: 2}
+  material5: {fileID: 2100000, guid: 4f18f82579858574f933651c432df049, type: 2}
+  skyboxMat: {fileID: 2100000, guid: 638719ebb7e98a244a99f3b562a58a38, type: 2}
 --- !u!4 &1960476557
 Transform:
   m_ObjectHideFlags: 0
@@ -404,6 +408,10 @@ PrefabInstance:
     - target: {fileID: 5487334652439518709, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 5487334654235042315, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
+      propertyPath: m_ClearFlags
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}

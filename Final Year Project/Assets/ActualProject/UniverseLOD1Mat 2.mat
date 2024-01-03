@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UniverseLOD1Mat Again
+  m_Name: UniverseLOD1Mat 2
   m_Shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
