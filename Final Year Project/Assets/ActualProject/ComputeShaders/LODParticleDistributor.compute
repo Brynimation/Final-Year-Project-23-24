@@ -253,7 +253,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     _GalacticCentre = _MainPositionBuffer[0];
 
     float curDist = length(_GalacticCentre - _PlayerPosition);
-    float multiplier = _ThresholdDist < curDist ? 1.0 : exp((float) _ThresholdDist / curDist) - 1.0;
+    float multiplier = _ThresholdDist < curDist ? 0.35 : exp((float) _ThresholdDist / curDist) - 1.0;
     _GalacticBulgeRadius = multiplier/4.0;
     _GalacticDiskRadius = multiplier/2.0;
     _GalacticHaloRadius = multiplier;
@@ -281,7 +281,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         data.colour = float4(1.0, 0.0, 1.0, 1.0);
     }
     float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
-    uint inViewFrustum = 1;//IntersectSphere(posObjectSpace, data.radius);
+    uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)
         return;
     if (dist < _LODSwitchDist)

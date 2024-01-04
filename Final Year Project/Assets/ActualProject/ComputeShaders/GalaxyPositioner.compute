@@ -1,39 +1,40 @@
-// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#pragma kernel CSMain2
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
+struct ChunkIdentifier 
+{ 
+    int chunksInViewDist;
+    int chunkSize;
+    int chunkType;
+    float3 pos;
+};
 
+float lodSwitchDist;
+float3 playerPosition;
+RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
+AppendStructuredBuffer<float3> _MainProperties;
 
-float _UniverseWidth;
-float _UniverseHeight;
-float _UniverseDepth;
-float _Time; 
-int _NumGalaxiesX;
-int _NumGalaxiesY;
-int _NumGalaxiesZ;
-
-RWStructuredBuffer<float3> _Positions; 
-
-float GenerateRandom(int x)
-{
-    float2 p = float2(x, sqrt(x));
-    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
-}
-[numthreads(8,8,8)]
-void CSMain2 (uint3 id : SV_DispatchThreadID)
-{
-    // TODO: insert actual code here!
-
-    uint index = id.z * ((_NumGalaxiesX) * (_NumGalaxiesY )) + id.y * (_NumGalaxiesX ) + id.x;
-    //_Positions[index] = float3((float) id.x * _UniverseWidth / _NumGalaxiesX, (float)id.y * _UniverseHeight / _NumGalaxiesY, (float)id.z * _UniverseDepth/_NumGalaxiesZ);
-    //_Positions[index] = float3(0.0, 0.0, 0.0);
-    _Positions[index] = float3(GenerateRandom(id.x) * _UniverseWidth, GenerateRandom(id.y) * _UniverseHeight, GenerateRandom(id.z) * _UniverseDepth);
-}
 
 [numthreads(8, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
+    if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
+    int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
 
+    int curXOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordX + id.x; 
+    int curYOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordY + id.y; 
+    int curZOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordZ + id.z; 
+
+    int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
+    uint width;
+    uint height;
+
+    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+    float dist = length(actualPosition - playerPosition);
+
+    if (length(actualPosition - playerPosition) < lodSwitchDist && _ChunksBuffer[0].chunkType == 3)
+    {
+        _MainProperties.Append(actualPosition);
+    }
 }

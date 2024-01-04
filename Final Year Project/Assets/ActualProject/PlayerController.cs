@@ -26,11 +26,12 @@ public class PlayerController : MonoBehaviour
     float xRotation = 0f;
     float yRotation = 0f;
     bool startMoving = false;
+    bool singleGalaxy = false;
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         dispatcher = FindObjectOfType<DispatcherProcedural>();
-        if (dispatcher != null) 
+        if (dispatcher != null && singleGalaxy) 
         {
             float dstFromGalaxy = dispatcher._GalacticDiskRadius * Mathf.Sqrt(3f) / 2f;
             transform.position = new Vector3(transform.position.x, transform.position.y, -dstFromGalaxy);

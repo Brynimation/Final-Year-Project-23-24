@@ -33,7 +33,14 @@ public class BufferManager : MonoBehaviour
     public int zSize;
     public Color _EmissionColour;
     public Color _EmissionColour2;
+
     public ComputeShader positionCalculator;
+
+    //Big galaxy
+    public DispatcherProcedural dispatcherProcedural;
+    public ComputeShader galaxyPositioner;
+    public float galaxyLodSwitchDist;
+
     public Transform playerPosition;
     public int chunkSize;
     public int renderDistance;
@@ -68,11 +75,13 @@ public class BufferManager : MonoBehaviour
     ComputeBuffer chunksBufferPrevFrame;
     ChunkIdentifier[] chunksVisible;
 
+    ComputeBuffer mainProperties;
+    ComputeBuffer mainPropertiesCount;
     public Material skyboxMat;
 
     ThreadIdentifier[] positions;
-    int kernelIndex;
-    int dispatchIndex;
+    int mainKernelIndex;
+    int galaxyPositionerIndex;
 
     Bounds bounds;
     void Start()
@@ -82,7 +91,8 @@ public class BufferManager : MonoBehaviour
         //material2 = new Material(shader);
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
         chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -1) };
-        kernelIndex = positionCalculator.FindKernel("CSMain");
+        mainKernelIndex = positionCalculator.FindKernel("CSMain");
+        galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
 
         positionsBuffer = new ComputeBuffer((int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3), System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
         argsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
@@ -104,6 +114,8 @@ public class BufferManager : MonoBehaviour
         argsBuffer5 = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         argsBuffer5.SetData(new uint[] { (uint)1, (uint)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3), 0u, 0u });
 
+        mainProperties = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Append);
+        mainPropertiesCount = new ComputeBuffer(1, sizeof(uint));
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
         chunksBufferPrevFrame = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
@@ -125,21 +137,29 @@ public class BufferManager : MonoBehaviour
             };
             
         }*/
-        positionCalculator.SetBuffer(kernelIndex, "_Properties", positionsBuffer);
-        positionCalculator.SetBuffer(kernelIndex, "_Properties2", positionsBuffer2);
-        positionCalculator.SetBuffer(kernelIndex, "_Properties3", positionsBuffer3);
-        positionCalculator.SetBuffer(kernelIndex, "_Properties4", positionsBuffer4);
-        positionCalculator.SetBuffer(kernelIndex, "_Properties5", positionsBuffer5);
+        positionCalculator.SetBuffer(mainKernelIndex, "_Properties", positionsBuffer);
+        positionCalculator.SetBuffer(mainKernelIndex, "_Properties2", positionsBuffer2);
+        positionCalculator.SetBuffer(mainKernelIndex, "_Properties3", positionsBuffer3);
+        positionCalculator.SetBuffer(mainKernelIndex, "_Properties4", positionsBuffer4);
+        positionCalculator.SetBuffer(mainKernelIndex, "_Properties5", positionsBuffer5);
 
-        positionCalculator.SetBuffer(kernelIndex, "_ChunksBuffer", chunksBuffer);
-        positionCalculator.SetBuffer(kernelIndex, "_ChunksBufferPrevFrame",chunksBufferPrevFrame);
-        positionCalculator.SetBuffer(kernelIndex, "_DispatchBuffer", dispatchBuffer);
+        positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBuffer", chunksBuffer);
+        positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBufferPrevFrame",chunksBufferPrevFrame);
+        positionCalculator.SetBuffer(mainKernelIndex, "_DispatchBuffer", dispatchBuffer);
 
         positionCalculator.SetInt("chunkSize", chunkSize);
         positionCalculator.SetInt("renderDistance", renderDistance);
         positionCalculator.SetFloat("lodSwitchDist", lodSwitchDist);
+        positionCalculator.SetFloat("galaxySwitchDist", galaxyLodSwitchDist);
         positionCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
+        galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
+        galaxyPositioner.SetVector("playerPosition", playerPosition.position);
+        dispatcherProcedural._MainPositionBuffer = mainProperties;
+        dispatcherProcedural._MainPositionBufferCount = mainPropertiesCount;
 
         material.SetBuffer("_Properties", positionsBuffer);
         material2.SetBuffer("_Properties", positionsBuffer2);
@@ -159,11 +179,17 @@ public class BufferManager : MonoBehaviour
         positionsBuffer2.SetCounterValue(0);
         positionsBuffer3.SetCounterValue(0);
         positionsBuffer4.SetCounterValue(0);
-        positionsBuffer5.SetCounterValue(0); 
+        positionsBuffer5.SetCounterValue(0);
+        mainProperties.SetCounterValue(0);
 
         debugPosBuffer.SetCounterValue(0);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
-        positionCalculator.DispatchIndirect(kernelIndex, dispatchBuffer);
+        positionCalculator.DispatchIndirect(mainKernelIndex, dispatchBuffer);
+
+        galaxyPositioner.SetVector("playerPosition", playerPosition.position);
+        galaxyPositioner.DispatchIndirect(galaxyPositionerIndex, dispatchBuffer);
+
+        ComputeBuffer.CopyCount(mainProperties, mainPropertiesCount, 0);
 
         ComputeBuffer.CopyCount(positionsBuffer, argsBuffer, sizeof(uint));
         Graphics.DrawProceduralIndirect(material, bounds, MeshTopology.Points, argsBuffer);
@@ -226,6 +252,16 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(p.chunksInViewDist);
                 Debug.Log(p.chunkSize);
                 Debug.Log(p.chunkType);
+            }
+        }
+        Vector3[] mainPos = new Vector3[1];
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            Debug.Log(mainPos.Length);
+            mainProperties.GetData(mainPos);
+            foreach (var p in mainPos)
+            {
+                Debug.Log(p);
             }
         }
 

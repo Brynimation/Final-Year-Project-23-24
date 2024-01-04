@@ -28,6 +28,7 @@ RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 float renderDistance;
 float lodSwitchDist;
+float galaxySwitchDist;
 int chunkSize;
 float3 playerPosition;
 int3 playerChunkCoord;
@@ -54,7 +55,7 @@ MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel
 }
 
 //actualPosition, 1, _ChunksBuffer[0].chunkType)
-void AppendToAppropriateBuffer(float3 actualPosition, float scale, int chunkType)
+void AppendToAppropriateBuffer(float3 actualPosition, float scale, int chunkType, float dist)
 {
     MeshProperties mp = GenerateMeshProperties(actualPosition, scale, chunkType);
 
@@ -70,7 +71,11 @@ void AppendToAppropriateBuffer(float3 actualPosition, float scale, int chunkType
             _Properties3.Append(mp);
             break;
         case 3:
-            _Properties4.Append(mp);
+            //If closer, it's appended to the mainProperties buffer by the galaxyPositioner compute shader, so we don't want to add it again here.
+            if(dist > galaxySwitchDist)
+            {
+                _Properties4.Append(mp);
+            }
             break;
         case 4:
             _Properties5.Append(mp);
@@ -81,7 +86,6 @@ void AppendToAppropriateBuffer(float3 actualPosition, float scale, int chunkType
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
-    int index = id.x + id.y * 8 + id.z * 8 * 8;
     int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
     int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
     int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
@@ -146,7 +150,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
         }
 
-        AppendToAppropriateBuffer(actualPosition, 1, _ChunksBuffer[0].chunkType);
+        AppendToAppropriateBuffer(actualPosition, 1, _ChunksBuffer[0].chunkType, dist);
         //_DispatchBuffer[0] = numThreadGroupsX;
         //_DispatchBuffer[1] = numThreadGroupsY;
         //_DispatchBuffer[2] = numThreadGroupsZ;
