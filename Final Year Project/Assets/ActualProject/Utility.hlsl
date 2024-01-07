@@ -1,4 +1,5 @@
 #define PI 3.14159265
+#define _G 1.0
 
 struct SolarSystem
 {
@@ -79,5 +80,15 @@ MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel
     mp.colour = colour;
     mp.lodLevel = lodLevel;
     return mp;
+}
+
+float Hash1(float seed)
+{
+    // Create a bit pattern from the seed
+    float bitPattern = sin(seed) * 43758.5453;
+    
+    // Fract() returns the fractional part of the float, 
+    // giving us a pseudo-random result between 0 and 1
+    return frac(bitPattern);
 }
 
