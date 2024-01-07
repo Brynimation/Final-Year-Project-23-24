@@ -331,14 +331,18 @@ MonoBehaviour:
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 2
+  starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
-  solarSystemSwitchDist: 20
+  solarSystemSwitchDist: 10
   starMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   starMaterial: {fileID: 2100000, guid: 20ed76f989045764aa0641635e504ec5, type: 2}
-  timeStep: 0.01
+  starResolution: 0
+  timeStep: 1
+  planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
   planetMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  planetResolution: 0
   chunkSize: 80
   renderDistance: 160
   lodSwitchDist: 0.5
