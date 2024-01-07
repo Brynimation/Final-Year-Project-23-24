@@ -1,32 +1,10 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-#define PI 3.14159265
+#include "Assets/ActualProject/Utility.hlsl"
 
 //AppendStructuredBuffer<float3> _PositionsLOD0;
 //AppendStructuredBuffer<float3> _PositionsLOD1;
-
-struct Plane
-{
-    float3 normal;
-    float distance;
-};
-
-struct InstanceData
-{
-    float3 position;
-    float4 colour;
-    float radius;
-    uint culled;
-};
-
-struct ThreadIdentifier
-{
-    float3 position;
-    float4 colour;
-    float radius;
-    uint id;
-};
 RWStructuredBuffer<float3> _MainPositionBuffer;
 RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
@@ -245,6 +223,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 }
 */
 
+float4 GetColour(uint id)
+{
+    float random = Hash21(float2(id, id * 123.42));
+    float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
+    return colour;
+}
 [numthreads(1024, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
@@ -267,7 +251,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     ThreadIdentifier data;
     data.id = id.x;
     data.radius = (id.x % 100) == 0 ? curLargeStarRadius : curSmallStarRadius; //100 : 50;
-    data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
+    data.colour = (id.x % 100) == 0 ? _H2RegionColour : GetColour(id.x);
 
 
     float3 posObjectSpace = GetPointOnEllipse(id.x);

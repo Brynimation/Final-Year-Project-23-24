@@ -1,12 +1,5 @@
 #pragma kernel CSMain
-
-struct ChunkIdentifier 
-{ 
-    int chunksInViewDist;
-    int chunkSize;
-    int chunkType;
-    float3 pos;
-};
+#include "Assets/ActualProject/Utility.hlsl"
 
 float lodSwitchDist;
 float3 playerPosition;

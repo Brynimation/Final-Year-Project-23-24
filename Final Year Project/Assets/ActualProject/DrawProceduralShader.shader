@@ -20,31 +20,17 @@ Shader "Custom/DrawProceduralShader"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Assets/ActualProject/Utility.hlsl"
             #pragma target 5.0
             #pragma vertex vert 
             #pragma fragment frag
             #pragma multi_compile_instancing
 
-
-            struct ThreadIdentifier
-            {
-                float3 position;
-                float4 colour;
-                float radius;
-                uint id;
-            };
-
-            struct SphereVertex
-            {
-                float3 position;
-                float2 uv;
-                float3 normal;
-            };
-
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);   
 
             uniform float4 _EmissionColour;
+            uniform float _Emission;
             RWStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
             StructuredBuffer<float3> _VertexBuffer;
             StructuredBuffer<float3> _NormalBuffer;
@@ -56,14 +42,7 @@ Shader "Custom/DrawProceduralShader"
                 float2 p = float2(x, sqrt(x));
                 return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
             }
-            float4x4 CreateMatrix(float3 pos, float scale) {
-                return float4x4(
-                    scale, 0.0, 0.0, pos.x,
-                    0.0, scale, 0.0, pos.y,
-                    0.0, 0.0, scale, pos.z,
-                    0.0, 0.0, 0.0, 1.0
-                );
-            }
+
             struct Attributes
             {
                 uint vertexId : SV_VERTEXID;
@@ -84,7 +63,7 @@ Shader "Custom/DrawProceduralShader"
             {
                 Interpolators o;
                 ThreadIdentifier ti = _PositionsLOD0[i.instanceId]; //Sphere centre position 
-                _ModelMatrix = CreateMatrix(ti.position, ti.radius); //Create TRS matrix
+                _ModelMatrix = GenerateTRSMatrix(ti.position, ti.radius); //Create TRS matrix
                 float4 vertexPosOS = mul(_ModelMatrix, float4(_VertexBuffer[i.vertexId], 1.0)); //transform to object space of sphere 
 
                 VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
@@ -94,7 +73,7 @@ Shader "Custom/DrawProceduralShader"
                 o.positionHCS = positionData.positionCS;
 
                 float2 uv = _UVBuffer[i.vertexId];
-                o.colour = ti.colour + _EmissionColour;
+                o.colour = ti.colour + ti.colour * _Emission;
                 o.uv = uv;
                 return o;
             }

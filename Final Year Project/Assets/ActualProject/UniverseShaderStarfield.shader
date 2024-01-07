@@ -33,6 +33,7 @@ Shader "Custom/UniverseShaderStarField"
                 #pragma multi_compile_instancing
                 #pragma target 5.0
                 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+                #include "Assets/ActualProject/Utility.hlsl"
 
                 UNITY_INSTANCING_BUFFER_START(MyProps)
                     UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
@@ -43,19 +44,6 @@ Shader "Custom/UniverseShaderStarField"
                 {
                     return round(frac(sin(dot(xy, float2(12.9898, 78.233))) * 43758.5453) * 1000) ;
                 }
-                struct ThreadIdentifier
-                {
-                    float3 position;
-                    float4 colour;
-                    float radius;
-                    uint id;
-                };
-
-                struct MeshProperties
-                {
-                    float4x4 mat;
-                    int lodLevel;
-                };
 
                 TEXTURE2D(_MainTex);
                 SAMPLER(sampler_MainTex);
@@ -90,19 +78,6 @@ Shader "Custom/UniverseShaderStarField"
                     float4 centreHCS : TEXCOORD2;
                 };
 
-                float4x4 CreateMatrix(float3 pos, float3 dir, float3 up, uint id) {
-                    float3 zaxis = normalize(dir);
-                    float3 xaxis = normalize(cross(up, zaxis));
-                    float3 yaxis = cross(zaxis, xaxis);
-                    //float scale = GenerateRandom(id) * _MaxStarSize;
-                    //Transform the vertex into the object space of the currently drawn mesh using a Transform Rotation Scale matrix.
-                    return float4x4(
-                        xaxis.x, yaxis.x, zaxis.x, pos.x,
-                        xaxis.y, yaxis.y, zaxis.y, pos.y,
-                        xaxis.z, yaxis.z, zaxis.z, pos.z,
-                        0, 0, 0, 1
-                    );
-                }
                 float4 colourFromLodLevel(int lodLevel)
                 {
                     switch(lodLevel)
@@ -164,8 +139,8 @@ Shader "Custom/UniverseShaderStarField"
                     //can't use id to determine properties - let's use position
                     o.positionWS = mul(unity_ObjectToWorld, posOS);
                     int seed = GenerateRandom(o.positionWS.xy);
-                    o.colour = colourFromLodLevel(mp.lodLevel);
-                    o.radius = radiusFromLodLevel(mp.lodLevel);
+                    o.colour = mp.colour;
+                    o.radius = mp.scale;
                     //o.colour += _EmissionColour;
                     //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                     return o;
@@ -249,12 +224,6 @@ Shader "Custom/UniverseShaderStarField"
                     //fade the brightness out from the centre of the cell
                     col *= smoothstep(0.5, 0.2, d);
                     return col;
-                }
-                float Hash21(float2 p)
-                {
-                    p = frac(p * float2(123.34, 456.21));
-                    p += dot(p, p+45.32);
-                    return frac(p.x * p.y);
                 }
 
                 float4 DrawStarLayer(float2 p, int gridSize)

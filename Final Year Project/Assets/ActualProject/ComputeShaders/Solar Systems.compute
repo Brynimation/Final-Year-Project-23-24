@@ -1,0 +1,77 @@
+#pragma kernel CSMain
+#include "Assets/ActualProject/Utility.hlsl"
+float solarSystemSwitchDist;
+float3 playerPosition;
+
+RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
+RWStructuredBuffer<int> _SolarSystemCount;
+AppendStructuredBuffer<SolarSystem> _SolarSystems; 
+AppendStructuredBuffer<Planet> _Planets;
+float time;
+float timeStep;
+
+float CalculatePlanetAngularVelocity(float radius, float starMass, float planetMass)
+{
+    //One simplifying assumption we make here is that, as the nuclear bulge of the galaxy is very densely packed with stars, we consider it to behave as a 
+    //uniformly dense solid sphere.
+    //Due to Newton's shell theorem: for a test particle contained within a sphere of constant density, gravitational force (and hence acceleration)
+    //increases linearly with distance from the centre (at 0) to the surface of the sphere (at a maximum).  Beyond the sphere, we use Newton's 
+    //universal law of gravitation to show that orbital velocity is proportion to 1/sqrt(distance) from the centre of mass, and hence, angular velocity is proportional to 1/distance^(3/2).
+    //Here, we make the simplifying assumption that the nuclear bulge is a sphere of constant density that houses the mass of the entire galaxy.
+    //We do the lerping so that the transition from the bulge to the disc is more seamless
+    float discSpeed = sqrt(starMass / pow(radius, 3));
+
+    return discSpeed;
+
+    //return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
+
+    //Using Newton's form of Kepler's third law:
+    //T = 4
+}
+
+// Example compute shader function
+[numthreads(8, 8, 8)]
+void CSMain(uint3 id : SV_DispatchThreadID) {
+    if(_SolarSystemCount[0] == 0) return;
+    if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
+    int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
+    int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
+
+    int curXOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordX + id.x; 
+    int curYOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordY + id.y; 
+    int curZOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordZ + id.z; 
+
+    int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
+    uint width;
+    uint height;
+
+    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+    float dist = length(actualPosition - playerPosition);
+
+    if (dist < solarSystemSwitchDist && _ChunksBuffer[0].chunkType == 2)
+    {
+        float random = Hash21(actualPosition.xy + actualPosition.z);
+        SolarSystem system = (SolarSystem)0;
+        system.starPosition = actualPosition;
+        system.starRadius = lerp(0.25, 2.0, random);
+        system.starMass = (4.0/3.0) * PI * pow(system.starRadius, 3.0);
+        system.starColour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
+        system.planetCount = ceil(10 * random);
+        _SolarSystems.Append(system);
+        float maxDist = 2.0;
+        for(int i = 0; i < system.planetCount; i++)
+        {
+            float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
+            float angle = initialAngle + CalculatePlanetAngularVelocity(maxDist, system.starMass, 1.0) * time * timeStep;
+            float x = maxDist * cos(angle);
+            float z = maxDist * sin(angle);
+            Planet planet = (Planet)0;
+            planet.position = actualPosition + float3(x, 0, z);
+            planet.radius = 0.1;
+            _Planets.Append(planet);
+        }
+
+    }
+}
+

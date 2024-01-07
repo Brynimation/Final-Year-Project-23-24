@@ -108,7 +108,7 @@ Shader "Custom/ParticleShader2"
                 o.positionWS = mul(unity_ObjectToWorld, float4(tid.position, 1.0));
                 o.colour = tid.colour;//(tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
                 o.radius = tid.radius;//(tid.id % 100 == 0) ? 100 : 50;
-                o.colour += _EmissionColour;
+                o.colour += tid.colour * _Emission;//_EmissionColour;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }

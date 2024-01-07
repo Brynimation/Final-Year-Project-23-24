@@ -3,13 +3,7 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-
-struct SphereVertex
-{
-    float3 position;
-    float2 uv;
-    float3 normal;
-};
+#include "Assets/ActualProject/Utility.hlsl"
 
 RWBuffer<uint> _IndexBuffer;
 RWStructuredBuffer<float3> _VertexBuffer;

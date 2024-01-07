@@ -14,6 +14,7 @@ Shader "Custom/StarField"
         HLSLINCLUDE
 
         #pragma target 5.0
+        #include "Assets/ActualProject/Utility.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #define PI 3.141519
 
@@ -85,12 +86,6 @@ Shader "Custom/StarField"
                 //fade the brightness out from the centre of the cell
                 col *= smoothstep(0.5, 0.2, d);
                 return col;
-            }
-            float Hash21(float2 p)
-            {
-                p = frac(p * float2(123.34, 456.21));
-                p += dot(p, p+45.32);
-                return frac(p.x * p.y);
             }
 
             float4 DrawStarLayer(float2 p, int gridSize)
