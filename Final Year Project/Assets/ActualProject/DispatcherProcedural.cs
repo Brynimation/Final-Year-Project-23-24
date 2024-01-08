@@ -17,6 +17,7 @@ public class DispatcherProcedural : MonoBehaviour
 {
     [Header("Shaders")]
     public Material[] material;
+    public ComputeShader sphereGeneratorPrefab;
     public ComputeShader sphereGenerator;
     public ComputeShader positionCalculator;
     public PlayerController player;
@@ -156,6 +157,7 @@ public class DispatcherProcedural : MonoBehaviour
     {
         //Create vertex and index buffers 
         Application.targetFrameRate = 300;
+        sphereGenerator = Instantiate(sphereGeneratorPrefab);
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 

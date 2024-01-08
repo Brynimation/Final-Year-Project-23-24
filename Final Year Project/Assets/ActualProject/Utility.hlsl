@@ -1,4 +1,3 @@
-#define PI 3.14159265
 #define _G 1.0
 
 struct SolarSystem
@@ -9,6 +8,7 @@ struct SolarSystem
     float4 starColour;
     int planetCount;  
 };
+
 
 struct Planet {
     float3 position;

@@ -189,7 +189,7 @@ PrefabInstance:
       objectReference: {fileID: 1538453084}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: numInstances
-      value: 50000
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: LODSwitchDist
@@ -201,11 +201,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: largeStarRadius
-      value: 0.0025
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: smallStarRadius
-      value: 0.001
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: sphereGenerator
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _EmissionColour.b
@@ -219,6 +223,10 @@ PrefabInstance:
       propertyPath: _EmissionColour.r
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: sphereGeneratorPrefab
+      value: 
+      objectReference: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_RootOrder
       value: 3
@@ -331,18 +339,19 @@ MonoBehaviour:
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 2
+  sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
   solarSystemSwitchDist: 10
   starMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   starMaterial: {fileID: 2100000, guid: 20ed76f989045764aa0641635e504ec5, type: 2}
-  starResolution: 0
+  starResolution: 8
   timeStep: 1
   planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
   planetMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  planetResolution: 0
+  planetResolution: 8
   chunkSize: 80
   renderDistance: 160
   lodSwitchDist: 0.5
@@ -418,6 +427,14 @@ PrefabInstance:
     - target: {fileID: 5487334652439518707, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5487334652439518708, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
+      propertyPath: flySpeed
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5487334652439518708, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
+      propertyPath: fastFlySpeed
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 5487334652439518709, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_Name
