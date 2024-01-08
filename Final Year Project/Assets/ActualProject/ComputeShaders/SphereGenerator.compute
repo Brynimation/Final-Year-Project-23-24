@@ -9,9 +9,7 @@ RWBuffer<uint> _IndexBuffer;
 RWStructuredBuffer<float3> _VertexBuffer;
 RWStructuredBuffer<float3> _NormalBuffer;
 RWStructuredBuffer<float2> _UVBuffer;
-StructuredBuffer<float3> _Positions;
 uint _Resolution;
-uint _NumVertsPerInstance;
 
 
 /*

@@ -147,6 +147,8 @@ public class BufferManager : MonoBehaviour
         mainKernelIndex = positionCalculator.FindKernel("CSMain");
         galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
         solarSystemCreatorIndex = solarSystemCreator.FindKernel("CSMain");
+        starSphereGeneratorIndex = starSphereGenerator.FindKernel("CSMain");
+        planetSphereGeneratorIndex = planetSphereGenerator.FindKernel("CSMain");
 
         int maxInstanceCount = (int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3);
 
@@ -174,10 +176,21 @@ public class BufferManager : MonoBehaviour
         solarSystemArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         solarSystemArgsBuffer.SetData(new uint[] { (uint)starMesh.GetIndexCount(0), (uint)maxInstanceCount, 0u, 0u, 0u });
 
+        //Create star sphere generation buffers
+        starVertexBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerStar, sizeof(float) * 3, ComputeBufferType.Structured);
+        starNormalBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerStar, sizeof(float) * 3, ComputeBufferType.Structured);
+        starUVBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerStar, sizeof(float) * 2, ComputeBufferType.Structured);
+        starIndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerStar * maxInstanceCount, sizeof(uint));
+
         planetsBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Planet)), ComputeBufferType.Append);
         planetsArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         planetsArgsBuffer.SetData(new uint[] { (uint)planetMesh.GetIndexCount(0), (uint)maxInstanceCount, 0u, 0u, 0u });
 
+        //Create planet sphere generation buffers
+        planetVertexBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerPlanet, sizeof(float) * 3, ComputeBufferType.Structured);
+        planetNormalBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerPlanet, sizeof(float) * 3, ComputeBufferType.Structured);
+        planetUVBuffer = new ComputeBuffer(maxInstanceCount * numVertsPerPlanet, sizeof(float) * 2, ComputeBufferType.Structured);
+        planetIndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerPlanet * maxInstanceCount, sizeof(uint));
 
 
         positionsBuffer4 = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
@@ -217,11 +230,20 @@ public class BufferManager : MonoBehaviour
         starMaterial.SetBuffer("_NormalBuffer", starNormalBuffer);
         starMaterial.SetBuffer("_UVBuffer", starUVBuffer);
 
+        starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_VertexBuffer", starVertexBuffer);
+        starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_NormalBuffer", starNormalBuffer);
+        starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_UVBuffer", starUVBuffer);
+        starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_IndexBuffer", starIndexBuffer);
 
         planetMaterial.SetBuffer("_Planets", planetsBuffer);
         planetMaterial.SetBuffer("_VertexBuffer", planetVertexBuffer);
         planetMaterial.SetBuffer("_NormalBuffer", planetNormalBuffer);
         planetMaterial.SetBuffer("_UVBuffer", planetUVBuffer);
+
+        planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_VertexBuffer", planetVertexBuffer);
+        planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_NormalBuffer", planetNormalBuffer);
+        planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_UVBuffer", planetUVBuffer);
+        planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_IndexBuffer", planetIndexBuffer);
 
         positionCalculator.SetBuffer(mainKernelIndex, "_Properties", positionsBuffer);
         positionCalculator.SetBuffer(mainKernelIndex, "_Properties2", positionsBuffer2);
