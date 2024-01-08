@@ -7,7 +7,7 @@
 
 //AppendStructuredBuffer<float3> _PositionsLOD0;
 //AppendStructuredBuffer<float3> _PositionsLOD1;
-RWStructuredBuffer<float3> _MainPositionBuffer;
+RWStructuredBuffer<MeshProperties> _MainPropertiesBuffer;
 RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
@@ -21,7 +21,7 @@ uniform float _GalaxyDensity;
 uniform float4 _LargeStarRadius;
 uniform float4 _SmallStarRadius;
 uniform float4 _H2RegionColour;
-uniform float3 _GalacticCentre;
+uniform MeshProperties _GalacticProperties;
 uniform float _MinEccentricity;
 uniform float _MaxEccentricity;
 uniform float _GalacticDiskRadius;
@@ -60,11 +60,11 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
     float cosOffset = cos(angleOffset);
     float sinOffset = sin(angleOffset);
 
-    float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset + _GalacticCentre.x;
-    float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset + _GalacticCentre.y;
-    float zPos = _GalacticCentre.z;
-    float3 pos = float3(xPos, yPos, zPos);
-    return pos;
+    float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset;
+    float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset;
+    float zPos = 0.0;
+    float4 pos = mul(_MainPropertiesBuffer[0].mat, float4(xPos, yPos, zPos, 1.0));
+    return pos.xyz;
 }
 
 float GetAccurateSemiMajorAxis(uint id)
@@ -236,9 +236,9 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= _NumParticles || _MainPositionBufferCount[0] == 0)
         return;
-    _GalacticCentre = _MainPositionBuffer[0];
+    _GalacticProperties = _MainPropertiesBuffer[0];
 
-    float curDist = length(_GalacticCentre - _PlayerPosition);
+    float curDist = length(_GalacticProperties.position - _PlayerPosition);
     float multiplier = _ThresholdDist < curDist ? 0.35 : exp((float) _ThresholdDist / curDist) - 1.0;
     _GalacticBulgeRadius = multiplier/4.0;
     _GalacticDiskRadius = multiplier/2.0;

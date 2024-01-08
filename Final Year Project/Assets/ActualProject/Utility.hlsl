@@ -22,6 +22,7 @@ struct MeshProperties
 {
     float4x4 mat;
     float scale;
+    float3 position;
     float4 colour;
     int lodLevel;
 };
@@ -68,6 +69,61 @@ float4x4 GenerateTRSMatrix(float3 position, float scale)
     return mat;
 }
 
+float4x4 GenerateScaleMatrix(float3 scale)
+{
+    float4x4 mat = 
+    {
+        scale.x, 0.0, 0.0, 0.0,
+        0.0, scale.y, 0.0, 0.0,
+        0.0, 0.0, scale.z, 0.0,
+        0.0, 0.0,   0.0,   1.0
+    };
+    return mat;
+}
+float4x4 GenerateTranslationMatrix(float3 translation)
+{
+    float4x4 mat = 
+    {
+        1.0, 0.0, 0.0, translation.x,
+        0.0, 1.0, 0.0, translation.y,
+        0.0, 0.0, 1.0, translation.z,
+        0.0, 0.0, 0.0, 1.0
+    };
+    return mat;
+}
+float4x4 GenerateRotationMatrix(float3 r)
+{
+    float4x4 xRot = 
+    {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, cos(r.x), - sin(r.x), 0.0,
+        0.0, sin(r.x), cos(r.x), 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    float4x4 yRot = 
+    {
+        cos(r.y), 0.0, sin(r.y), 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        -sin(r.y), 0.0, cos(r.y), 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    float4x4 zRot = 
+    {
+        cos(r.z), -sin(r.z), 0.0, 0.0,
+        sin(r.z), cos(r.z), 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    return mul(zRot, mul(yRot, xRot));
+}
+float4x4 GenerateTRSMatrix(float3 position, float3 rotation, float3 scale)
+{
+    float4x4 translationM = GenerateTranslationMatrix(position);
+    float4x4 scaleM = GenerateScaleMatrix(scale);
+    float4x4 rotationM = GenerateRotationMatrix(rotation);
+    return mul(translationM, mul(rotationM, scaleM));
+}
+
 float Hash21(float2 p)
 {
     p = frac(p * float2(123.34, 456.21));
@@ -79,6 +135,18 @@ MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel
     MeshProperties mp = (MeshProperties)0;
     mp.mat = GenerateTRSMatrix(position, scale);
     mp.scale = scale;
+    mp.position = position;
+    mp.colour = colour;
+    mp.lodLevel = lodLevel;
+    return mp;
+}
+
+MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float scale, int lodLevel, float4 colour)
+{
+    MeshProperties mp = (MeshProperties)0;
+    mp.mat = GenerateTRSMatrix(position, rotation, scale);
+    mp.scale = scale;
+    mp.position = position;
     mp.colour = colour;
     mp.lodLevel = lodLevel;
     return mp;
@@ -94,6 +162,10 @@ float Hash1(float seed)
     return frac(bitPattern);
 }
 
+float3 Hash3(float3 position)
+{
+    return float3(Hash1(position.x), Hash1(position.y), Hash1(position.z));
+}
 float4x4 MakeRotationMatrix(float3 axis, float angle)
 {
     float theta = radians(angle); // Convert to radians

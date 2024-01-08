@@ -149,7 +149,7 @@ public class DispatcherProcedural : MonoBehaviour
         {
             yield return null;
         }
-        positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBuffer", _MainPositionBuffer);
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPropertiesBuffer", _MainPositionBuffer);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBufferCount", _MainPositionBufferCount);
         buffersSet = true;
     }

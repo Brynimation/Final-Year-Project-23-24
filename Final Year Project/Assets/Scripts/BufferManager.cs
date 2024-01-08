@@ -5,47 +5,48 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+public struct SolarSystem
+{
+    public Vector3 starPosition;
+    public float starRadius;
+    public float starMass;
+    public Color starColour;
+    public int planetCount;
+}
+public struct MeshProperties
+{
+    public Matrix4x4 mat;
+    public float scale;
+    public Vector3 position;
+    public Color colour;
+    public int lodLevel;
+}
+public struct ChunkIdentifier
+{
+    public int chunksInViewDist;
+    public int chunkSize;
+    public int chunkType;
+    public Vector3 pos;
+
+    public ChunkIdentifier(int chunksInViewDist, int chunkSize, int chunkType, Vector3 pos)
+    {
+        this.chunksInViewDist = chunksInViewDist;
+        this.chunkSize = chunkSize;
+        this.chunkType = chunkType;
+        this.pos = pos;
+    }
+}
+public struct Planet
+{
+    Vector3 position;
+    float mass;
+    float radius;
+    Color colour;
+    float rotationSpeed;
+    Vector3 rotationAxis;
+}
 public class BufferManager : MonoBehaviour
 {
-
-    private struct SolarSystem
-    {
-        public Vector3 starPosition;
-        public float starRadius;
-        public float starMass;
-        public Color starColour;
-        public int planetCount;
-    }
-    private struct MeshProperties
-    {
-        public Matrix4x4 mat;
-        public int lodLevel;
-    }
-    struct ChunkIdentifier
-    {
-        public int chunksInViewDist;
-        public int chunkSize;
-        public int chunkType;
-        public Vector3 pos;
-
-        public ChunkIdentifier(int chunksInViewDist, int chunkSize, int chunkType, Vector3 pos)
-        {
-            this.chunksInViewDist = chunksInViewDist;
-            this.chunkSize = chunkSize;
-            this.chunkType = chunkType;
-            this.pos = pos;
-        }
-    }
-    private struct Planet
-    {
-        Vector3 position;
-        float mass;
-        float radius;
-        Color colour;
-        float rotationSpeed;
-        Vector3 rotationAxis;
-    }
-
     public int numPositions;
     public int xSize;
     public int ySize;
@@ -209,7 +210,7 @@ public class BufferManager : MonoBehaviour
         argsBuffer5 = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         argsBuffer5.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
 
-        mainProperties = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Append);
+        mainProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
         mainPropertiesCount = new ComputeBuffer(1, sizeof(uint));
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
