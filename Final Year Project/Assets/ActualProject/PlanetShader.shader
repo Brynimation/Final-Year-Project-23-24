@@ -26,28 +26,38 @@ Shader "Custom/PlanetShader"
             SAMPLER(sampler_MainTex);
             StructuredBuffer<Planet> _Planets;
 
+            StructuredBuffer<float3> _VertexBuffer;
+            StructuredBuffer<float3> _NormalBuffer;
+            StructuredBuffer<float2> _UVBuffer;
+
             struct Attributes
             {
-                float4 positionOS : POSITION;
-                float2 uv : TEXCOORD0;
                 uint instanceId : SV_INSTANCEID;
+                uint vertexId : SV_VERTEXID;
             };
 
             struct Interpolators
             {
                 float2 uv : TEXCOORD0;
                 float4 positionHCS : SV_POSITION;
+                float3 normWS : TEXCOORD2;
             };
 
             
-
             Interpolators vert (Attributes i)
             {
                 Interpolators o;
-                float3 curObjectPos = _Planets[i.instanceId].position;
-                float4 vertexPosOS = mul(GenerateTRSMatrix(curObjectPos,  _Planets[i.instanceId].radius), float4(i.positionOS.xyz, 1.0));
-                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); 
-                o.uv = i.uv;
+                Planet planetData = _Planets[i.instanceId];
+                float4x4 modelMatrix = GenerateTRSMatrix(planetData.position, planetData.radius); //Create TRS matrix
+
+                float4 vertexPosOS = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
+                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
+                VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
+                o.positionHCS = positionData.positionCS;
+
+                float2 uv = _UVBuffer[i.vertexId];
+                o.uv = uv;
+                o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
                 return o;
 
