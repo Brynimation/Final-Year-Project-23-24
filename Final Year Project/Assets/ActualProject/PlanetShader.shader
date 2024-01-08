@@ -50,7 +50,15 @@ Shader "Custom/PlanetShader"
                 Planet planetData = _Planets[i.instanceId];
                 float4x4 modelMatrix = GenerateTRSMatrix(planetData.position, planetData.radius); //Create TRS matrix
 
-                float4 vertexPosOS = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
+                //We want to rotate the vertices so that the planet spins about its axis.
+                float4 worldPos = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
+                worldPos.xyz -= planetData.position;
+                float3x3 rotationMatrix = rotateAroundAxis(planetData.rotationAxis, planetData.rotationSpeed);
+                worldPos.xyz = mul(worldPos.xyz, rotationMatrix);
+
+                float4 vertexPosOS = float4(worldPos.xyz + planetData.position, 1.0);
+
+
                 VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
                 VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
                 o.positionHCS = positionData.positionCS;

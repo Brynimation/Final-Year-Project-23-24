@@ -351,7 +351,7 @@ MonoBehaviour:
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
   planetMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  planetResolution: 8
+  planetResolution: 4
   chunkSize: 80
   renderDistance: 160
   lodSwitchDist: 0.5

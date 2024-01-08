@@ -41,7 +41,9 @@ public class BufferManager : MonoBehaviour
         Vector3 position;
         float mass;
         float radius;
-        // Other properties
+        Color colour;
+        float rotationSpeed;
+        Vector3 rotationAxis;
     }
 
     public int numPositions;

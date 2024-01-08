@@ -59,6 +59,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
         for(int i = 0; i < system.planetCount; i++)
         {
             float planetRandom = Hash1(float(i)/float(system.planetCount) * length(actualPosition));
+            
             Planet planet = (Planet)0;
             float distFromStar = maxDist * planetRandom;
             float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
@@ -68,6 +69,9 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.position = actualPosition + float3(x, 0, z);
             planet.radius = lerp(0.1, 0.4, planetRandom);
             planet.mass = calculateSphereMass(planet.radius, 1.0);
+            planet.colour = float4(0.8, 0.1, 0.4, 1.0);
+            planet.rotationSpeed = 5.0 * time * timeStep;
+            planet.rotationAxis = float3(0.0, 1.0, 0.0);
 
             _Planets.Append(planet);
         }

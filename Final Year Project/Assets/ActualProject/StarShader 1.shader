@@ -59,6 +59,7 @@ Shader "Custom/StarShader"
                 o.uv = uv;
                 o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
+                o.mainColour = systemData.starColour;
                 return o;
 
             }
@@ -67,7 +68,7 @@ Shader "Custom/StarShader"
             {
                 //return float4(1.0, 0.0, 0.0, 1.0);
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                return baseTex;// * i.mainColour;
+                return baseTex * i.mainColour;
             }
             ENDHLSL
         }
