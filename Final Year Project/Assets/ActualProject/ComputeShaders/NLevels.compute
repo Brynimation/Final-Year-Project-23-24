@@ -51,7 +51,7 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
             break;
         case 3:
             //If closer, it's appended to the mainProperties buffer by the galaxyPositioner compute shader, so we don't want to add it again here.
-            if(dist > galaxySwitchDist)
+            if(dist > galaxySwitchDist  * max(1.0, scale))
             {
                 _Properties4.Append(mp);
             }

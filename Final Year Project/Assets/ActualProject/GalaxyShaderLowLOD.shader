@@ -71,7 +71,7 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
                 float radius : TEXCOORD2;
-                uint id : TEXCOORD3;
+                float3 forward : TEXCOORD3;
             };
 
                 struct Interpolators
@@ -137,7 +137,6 @@ Shader "Custom/GalaxyShaderLowLOD"
             GeomData vert(uint id : SV_INSTANCEID)
             {
                 GeomData o;
-                o.id = id;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
                 MeshProperties mp = _Properties[id];
@@ -147,6 +146,10 @@ Shader "Custom/GalaxyShaderLowLOD"
                 int seed = GenerateRandom(o.positionWS.xy);
                 o.colour = mp.colour;
                 o.radius = mp.scale;
+                //We need to extract the 3x3 rotation (and scale) matrix from our 4x4 trs matrix so we can properly orient our quad in the geometry shader
+                float3x3 rotMat = float3x3(mp.mat[0].xyz, mp.mat[1].xyz, mp.mat[2].xyz);
+                o.forward = normalize(mul(rotMat, float3(0.0, 0.0, 1.0)));
+
                 //o.colour += _EmissionColour;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
@@ -157,10 +160,9 @@ Shader "Custom/GalaxyShaderLowLOD"
             {
 
                 GeomData centre = inputs[0];
-                //if(_PositionsLOD1[centre.id].culled == 0) return;
-                float3 forward = centre.positionWS;
-                //forward.y ;
-                forward = normalize(forward);
+                
+                
+                float3 forward = centre.forward;
 
                 float3 worldUp = float3(0.0f, 1.0f, 0.0f);
                 float3 right = normalize(cross(forward, worldUp));

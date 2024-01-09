@@ -338,7 +338,7 @@ MonoBehaviour:
   positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
-  galaxyLodSwitchDist: 2
+  galaxyLodSwitchDist: 5
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
@@ -354,7 +354,7 @@ MonoBehaviour:
   planetResolution: 4
   chunkSize: 80
   renderDistance: 160
-  lodSwitchDist: 0.5
+  lodSwitchDist: 0.75
   shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
   material2: {fileID: 2100000, guid: 42b2cd426dd15234893f3817a6f26c34, type: 2}

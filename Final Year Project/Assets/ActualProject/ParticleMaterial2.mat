@@ -103,7 +103,7 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Emission: 25
+    - _Emission: 10
     - _EnvironmentReflections: 1
     - _GalacticBulgeRadius: 2
     - _GalacticDiskRadius: 5
