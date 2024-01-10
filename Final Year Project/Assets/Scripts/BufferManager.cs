@@ -224,6 +224,9 @@ public class BufferManager : MonoBehaviour
         starMaterial.SetBuffer("_VertexBuffer", starVertexBuffer);
         starMaterial.SetBuffer("_NormalBuffer", starNormalBuffer);
         starMaterial.SetBuffer("_UVBuffer", starUVBuffer);
+        starMaterial.SetFloat("solarSystemSwitchDist", solarSystemSwitchDist);
+        starMaterial.SetVector("playerPosition", playerPosition.position);
+        starMaterial.SetFloat("minDist", (float)(solarSystemSwitchDist / 3.0f));
 
         starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_VertexBuffer", starVertexBuffer);
         starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_NormalBuffer", starNormalBuffer);
@@ -308,6 +311,7 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
         solarSystemCreator.DispatchIndirect(solarSystemCreatorIndex, dispatchBuffer);
+        starMaterial.SetVector("playerPosition", playerPosition.position);
 
         planetSphereGenerator.SetInt("_Resolution", planetResolution);
         starSphereGenerator.SetInt("_Resolution", starResolution);

@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: New Material
+  m_Name: VoronoiStar
   m_Shader: {fileID: 4800000, guid: 425b38f7853eb004ea7c65b012e3b7bf, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -93,9 +93,9 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _Blend: 0
-    - _BorderWidth: 0.05
+    - _BorderWidth: 2
     - _BumpScale: 1
-    - _CellSize: -0.04
+    - _CellSize: 0.05
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -123,7 +123,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BorderColour: {r: 1, g: 0.4748215, b: 0, a: 1}
+    - _BorderColour: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Colour: {r: 1, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

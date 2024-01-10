@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UniverseLOD1Mat 2
-  m_Shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
+  m_Shader: {fileID: 4800000, guid: 86397cbad83cb944980be267384f4540, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -95,7 +95,9 @@ Material:
     - _AngularOffsetIncrement: 1
     - _AngularOffsetMultiplier: 1
     - _Blend: 0
+    - _BorderWidth: 1
     - _BumpScale: 1
+    - _CellSize: 0.1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -134,6 +136,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColour: {r: 1, g: 1, b: 1, a: 1}
+    - _BorderColour: {r: 1, g: 1, b: 1, a: 1}
     - _CameraPosition: {r: 0, g: 0, b: 0, a: 1}
     - _CameraUp: {r: 0, g: 0, b: 0, a: 1}
     - _CentreColour: {r: 1, g: 1, b: 1, a: 1}
