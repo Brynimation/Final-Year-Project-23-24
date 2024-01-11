@@ -12,6 +12,7 @@ public struct SolarSystem
     public float starMass;
     public Color starColour;
     public int planetCount;
+    public float fade;
 }
 public struct MeshProperties
 {
@@ -19,6 +20,7 @@ public struct MeshProperties
     public float scale;
     public Vector3 position;
     public Color colour;
+    public float fade;
     public int lodLevel;
 }
 public struct ChunkIdentifier
@@ -69,10 +71,12 @@ public class BufferManager : MonoBehaviour
     public ComputeBuffer solarSystemArgsBuffer;
     public ComputeBuffer solarSystemBufferCount;
     public ComputeBuffer solarSystemBufferCountAgain;
+    public float solarSystemFadeDist;
     public float solarSystemSwitchDist;
     public Mesh starMesh;
     public Material starMaterial;
     public int starResolution;
+    public float starMaxWobbleMagnitude;
     private ComputeBuffer starVertexBuffer;
     private ComputeBuffer starNormalBuffer;
     private ComputeBuffer starUVBuffer;
@@ -227,6 +231,7 @@ public class BufferManager : MonoBehaviour
         starMaterial.SetFloat("solarSystemSwitchDist", solarSystemSwitchDist);
         starMaterial.SetVector("playerPosition", playerPosition.position);
         starMaterial.SetFloat("minDist", (float)(solarSystemSwitchDist / 3.0f));
+        starMaterial.SetFloat("_WobbleMagnitude", starMaxWobbleMagnitude);
 
         starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_VertexBuffer", starVertexBuffer);
         starSphereGenerator.SetBuffer(starSphereGeneratorIndex, "_NormalBuffer", starNormalBuffer);
@@ -308,10 +313,12 @@ public class BufferManager : MonoBehaviour
         galaxyPositioner.DispatchIndirect(galaxyPositionerIndex, dispatchBuffer);
 
         solarSystemCreator.SetVector("playerPosition", playerPosition.position);
+        solarSystemCreator.SetFloat("fadeDist", solarSystemFadeDist);
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
         solarSystemCreator.DispatchIndirect(solarSystemCreatorIndex, dispatchBuffer);
         starMaterial.SetVector("playerPosition", playerPosition.position);
+        starMaterial.SetFloat("_WobbleMagnitude", starMaxWobbleMagnitude);
 
         planetSphereGenerator.SetInt("_Resolution", planetResolution);
         starSphereGenerator.SetInt("_Resolution", starResolution);

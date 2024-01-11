@@ -56,6 +56,7 @@ Shader "Custom/StarShader"
                 float3 positionWS : TEXCOORD1;
                 float3 normWS : TEXCOORD2;
                 float4 mainColour : COLOR0;
+                float fade : TEXCOORD3;
             };
 
             
@@ -70,13 +71,8 @@ Shader "Custom/StarShader"
                 //wobble
                 float noiseValue = pNoise(vertexPosOS.xyz);
                 float dist = distance(systemData.starPosition, playerPosition);
-                float wobbleMagnitude = 0.0;
-                if(dist > solarSystemSwitchDist)
-                {
-                    wobbleMagnitude = 0.0;
-                }else{
-                    wobbleMagnitude = lerp(0.0, _WobbleMagnitude, minDist/dist);
-                }
+                float maxWobbleMagnitude = _WobbleMagnitude * systemData.starRadius / 2.0;
+                float wobbleMagnitude = lerp(0.0, _WobbleMagnitude, systemData.fade);
                 vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue); 
 
 
@@ -86,6 +82,7 @@ Shader "Custom/StarShader"
 
                 float2 uv = _UVBuffer[i.vertexId];
                 o.uv = uv;
+                o.fade = systemData.fade;
                 o.normWS = normalData.normalWS;
                 o.positionWS = positionData.positionWS.xyz;
                 o.positionHCS = positionData.positionCS;
@@ -100,6 +97,10 @@ Shader "Custom/StarShader"
                 //return float4(1.0, 0.0, 0.0, 1.0);
                 // sample the texture
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+
+                //LOD cross fade
+                float dither = InterleavedGradientNoise(i.positionHCS, i.fade);
+                clip(i.fade - dither);
                 float pulsatingCellSize = _CellSize;
 
                 //Our voronoi noise function takes as input the world space position of the current fragment, scaled by the cell size.

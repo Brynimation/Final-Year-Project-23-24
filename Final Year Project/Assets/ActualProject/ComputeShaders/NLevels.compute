@@ -20,6 +20,7 @@ RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 float renderDistance;
 float lodSwitchDist;
+float fadeDist;
 float solarSystemSwitchDist;
 float galaxySwitchDist;
 int chunkSize;
@@ -30,9 +31,9 @@ int originalChunksVisibleInViewDist;
 
 
 //actualPosition, 1, _ChunksBuffer[0].chunkType)
-void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour)
+void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour, float fade)
 {
-    MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, chunkType, colour);
+    MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, chunkType, colour, fade);
 
     switch(chunkType)
     {
@@ -132,7 +133,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float scale = lerp(0.25, 2.0, random);
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         float3 rotation = Hash3(actualPosition) * 2.0 * PI;
-        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour);
+        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0);
         //_DispatchBuffer[0] = numThreadGroupsX;
         //_DispatchBuffer[1] = numThreadGroupsY;
         //_DispatchBuffer[2] = numThreadGroupsZ;

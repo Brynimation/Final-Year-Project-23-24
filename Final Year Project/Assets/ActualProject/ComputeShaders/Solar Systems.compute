@@ -10,6 +10,7 @@ RWStructuredBuffer<int> _SolarSystemCount;
 AppendStructuredBuffer<SolarSystem> _SolarSystems; 
 AppendStructuredBuffer<Planet> _Planets;
 float time;
+float fadeDist;
 float timeStep;
 
 float CalculatePlanetAngularVelocity(float dist, float starMass, float planetMass)
@@ -44,8 +45,8 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
     float dist = length(actualPosition - playerPosition);
-
-    if (dist < solarSystemSwitchDist && _ChunksBuffer[0].chunkType == 2)
+    float lodDist = solarSystemSwitchDist + fadeDist;
+    if (dist < lodDist && _ChunksBuffer[0].chunkType == 2)
     {
         float random = Hash21(actualPosition.xy + actualPosition.z);
         SolarSystem system = (SolarSystem)0;
@@ -54,6 +55,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
         system.starMass = calculateSphereMass(system.starRadius, 1.0);
         system.starColour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         system.planetCount = ceil(10 * random);
+        system.fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
         _SolarSystems.Append(system);
         float maxDist = 10.0;
         for(int i = 0; i < system.planetCount; i++)
@@ -61,7 +63,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             float planetRandom = Hash1(float(i)/float(system.planetCount) * length(actualPosition));
             
             Planet planet = (Planet)0;
-            float distFromStar = maxDist * planetRandom;
+            float distFromStar = system.starRadius + maxDist * planetRandom;
             float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
             float angle = initialAngle + CalculatePlanetAngularVelocity(distFromStar, system.starMass, 1.0) * time * timeStep;
             float x = distFromStar * cos(angle);

@@ -19,6 +19,10 @@ Voronoi noise is often used to create organic and natural textures, and I felt i
         _Colour("Colour", Color) = (1.0, 0.0, 0.0, 1.0)
         _BorderColour("BorderColour", Color) = (1.0, 0.2, 0.2, 1.0)
         _BorderWidth("BorderWidth", Float) = 0.1
+        _StartFadeInDist("StartFadeInDist", Float) = 20.0
+        _StartFadeOutDist("StartFadeOutDist", Float) = 5.0
+        _FadeDist("FadeDist", Float) = 3.0
+        _Fade("Fade", Range(0.0, 1.0)) = 0.5
     }
     SubShader
     {
@@ -34,13 +38,20 @@ Voronoi noise is often used to create organic and natural textures, and I felt i
 
         TEXTURE2D(_MainTex);
         SAMPLER(sampler_MainTex);
+        uniform float _StartFadeInDist;
+        uniform float _StartFadeOutDist;
+        uniform float _FadeDist;
+        uniform float3 playerPosition;
+
+        uniform float3 centre;
         uniform float solarSystemSwitchDist;
         uniform float minDist;
-        uniform float3 playerPosition;
+
         uniform float _CellSize;
         uniform float4 _Colour;
         uniform float4 _BorderColour;
         uniform float _BorderWidth;
+        uniform float _Fade;
 
         ENDHLSL
         Pass
@@ -61,6 +72,7 @@ Voronoi noise is often used to create organic and natural textures, and I felt i
             struct Interpolators
             {
                 float2 uv : TEXCOORD0;
+                float fade : TEXCOORD1;
                 float4 positionHCS : SV_POSITION;
             };
 
@@ -68,11 +80,32 @@ Voronoi noise is often used to create organic and natural textures, and I felt i
 
             Interpolators vert (Attributes i)
             {
+                
                 Interpolators o;
                 float noiseValue = pNoise(i.positionOS);
                 float wobbleMagnitude = 0.1;
                 float4 vertexPosOS = i.positionOS;
                 vertexPosOS.xyz += i.normalOS * wobbleMagnitude * sin(_Time.y * noiseValue); 
+                float3 worldPos = mul(unity_ObjectToWorld, vertexPosOS);
+                o.fade = 0.0;
+                float dist = distance(playerPosition, worldPos);
+                if(dist > _StartFadeInDist)
+                {
+                    o.fade = 0.0;    
+                }else if(dist < _StartFadeInDist && dist > _StartFadeInDist - _FadeDist)
+                {
+                    o.fade = lerp(0.0, 1.0, dist / (_StartFadeInDist - _FadeDist));    
+                }else if(dist <= _StartFadeInDist - _FadeDist && dist > _StartFadeOutDist)
+                {
+                    o.fade = 1.0;    
+                }else if(dist <= _StartFadeOutDist && dist > _StartFadeOutDist - _FadeDist)
+                {
+                    o.fade = lerp(1.0, 0.0, dist / (_StartFadeOutDist - _FadeDist)); 
+                }else{
+                    o.fade = 0.0;    
+                }
+
+
                 o.positionHCS = TransformObjectToHClip(vertexPosOS);
                 o.uv = i.uv;
                 return o;
@@ -89,6 +122,8 @@ Voronoi noise is often used to create organic and natural textures, and I felt i
             {
                 // sample the texture
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                float dither = InterleavedGradientNoise(i.positionHCS, i.fade);
+                clip(i.fade - dither);
                 float pulsatingCellSize = _CellSize;
 
                 /*Our voronoi noise function takes as input the uv coordinate of the current fragment, remapped from a range of (9, 1) to (-1, 1) in both the u and v dimensions.

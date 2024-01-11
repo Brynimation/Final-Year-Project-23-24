@@ -7,6 +7,7 @@ struct SolarSystem
     float starMass;
     float4 starColour;
     int planetCount;  
+    float fade;
 };
 
 struct Planet {
@@ -24,6 +25,7 @@ struct MeshProperties
     float scale;
     float3 position;
     float4 colour;
+    float fade;
     int lodLevel;
 };
 
@@ -175,7 +177,7 @@ float3 Hash33(float3 value){
 }
 
 
-MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel, float4 colour)
+MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel, float4 colour, float fade)
 {
     MeshProperties mp = (MeshProperties)0;
     mp.mat = GenerateTRSMatrix(position, scale);
@@ -183,10 +185,11 @@ MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel
     mp.position = position;
     mp.colour = colour;
     mp.lodLevel = lodLevel;
+    mp.fade = fade;
     return mp;
 }
 
-MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float scale, int lodLevel, float4 colour)
+MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float scale, int lodLevel, float4 colour, float fade)
 {
     MeshProperties mp = (MeshProperties)0;
     mp.mat = GenerateTRSMatrix(position, rotation, scale);
@@ -194,6 +197,7 @@ MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float sc
     mp.position = position;
     mp.colour = colour;
     mp.lodLevel = lodLevel;
+    mp.fade = fade;
     return mp;
 }
 
@@ -237,6 +241,32 @@ float3x3 rotateAroundAxis(float3 axis, float angle)
     );
 }
 
+float CrossFade(float3 playerPosition, float3 worldPos, float _StartFadeOutDist, float _StartFadeInDist, float _FadeDist)
+{
+    float dist = distance(playerPosition, worldPos);
+    float fade = 0.0;
+    if (dist <= _StartFadeOutDist - _FadeDist)
+    {
+        fade = 0.0;
+    }
+    else if (dist <= _StartFadeOutDist)
+    {
+        fade = lerp(1.0, 0.0, dist / (_StartFadeOutDist - _FadeDist));
+    }
+    else if (dist <= _StartFadeInDist - _FadeDist)
+    {
+        fade = 1.0;
+    }
+    else if (dist <= _StartFadeInDist)
+    {
+        fade = lerp(1.0, 0.0, (dist - (_StartFadeInDist - _FadeDist)) / _FadeDist);
+    }
+    else
+    {
+        fade = 0.0;
+    }
+    return fade;
+}
 
 //https://gist.github.com/oscnord/35cbe399853b338e281aaf6221d9a29b
 

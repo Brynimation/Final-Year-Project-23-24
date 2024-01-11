@@ -75,6 +75,7 @@ Shader "Custom/StarLowLODShader"
                 float4 positionWS : POSITION;
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
+                float fade : TEXCOORD1;
                 float radius : TEXCOORD2;
                 uint id : TEXCOORD3;
             };
@@ -152,6 +153,7 @@ Shader "Custom/StarLowLODShader"
                 int seed = GenerateRandom(o.positionWS.xy);
                 o.colour = mp.colour;
                 o.radius = mp.scale;
+                o.fade = mp.fade;
                 //o.colour += _EmissionColour;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
