@@ -15,7 +15,6 @@ Shader "Custom/StarField"
 
         #pragma target 5.0
         #include "Assets/ActualProject/Utility.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #define PI 3.141519
 
         TEXTURE2D(_MainTex);

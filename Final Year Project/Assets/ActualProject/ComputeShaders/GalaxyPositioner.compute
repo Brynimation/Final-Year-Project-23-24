@@ -4,7 +4,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 float lodSwitchDist;
-float fadeDist;
+float galaxyFadeDist;
 float3 playerPosition;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 AppendStructuredBuffer<MeshProperties> _MainProperties;
@@ -31,11 +31,10 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     float random = Hash21(actualPosition.xy + actualPosition.z);
     float scale = lerp(0.25, 2.0, random);
-    float lodDist = lodSwitchDist * max(1.0, scale) + fadeDist;
+    float lodDist = lodSwitchDist * max(1.0, scale) + galaxyFadeDist;
     if (dist < lodDist && _ChunksBuffer[0].chunkType == 3)
     {
-        //CrossFade(float3 playerPosition, float3 worldPos, float _StartFadeOutDist, float _StartFadeInDist, float _FadeDist);
-        float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, fadeDist);
+        float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, galaxyFadeDist);
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         float3 rotation = Hash3(actualPosition) * 2.0 * PI;
         MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);

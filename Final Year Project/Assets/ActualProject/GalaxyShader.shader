@@ -22,8 +22,7 @@ Shader "Custom/GalaxyShader" {
             #pragma vertex vert 
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Assets/ActualProject/Utility.hlsl"
 
 
             float GenerateRandom(int x)

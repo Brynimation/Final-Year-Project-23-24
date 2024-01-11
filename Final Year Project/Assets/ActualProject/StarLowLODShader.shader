@@ -41,7 +41,6 @@ Shader "Custom/StarLowLODShader"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma target 5.0
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Assets/ActualProject/Voronoi.hlsl"
 
             UNITY_INSTANCING_BUFFER_START(MyProps)

@@ -14,8 +14,6 @@ Shader "Custom/PlanetShader"
         {
             HLSLPROGRAM
             #include "Assets/ActualProject/Utility.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #pragma target 5.0
             #pragma vertex vert 
             #pragma fragment frag

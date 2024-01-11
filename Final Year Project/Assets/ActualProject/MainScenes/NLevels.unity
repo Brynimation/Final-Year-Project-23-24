@@ -183,6 +183,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dispatcher
       objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869345, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: _AngularOffsetMultiplier
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: player
       value: 
@@ -201,11 +205,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: largeStarRadius
-      value: 0.0025
+      value: 0.025
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: smallStarRadius
-      value: 0.001
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: sphereGenerator
@@ -227,6 +231,10 @@ PrefabInstance:
       propertyPath: sphereGeneratorPrefab
       value: 
       objectReference: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: _AngularOffsetMultiplier
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_RootOrder
       value: 3
@@ -339,6 +347,7 @@ MonoBehaviour:
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 5
+  galaxyFadeDist: 3
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}

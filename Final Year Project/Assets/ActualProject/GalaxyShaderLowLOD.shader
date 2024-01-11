@@ -39,7 +39,6 @@ Shader "Custom/GalaxyShaderLowLOD"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma target 5.0
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Assets/ActualProject/Utility.hlsl"
 
             UNITY_INSTANCING_BUFFER_START(MyProps)
@@ -70,8 +69,11 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float4 positionWS : POSITION;
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
+                float fade : TEXCOORD1;
                 float radius : TEXCOORD2;
                 float3 forward : TEXCOORD3;
+                float3 right : TEXCOORD4;
+                float3 up : TEXCOORD5;
             };
 
                 struct Interpolators
@@ -80,8 +82,10 @@ Shader "Custom/GalaxyShaderLowLOD"
                 //float size : PSIZE; //Size of each vertex.
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
-                float3 positionWS : TEXCOORD1;
-                float4 centreHCS : TEXCOORD2;
+                float fade : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
+                float4 centreHCS : TEXCOORD3;
+
             };
 
             float4 colourFromLodLevel(int lodLevel)
@@ -149,7 +153,9 @@ Shader "Custom/GalaxyShaderLowLOD"
                 //We need to extract the 3x3 rotation (and scale) matrix from our 4x4 trs matrix so we can properly orient our quad in the geometry shader
                 float3x3 rotMat = float3x3(mp.mat[0].xyz, mp.mat[1].xyz, mp.mat[2].xyz);
                 o.forward = normalize(mul(rotMat, float3(0.0, 0.0, 1.0)));
-
+                o.right = normalize(mul(rotMat, float3(1.0, 0.0, 0.0)));
+                o.up = normalize(mul(rotMat, float3(0.0, 1.0, 0.0)));
+                o.fade = mp.fade;
                 //o.colour += _EmissionColour;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
@@ -168,6 +174,8 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float3 right = normalize(cross(forward, worldUp));
                 float3 up = normalize(cross(forward, right));
 
+                right = centre.right;
+                up = centre.up;
                 float3 WSPositions[4];
                 float2 uvs[4];
 
@@ -197,12 +205,24 @@ Shader "Custom/GalaxyShaderLowLOD"
                     o.positionWS = float4(WSPositions[i], 1.0f);
                     o.uv = uvs[i];
                     o.colour = centre.colour;
+                    o.fade = centre.fade;
                     outputStream.Append(o);
                 }
             }
 
             float4 frag(Interpolators i) : SV_Target
             {
+                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
+                float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+                float radius = 1.0;
+                float2 centre = float2(0.0, 0.0);
+                float dist = distance(p, centre);
+                if(dist > radius) discard;
+                return i.colour;
+            }
+            float4 frag2(Interpolators i)
+            {
+                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
 
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 if (baseTex.a == 0.0)discard;

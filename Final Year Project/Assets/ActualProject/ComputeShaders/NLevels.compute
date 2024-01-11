@@ -1,8 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 #include "Assets/ActualProject/Utility.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -20,7 +18,7 @@ RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 float renderDistance;
 float lodSwitchDist;
-float fadeDist;
+float galaxyFadeDist;
 float solarSystemSwitchDist;
 float galaxySwitchDist;
 int chunkSize;
@@ -52,8 +50,11 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
             break;
         case 3:
             //If closer, it's appended to the mainProperties buffer by the galaxyPositioner compute shader, so we don't want to add it again here.
-            if(dist > galaxySwitchDist  * max(1.0, scale))
+            float finalGalaxySwitchDist = galaxySwitchDist * max(1.0, scale);
+            if(dist > finalGalaxySwitchDist)
             {
+                //Start fading the sprites 
+                mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
                 _Properties4.Append(mp);
             }
             break;

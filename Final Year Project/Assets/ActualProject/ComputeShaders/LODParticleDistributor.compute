@@ -63,7 +63,12 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset;
     float zPos = 0.0;
-    float4 pos = mul(_MainPropertiesBuffer[0].mat, float4(xPos, yPos, zPos, 1.0));
+    float3 scale = _MainPropertiesBuffer[0].scale;
+    float4x4 matNoScale = _MainPropertiesBuffer[0].mat;
+    matNoScale[0][0] /= scale.x;
+    matNoScale[1][1] /= scale.y;
+    matNoScale[2][2] /= scale.z;
+    float4 pos = mul(matNoScale, float4(xPos, yPos, zPos, 1.0));
     return pos.xyz;
 }
 
@@ -74,7 +79,7 @@ float GetAccurateSemiMajorAxis(uint id)
     /*float radius = _GalacticHaloRadius * (exp(_Bias * (float) id / (float) _NumParticles) - 1.0);
     return radius;*/
         // Normalized progress variable (from 0 to 1 as id goes from 0 to _NumParticles)
-    float t = (float)id / (float)_NumParticles;
+    float t = (float) id / (float) (_NumParticles - 1.0);
 
     // Exponential falloff factor
     float falloff = exp(-_FalloffCoefficient * (1.0 - t));
@@ -82,7 +87,7 @@ float GetAccurateSemiMajorAxis(uint id)
     // Calculate the radius with an exponential falloff
     float radius = _GalacticHaloRadius * (1.0 - falloff);
 
-    return radius;
+    return _GalacticHaloRadius; //lerp(0.0, _GalacticHaloRadius, t);
 }
 /*float GetAccurateSemiMajorAxis(uint id)
 {

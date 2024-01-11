@@ -62,6 +62,7 @@ public class BufferManager : MonoBehaviour
     public DispatcherProcedural dispatcherProcedural;
     public ComputeShader galaxyPositioner;
     public float galaxyLodSwitchDist;
+    public float galaxyFadeDist;
 
     //Solar systems
     public ComputeShader sphereGeneratorPrefab;
@@ -265,10 +266,12 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetFloat("solarSystemSwitchDist", solarSystemSwitchDist);
         positionCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+        positionCalculator.SetFloat("galaxyFadeDist", galaxyFadeDist);
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
+        galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
         dispatcherProcedural._MainPositionBuffer = mainProperties;
         dispatcherProcedural._MainPositionBufferCount = mainPropertiesCount;

@@ -19,8 +19,6 @@ Shader "Custom/StarShader"
         {
             HLSLPROGRAM
             #include "Assets/ActualProject/Voronoi.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #pragma target 5.0
             #pragma vertex vert 
             #pragma fragment frag
@@ -102,8 +100,8 @@ Shader "Custom/StarShader"
                 //https://catlikecoding.com/unity/tutorials/custom-srp/lod-and-reflections/
                 //https://www.youtube.com/watch?v=-mE4qreuqJY
 
-                float dither = InterleavedGradientNoise(i.positionHCS, i.fade);
-                clip(i.fade - dither);
+                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
+
                 float pulsatingCellSize = _CellSize;
 
                 //Our voronoi noise function takes as input the world space position of the current fragment, scaled by the cell size.

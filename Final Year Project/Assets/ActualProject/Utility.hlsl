@@ -1,5 +1,6 @@
 #define _G 1.0
-
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 struct SolarSystem
 {
     float3 starPosition;
@@ -251,7 +252,7 @@ float CrossFade(float3 playerPosition, float3 worldPos, float _StartFadeOutDist,
     }
     else if (dist <= _StartFadeOutDist)
     {
-        fade = lerp(1.0, 0.0, dist / (_StartFadeOutDist - _FadeDist));
+        fade = (dist - (_StartFadeOutDist - _FadeDist)) / _FadeDist;
     }
     else if (dist <= _StartFadeInDist - _FadeDist)
     {
@@ -266,6 +267,12 @@ float CrossFade(float3 playerPosition, float3 worldPos, float _StartFadeOutDist,
         fade = 0.0;
     }
     return fade;
+}
+
+float DiscardPixelLODCrossFade(float4 posHCS, float fade)
+{
+    float dither = InterleavedGradientNoise(posHCS, fade);
+    return fade - dither;
 }
 
 //https://gist.github.com/oscnord/35cbe399853b338e281aaf6221d9a29b

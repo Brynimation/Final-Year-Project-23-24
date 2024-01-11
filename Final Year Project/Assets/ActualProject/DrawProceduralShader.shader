@@ -18,8 +18,6 @@ Shader "Custom/DrawProceduralShader"
             cull Off
             HLSLPROGRAM
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Assets/ActualProject/Utility.hlsl"
             #pragma target 5.0
             #pragma vertex vert 
