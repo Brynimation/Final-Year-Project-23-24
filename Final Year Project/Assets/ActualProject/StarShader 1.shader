@@ -99,6 +99,9 @@ Shader "Custom/StarShader"
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
 
                 //LOD cross fade
+                //https://catlikecoding.com/unity/tutorials/custom-srp/lod-and-reflections/
+                //https://www.youtube.com/watch?v=-mE4qreuqJY
+
                 float dither = InterleavedGradientNoise(i.positionHCS, i.fade);
                 clip(i.fade - dither);
                 float pulsatingCellSize = _CellSize;
