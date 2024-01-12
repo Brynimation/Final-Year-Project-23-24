@@ -46,7 +46,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     float lodDist = solarSystemSwitchDist + fadeDist;
     if (dist < lodDist && _ChunksBuffer[0].chunkType == 2)
     {
-        float random = Hash21(actualPosition.xy + actualPosition.z);
+        float random = Hash31(actualPosition);
         SolarSystem system = (SolarSystem)0;
         system.starPosition = actualPosition;
         system.starRadius = lerp(0.25, 2.0, random);

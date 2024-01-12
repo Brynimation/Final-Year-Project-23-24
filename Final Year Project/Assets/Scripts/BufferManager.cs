@@ -270,6 +270,7 @@ public class BufferManager : MonoBehaviour
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Properties4", positionsBuffer4);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
         galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);

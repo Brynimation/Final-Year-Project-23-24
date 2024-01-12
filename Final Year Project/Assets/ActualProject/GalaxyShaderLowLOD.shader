@@ -152,6 +152,17 @@ Shader "Custom/GalaxyShaderLowLOD"
                 o.radius = mp.scale;
                 //We need to extract the 3x3 rotation (and scale) matrix from our 4x4 trs matrix so we can properly orient our quad in the geometry shader
                 float3x3 rotMat = float3x3(mp.mat[0].xyz, mp.mat[1].xyz, mp.mat[2].xyz);
+                rotMat[0][0] /= mp.scale;
+                rotMat[0][1] /= mp.scale;
+                rotMat[0][2] /= mp.scale;
+
+                rotMat[1][0] /= mp.scale;
+                rotMat[1][1] /= mp.scale;
+                rotMat[1][2] /= mp.scale;
+
+                rotMat[2][0] /= mp.scale;
+                rotMat[2][1] /= mp.scale;
+                rotMat[2][2] /= mp.scale;
                 o.forward = normalize(mul(rotMat, float3(0.0, 0.0, 1.0)));
                 o.right = normalize(mul(rotMat, float3(1.0, 0.0, 0.0)));
                 o.up = normalize(mul(rotMat, float3(0.0, 1.0, 0.0)));
@@ -201,8 +212,8 @@ Shader "Custom/GalaxyShaderLowLOD"
                 {
                     Interpolators o;
                     o.centreHCS = mul(UNITY_MATRIX_VP, centre.positionWS);
-                    o.positionHCS = mul(UNITY_MATRIX_VP, float4(WSPositions[i], 1.0f));
-                    o.positionWS = float4(WSPositions[i], 1.0f);
+                    o.positionHCS = mul(UNITY_MATRIX_VP, float4(WSPositions[i], 1.0));
+                    o.positionWS = float4(WSPositions[i], 1.0);
                     o.uv = uvs[i];
                     o.colour = centre.colour;
                     o.fade = centre.fade;

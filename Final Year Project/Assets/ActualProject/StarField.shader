@@ -15,7 +15,6 @@ Shader "Custom/StarField"
 
         #pragma target 5.0
         #include "Assets/ActualProject/Utility.hlsl"
-        #define PI 3.141519
 
         TEXTURE2D(_MainTex);
         SAMPLER(sampler_MainTex);

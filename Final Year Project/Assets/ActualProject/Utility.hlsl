@@ -177,6 +177,18 @@ float3 Hash33(float3 value){
     );
 }
 
+float3 RotationFromPosition(float3 position)
+{
+   float3 val = float3(
+        dot(position, float3(1.0, 2.0, 0.5)),
+        dot(position, float3(0.2, 0.1, 2.0)),
+        dot(position, float3(2.5, 1.2, 3.3))
+    
+);
+    return val * PI * 2.0;
+
+}
+
 
 MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel, float4 colour, float fade)
 {

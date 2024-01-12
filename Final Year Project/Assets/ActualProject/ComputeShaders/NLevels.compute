@@ -130,10 +130,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             }
 
         }
-        float random = Hash21(actualPosition.xy + actualPosition.z);
+        float random = Hash31(actualPosition);
         float scale = lerp(0.25, 2.0, random);
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
-        float3 rotation = Hash3(actualPosition) * 2.0 * PI;
+        float3 rotation = Hash33(actualPosition) * 2.0 * PI;
         AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0);
         //_DispatchBuffer[0] = numThreadGroupsX;
         //_DispatchBuffer[1] = numThreadGroupsY;

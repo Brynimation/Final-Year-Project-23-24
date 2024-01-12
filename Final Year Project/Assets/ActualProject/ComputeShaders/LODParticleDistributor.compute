@@ -66,7 +66,15 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
     float3 scale = _MainPropertiesBuffer[0].scale;
     float4x4 matNoScale = _MainPropertiesBuffer[0].mat;
     matNoScale[0][0] /= scale.x;
+    matNoScale[0][1] /= scale.y;
+    matNoScale[0][2] /= scale.z;
+
+    matNoScale[1][0] /= scale.x;
     matNoScale[1][1] /= scale.y;
+    matNoScale[1][2] /= scale.z;
+
+    matNoScale[2][0] /= scale.x;
+    matNoScale[2][1] /= scale.y;
     matNoScale[2][2] /= scale.z;
     float4 pos = mul(matNoScale, float4(xPos, yPos, zPos, 1.0));
     return pos.xyz;
@@ -87,7 +95,7 @@ float GetAccurateSemiMajorAxis(uint id)
     // Calculate the radius with an exponential falloff
     float radius = _GalacticHaloRadius * (1.0 - falloff);
 
-    return _GalacticHaloRadius; //lerp(0.0, _GalacticHaloRadius, t);
+    return lerp(0.0, _GalacticHaloRadius, t);
 }
 /*float GetAccurateSemiMajorAxis(uint id)
 {
