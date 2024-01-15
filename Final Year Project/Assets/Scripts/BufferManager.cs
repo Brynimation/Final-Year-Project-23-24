@@ -10,6 +10,7 @@ public struct SolarSystem
     public Vector3 starPosition;
     public float starRadius;
     public float starMass;
+    public float starLuminosity;
     public Color starColour;
     public int planetCount;
     public float fade;
@@ -78,6 +79,12 @@ public class BufferManager : MonoBehaviour
     public Material starMaterial;
     public int starResolution;
     public float starMaxWobbleMagnitude;
+    public float minLuminosity;
+    public float maxLuminosity;
+    public float minWavelength;
+    public float maxWavelength;
+    public float minRadius;
+    public float maxRadius;
     private ComputeBuffer starVertexBuffer;
     private ComputeBuffer starNormalBuffer;
     private ComputeBuffer starUVBuffer;
@@ -311,6 +318,12 @@ public class BufferManager : MonoBehaviour
 
         debugPosBuffer.SetCounterValue(0);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+        positionCalculator.SetFloat("minWavelength", minWavelength);
+        positionCalculator.SetFloat("maxWavelength", maxWavelength);
+        positionCalculator.SetFloat("minLuminosity", minLuminosity);
+        positionCalculator.SetFloat("maxLuminosity", maxLuminosity);
+        positionCalculator.SetFloat("minRadius", minRadius);
+        positionCalculator.SetFloat("maxRadius", maxRadius);
         positionCalculator.DispatchIndirect(mainKernelIndex, dispatchBuffer);
 
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
@@ -320,6 +333,13 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetFloat("fadeDist", solarSystemFadeDist);
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
+        solarSystemCreator.SetFloat("minWavelength", minWavelength);
+        solarSystemCreator.SetFloat("maxWavelength", maxWavelength);
+        solarSystemCreator.SetFloat("minLuminosity", minLuminosity);
+        solarSystemCreator.SetFloat("maxLuminosity", maxLuminosity);
+        solarSystemCreator.SetFloat("minRadius", minRadius);
+        solarSystemCreator.SetFloat("maxRadius", maxRadius);
+
         solarSystemCreator.DispatchIndirect(solarSystemCreatorIndex, dispatchBuffer);
         starMaterial.SetVector("playerPosition", playerPosition.position);
         starMaterial.SetFloat("_WobbleMagnitude", starMaxWobbleMagnitude);

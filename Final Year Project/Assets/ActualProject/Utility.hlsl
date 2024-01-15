@@ -1,4 +1,6 @@
-#define _G 1.0
+#define _G 1.0 //Universal Gravitational Constant - 6.67 * 10 - 11
+#define _sigma 100.0/(4.0 * PI)//Stefan-Boltzmann Constant - 5.67 * 10^-8, calculated when the sun has luminosity, radius and temperature = 1
+#define _k 508.0 //Wien's displacement constant, 5.898 * 10-3, multiplied by 10^9 and divided by the sun's surface temperature * 5 in kelvin
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 struct SolarSystem
@@ -6,6 +8,7 @@ struct SolarSystem
     float3 starPosition;
     float starRadius;
     float starMass;
+    float starLuminosity;
     float4 starColour;
     int planetCount;  
     float fade;
@@ -60,6 +63,42 @@ struct ChunkIdentifier
     float3 pos;
 };
 
+float CalculateStarSurfaceTemperature(float luminosity, float radius)
+{
+    //Use Stefan-Boltzmann law
+    return pow((luminosity / (pow(radius, 2.0) * _sigma * 4.0 * PI)), 0.25);
+}
+float CalculatePeakWavelength(float surfaceTemperature)
+{
+    //Use Wien's Displacement law
+    return _k / surfaceTemperature;
+}
+float4 ColourFromWavelength(float wavelength, float minWavelength, float maxWavelength)
+{
+    float interpolator = max(wavelength - minWavelength, 0.0) / (maxWavelength - minWavelength);
+    return lerp(float4(0.0, 0.0, 1.0, 1.0), float4(1.0, 0.0, 0.0, 0.0), interpolator);
+
+}
+
+float4 ColourFromLuminosity(float luminosity, float radius, float minWavelength, float maxWavelength)
+{
+    float temp = CalculateStarSurfaceTemperature(luminosity, radius);
+    float wavelength = CalculatePeakWavelength(temp);
+    return ColourFromWavelength(wavelength, minWavelength, maxWavelength);
+}
+
+float CalculatePlanetAngularVelocity(float dist, float starMass, float planetMass)
+{
+    //m1rw^2 = Gm1m2/r^2 
+    //w = sqrt(Gm2 / r^3)
+    float angularVelSqrd = _G * starMass / pow(dist, 3.0);
+    float angularVelocity = sqrt(angularVelSqrd);
+    return angularVelocity;
+}
+float calculateSphereMass(float sphereRadius, float sphereDensity)
+{
+    return (4.0 / 3.0) * PI * pow(sphereRadius, 3.0) * sphereDensity;
+}
 float4x4 GenerateTRSMatrix(float3 position, float scale)
 {
     float4x4 mat = 

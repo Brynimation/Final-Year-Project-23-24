@@ -27,9 +27,18 @@ int3 playerChunkCoord;
 int chunksVisibleInViewDist;
 int originalChunksVisibleInViewDist;
 
+float minLuminosity;
+float maxLuminosity;
+
+float minRadius;
+float maxRadius;
+
+float minWavelength;
+float maxWavelength;
+
 
 //actualPosition, 1, _ChunksBuffer[0].chunkType)
-void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour, float fade)
+void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour, float fade, float random)
 {
     MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, chunkType, colour, fade);
 
@@ -45,6 +54,9 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
             //If closer, it's appended to the solarSystems buffer by the solarSystems compute shader, so we don't want to add it again here.
             if(dist > solarSystemSwitchDist)
             {
+                float luminosity = lerp(minLuminosity, maxLuminosity, random);
+                mp.scale = lerp(minRadius, maxRadius, random);
+                mp.colour = ColourFromLuminosity(luminosity, mp.scale, minWavelength, maxWavelength);
                 _Properties3.Append(mp);
             }
             break;
@@ -134,7 +146,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float scale = lerp(0.25, 2.0, random);
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         float3 rotation = Hash33(actualPosition) * 2.0 * PI;
-        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0);
+        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0, random);
         //_DispatchBuffer[0] = numThreadGroupsX;
         //_DispatchBuffer[1] = numThreadGroupsY;
         //_DispatchBuffer[2] = numThreadGroupsZ;

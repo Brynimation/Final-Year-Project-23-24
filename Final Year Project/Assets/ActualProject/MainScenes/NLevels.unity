@@ -356,15 +356,21 @@ MonoBehaviour:
   starMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   starMaterial: {fileID: 2100000, guid: 20ed76f989045764aa0641635e504ec5, type: 2}
   starResolution: 8
-  starMaxWobbleMagnitude: 1
+  starMaxWobbleMagnitude: 0.01
+  minLuminosity: 1
+  maxLuminosity: 10000000
+  minWavelength: 350
+  maxWavelength: 700
+  minRadius: 0.2
+  maxRadius: 10
   timeStep: 1
   planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
   planetMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   planetResolution: 4
-  chunkSize: 80
-  renderDistance: 160
+  chunkSize: 180
+  renderDistance: 360
   lodSwitchDist: 0.75
   shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}

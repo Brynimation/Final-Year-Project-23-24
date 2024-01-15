@@ -1,4 +1,4 @@
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
 #include "Assets/ActualProject/Utility.hlsl"
 float solarSystemSwitchDist;
 float3 playerPosition;
@@ -11,18 +11,57 @@ float time;
 float fadeDist;
 float timeStep;
 
-float CalculatePlanetAngularVelocity(float dist, float starMass, float planetMass)
-{
-    //m1rw^2 = Gm1m2/r^2 
-    //w = sqrt(Gm2 / r^3)
-    float angularVelSqrd = _G * starMass / pow(dist, 3.0);
-    float angularVelocity = sqrt(angularVelSqrd);
-    return angularVelocity;
-}
-float calculateSphereMass(float sphereRadius, float sphereDensity)
-{
-    return (4.0/3.0) * PI * pow(sphereRadius, 3.0) * sphereDensity;
-}
+float minLuminosity;
+float maxLuminosity;
+
+float minRadius;
+float maxRadius;
+
+float minWavelength;
+float maxWavelength;
+
+/*
+https://www.teachastronomy.com/textbook/Properties-of-Stars/Stefan-Boltzmann-Law/
+Stefan-Boltzmann law: Flux energy emitted from a surface (Wm-2) = sigma * T4 
+Total luminosity of a blackbody emitter (ie, a star): L=4πR2 sigma * T4
+1 =
+sigma - Stefan-Boltzmann constant - 5.67 * 10^-8 Wm^(-2)K^(-4)
+Tells us that radius of a star is proportional to the root of its luminosity and inversely proportional to the square of its temperature
+
+http://hyperphysics.phy-astr.gsu.edu/hbase/wien.html
+Wien's Displacement Law: Relates a star's surface temperature to its peak wavelength (the wavelength at which it emits the most energy - the colour 
+of radiation that it emits most strongly. Formally:
+lambdaPeak * T = 2.898 * 10 ^(-3) mk
+
+//Chapter 14, page 278 introductory-astronomy-and-astrophysics_compress.pdf
+//Population 1 stars are hot, young and blue. Inhabit the spiral arms.
+//Population 2 stars are cool, red and blue. They inhabit the galactic halo and galactic disc.
+
+Approach: initialise stars with a random luminosity and radius.
+Compute the star's surface temperature using Stefan-Boltzmann
+Compute lambdaPeak using Wien's Displacement Law
+Generate an appropriate colour based on wavelength
+
+//Chapter 13, page 258 introductory-astronomy-and-astrophysics_compress.pdf
+https://astrobackyard.com/types-of-stars/
+Main Sequence stars are classified into 1 of 7 groups using the Harvard Spectral classification.
+For our calculations, we will consider sol as having a temperature, radius and luminosity of 100
+Sol Temp, T = 5700k, Sol radius, R = 696,340 km, Sol luminosity, 100L = 3.846 * 10^26 W
+O - 7.0T, 10R, 10000000L 
+B -  3.5T, 5R, 100000L
+A - 1.5T, 1.7R, 2000L
+F - 1.14T, 1.3R, 400L
+G - 1T, 1R, 100L
+K - 0.79T, 0.7R, 20L
+M - 0.56T, 0.2R, L
+
+I want the peak wavelength to be returned in nanometres. This will make it easier to convert to colours as the visible range
+of colours is 350 - 700 nm
+
+
+
+
+*/
 
 // Example compute shader function
 [numthreads(8, 8, 8)]
@@ -49,9 +88,10 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
         float random = Hash31(actualPosition);
         SolarSystem system = (SolarSystem)0;
         system.starPosition = actualPosition;
-        system.starRadius = lerp(0.25, 2.0, random);
+        system.starRadius = lerp(minRadius, maxRadius, random);
+        system.starLuminosity = lerp(minLuminosity, maxLuminosity, random);
         system.starMass = calculateSphereMass(system.starRadius, 1.0);
-        system.starColour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
+        system.starColour = ColourFromLuminosity(system.starLuminosity, system.starRadius, minWavelength, maxWavelength);
         system.planetCount = ceil(10 * random);
         system.fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
         _SolarSystems.Append(system);

@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UniverseLOD1Mat 2
+  m_Name: StarLowLOD
   m_Shader: {fileID: 4800000, guid: 86397cbad83cb944980be267384f4540, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
