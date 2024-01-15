@@ -36,6 +36,8 @@ float maxRadius;
 float minWavelength;
 float maxWavelength;
 
+float4 colours[6];
+
 
 //actualPosition, 1, _ChunksBuffer[0].chunkType)
 void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour, float fade, float random)
@@ -54,9 +56,9 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
             //If closer, it's appended to the solarSystems buffer by the solarSystems compute shader, so we don't want to add it again here.
             if(dist > solarSystemSwitchDist)
             {
-                float luminosity = lerp(minLuminosity, maxLuminosity, random);
+                float luminosity = weightedRandomSample(random);//lerp(minLuminosity, maxLuminosity, random);
                 mp.scale = lerp(minRadius, maxRadius, random);
-                mp.colour = ColourFromLuminosity(luminosity, mp.scale, minWavelength, maxWavelength);
+                mp.colour = ColourFromLuminosity(luminosity, mp.scale, colours[0], colours[1], colours[2], colours[3], colours[4], colours[5]);//ColourFromWavelength(float waveLength, float4 blue, float4 blueishWhite, float4 white, float4 yellowWhite, float4 yellowOrange, float4 orangeRed)
                 _Properties3.Append(mp);
             }
             break;

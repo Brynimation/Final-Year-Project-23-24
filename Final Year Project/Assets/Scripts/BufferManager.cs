@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Linq;
 
 public struct SolarSystem
 {
@@ -77,6 +78,9 @@ public class BufferManager : MonoBehaviour
     public float solarSystemSwitchDist;
     public Mesh starMesh;
     public Material starMaterial;
+    public float cellSize = 0.1f;
+    public float lowLodBorderWidth = 0.0f;
+    public float highLodBorderWidth = 1.0f;
     public int starResolution;
     public float starMaxWobbleMagnitude;
     public float minLuminosity;
@@ -85,6 +89,8 @@ public class BufferManager : MonoBehaviour
     public float maxWavelength;
     public float minRadius;
     public float maxRadius;
+    public Color[] colours;
+    public float[] floatColours;
     private ComputeBuffer starVertexBuffer;
     private ComputeBuffer starNormalBuffer;
     private ComputeBuffer starUVBuffer;
@@ -155,6 +161,7 @@ public class BufferManager : MonoBehaviour
     Bounds bounds;
     void Start()
     {
+        floatColours =  colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();  //needed to pass to shader
         starSphereGenerator = Instantiate(sphereGeneratorPrefab);
         planetSphereGenerator = Instantiate(sphereGeneratorPrefab);
         //RenderSettings.skybox = skyboxMat;
@@ -274,6 +281,7 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
         positionCalculator.SetFloat("galaxyFadeDist", galaxyFadeDist);
+        positionCalculator.SetFloats("colours", floatColours);
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
@@ -281,6 +289,7 @@ public class BufferManager : MonoBehaviour
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
         galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
+
         dispatcherProcedural._MainPositionBuffer = mainProperties;
         dispatcherProcedural._MainPositionBufferCount = mainPropertiesCount;
 
@@ -288,6 +297,7 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetVector("playerPosition", playerPosition.position);
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
+        solarSystemCreator.SetFloats("colours", floatColours);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ChunksBuffer", chunksBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystemCount", solarSystemBufferCount);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystems", solarSystemBuffer);
@@ -302,6 +312,8 @@ public class BufferManager : MonoBehaviour
         bounds = new Bounds(Vector3.zero, new Vector3(1000000, 1000000, 1000000));
         material.SetColor("_EmissionColour", _EmissionColour);
         material2.SetColor("_EmissionColour", _EmissionColour2);
+        material3.SetFloat("_CellSize", cellSize);
+        starMaterial.SetFloat("_CellSize", cellSize);
     }
 
     // Update is called once per frame
@@ -350,7 +362,11 @@ public class BufferManager : MonoBehaviour
         planetSphereGenerator.DispatchIndirect(planetSphereGeneratorIndex, planetSphereGeneratorDispatchArgsBuffer);
         starSphereGenerator.DispatchIndirect(starSphereGeneratorIndex, starSphereGeneratorDispatchArgsBuffer);
 
+        material3.SetFloat("_CellSize", cellSize);
+        starMaterial.SetFloat("_CellSize", cellSize);
 
+        material3.SetFloat("_BorderWidth", lowLodBorderWidth);
+        starMaterial.SetFloat("_BorderWidth", highLodBorderWidth);
 
         ComputeBuffer.CopyCount(mainProperties, mainPropertiesCount, 0);
         ComputeBuffer.CopyCount(positionsBuffer3, solarSystemBufferCount, 0);

@@ -85,6 +85,7 @@ Shader "Custom/StarShader"
                 o.positionWS = positionData.positionWS.xyz;
                 o.positionHCS = positionData.positionCS;
                 o.mainColour = systemData.starColour;
+                o.mainColour += o.mainColour * sqrt(systemData.starRadius);
                 return o;
 
             }

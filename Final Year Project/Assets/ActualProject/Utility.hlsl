@@ -1,5 +1,5 @@
 #define _G 1.0 //Universal Gravitational Constant - 6.67 * 10 - 11
-#define _sigma 100.0/(4.0 * PI)//Stefan-Boltzmann Constant - 5.67 * 10^-8, calculated when the sun has luminosity, radius and temperature = 1
+#define _sigma 1.0/(4.0 * PI)//Stefan-Boltzmann Constant - 5.67 * 10^-8, calculated when the sun has luminosity, radius and temperature = 1
 #define _k 508.0 //Wien's displacement constant, 5.898 * 10-3, multiplied by 10^9 and divided by the sun's surface temperature * 5 in kelvin
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -63,6 +63,21 @@ struct ChunkIdentifier
     float3 pos;
 };
 
+//Abundances of different luminosities from: https://astrobackyard.com/types-of-stars/ (adapted to only include main sequence stars)
+float weightedRandomSample(float r, float typeM = 0.01, float typeK = 0.1, float typeG = 1.0, float typeF= 20.0, float typeAB = 1000.0, float typeO = 10000.0) {
+    if (r < 0.85) return typeM;
+    else if (r < 0.93) return typeK;
+    else if (r < 0.97) return typeG;
+    else if (r < 0.99) return typeF;
+    else if (r < 0.999) return typeAB;
+    else if (r < 0.999999) return typeO;
+    else return typeO;
+}
+
+float weightedRandomSampleRadius(float r) {
+    return weightedRandomSample(r, 0.3, 0.8, 1.0, 1.3, 5.0, 10.0);
+}
+
 float CalculateStarSurfaceTemperature(float luminosity, float radius)
 {
     //Use Stefan-Boltzmann law
@@ -76,8 +91,36 @@ float CalculatePeakWavelength(float surfaceTemperature)
 float4 ColourFromWavelength(float wavelength, float minWavelength, float maxWavelength)
 {
     float interpolator = max(wavelength - minWavelength, 0.0) / (maxWavelength - minWavelength);
-    return lerp(float4(0.0, 0.0, 1.0, 1.0), float4(1.0, 0.0, 0.0, 0.0), interpolator);
+    float solColourInterpolator = max(_k - minWavelength, 0.0) / (maxWavelength - minWavelength);
+    
+    if(interpolator < solColourInterpolator)
+    {
+        return lerp(float4(0.0, 0.0, 1.0, 1.0), float4(1.0, 0.5, 0.5, 1.0), interpolator * 1.0/solColourInterpolator);
+    }
+    return lerp(float4(1.0, 0.5, 0.5, 1.0), float4(1.0, 0.0, 0.0, 0.0), (interpolator - solColourInterpolator) * 1.0/solColourInterpolator);
 
+}
+float4 ColourFromWavelength(float waveLength, float4 blue, float4 blueishWhite, float4 white, float4 yellowWhite, float4 yellowOrange, float4 orangeRed)
+{
+    if(waveLength < 96)
+    {
+        return blue;
+    }else if(waveLength >= 96 && waveLength < 145)
+    {
+        return blueishWhite;
+    }else if(waveLength >= 145 && waveLength < 341)
+    {
+        return white;
+    }else if(waveLength >= 341 && waveLength < 446)
+    {
+        return yellowWhite;
+    }else if(waveLength >= 446 && waveLength < 508)
+    {
+        return yellowOrange;
+    }else if(waveLength >= 508){
+        return orangeRed;
+    }
+    return orangeRed;
 }
 
 float4 ColourFromLuminosity(float luminosity, float radius, float minWavelength, float maxWavelength)
@@ -85,6 +128,41 @@ float4 ColourFromLuminosity(float luminosity, float radius, float minWavelength,
     float temp = CalculateStarSurfaceTemperature(luminosity, radius);
     float wavelength = CalculatePeakWavelength(temp);
     return ColourFromWavelength(wavelength, minWavelength, maxWavelength);
+}
+
+
+float4 ColourFromLuminosity(float luminosity, float radius, float4 blue, float4 blueishWhite, float4 white, float4 yellowWhite, float4 yellowOrange, float4 orangeRed)
+{
+    float temp = CalculateStarSurfaceTemperature(luminosity, radius);
+    if(temp > 7.01)// Type O
+    {
+        return blue;
+    }else if(temp > 1.5 && temp <= 7.01) //type B and A
+    {
+        return blueishWhite;
+    }else if(temp > 1.14 && temp <= 1.5) //Type F
+    {
+        return white;
+    }else if(temp > 1.00 && temp <= 1.14) //Type G
+    {
+        return yellowWhite;
+    }else if(temp > 0.56 && temp <= 1.00) //Type K
+    {
+        return yellowOrange;
+    }else{ //tyoe M
+        return orangeRed;
+    }
+   /* float wavelength = CalculatePeakWavelength(temp);
+    return ColourFromWavelength(wavelength, blue, blueishWhite, white, yellowWhite, yellowOrange, orangeRed);
+    O - 7.0T, 10R, 10000000L 
+    B -  3.5T, 5R, 100000L
+    A - 1.5T, 1.7R, 2000L
+    F - 1.14T, 1.3R, 400L
+    G - 1T, 1R, 100L
+    K - 0.79T, 0.7R, 20L
+    M - 0.56T, 0.2R, L
+    
+    */
 }
 
 float CalculatePlanetAngularVelocity(float dist, float starMass, float planetMass)

@@ -153,7 +153,7 @@ Shader "Custom/StarLowLODShader"
                 o.colour = mp.colour;
                 o.radius = mp.scale;
                 o.fade = mp.fade;
-                //o.colour += _EmissionColour;
+                o.colour += o.colour * sqrt(o.radius);
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }

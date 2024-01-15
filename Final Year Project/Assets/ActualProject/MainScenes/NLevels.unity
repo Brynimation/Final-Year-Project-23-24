@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414727, b: 0.12107857, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -352,17 +352,28 @@ MonoBehaviour:
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
   solarSystemFadeDist: 5
-  solarSystemSwitchDist: 10
+  solarSystemSwitchDist: 25
   starMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   starMaterial: {fileID: 2100000, guid: 20ed76f989045764aa0641635e504ec5, type: 2}
+  cellSize: 1
+  lowLodBorderWidth: 1
+  highLodBorderWidth: 1
   starResolution: 8
   starMaxWobbleMagnitude: 0.01
-  minLuminosity: 1
-  maxLuminosity: 10000000
+  minLuminosity: 0.01
+  maxLuminosity: 100000
   minWavelength: 350
   maxWavelength: 700
   minRadius: 0.2
   maxRadius: 10
+  colours:
+  - {r: 0, g: 0.62456584, b: 1, a: 0}
+  - {r: 0, g: 0.7666669, b: 1, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 1, g: 0.8365737, b: 0, a: 0}
+  - {r: 1, g: 0.42769682, b: 0, a: 0}
+  - {r: 0.972549, g: 0.14481398, b: 0, a: 0}
+  floatColours: []
   timeStep: 1
   planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
