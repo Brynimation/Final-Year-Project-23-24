@@ -207,11 +207,12 @@ Shader "Custom/StarLowLODShader"
 
             float4 frag(Interpolators i) : SV_Target
             {
-
-                float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                if (baseTex.a == 0.0)discard;
+                float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+                float radius = 1.0;
+                float2 centre = float2(0.0, 0.0);
+                float dist = distance(p, centre);
+                if(dist > radius) discard;
                 float pulsatingCellSize = _CellSize;
-                float2 p = i.uv * 2.0 - 1.0;
                 float3 value = i.positionWS / pulsatingCellSize;
 
                 //Make cells move by having y be time dependent

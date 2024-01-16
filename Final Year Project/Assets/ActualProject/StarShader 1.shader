@@ -69,8 +69,8 @@ Shader "Custom/StarShader"
                 //wobble
                 float noiseValue = pNoise(vertexPosOS.xyz);
                 float dist = distance(systemData.starPosition, playerPosition);
-                float maxWobbleMagnitude = _WobbleMagnitude * systemData.starRadius / 2.0;
-                float wobbleMagnitude = lerp(0.0, _WobbleMagnitude, systemData.fade);
+                float maxWobbleMagnitude = _WobbleMagnitude * systemData.starRadius / 2.0; //modulate wobble amount by star radius
+                float wobbleMagnitude = lerp(0.0, maxWobbleMagnitude, systemData.fade);
                 vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue); 
 
 
