@@ -432,3 +432,72 @@ float pNoise( float3 x ) {
             lerp(lerp( hash(n+113.0), hash(n+114.0),f.x),
             lerp( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
 }
+
+float pNoise2( float2 uv) {
+    // The noise function returns a value in the range -1.0f -> 1.0f
+    float2 p = floor(uv);
+    float2 f = frac(uv);
+     
+    f = f*f*(3.0-2.0*f);
+    float n = p.x + p.y*57.0;
+     
+    return lerp(lerp( hash(n+0.0), hash(n+1.0),f.x),
+            lerp( hash(n+57.0), hash(n+58.0),f.x),f.y),
+            lerp(lerp( hash(n+113.0), hash(n+114.0),f.x),
+            lerp( hash(n+170.0), hash(n+171.0),f.x),f.y);
+}
+
+//Resource on Fractal Brownian Motion: https://thebookofshaders.com/13/
+/*By adding different iterations of noise (octaves), where we successively increment the frequencies in regular steps (lacunarity) and decrease the amplitude (gain) 
+of the noise, we can obtain a finer granularity in the noise and get more fine detail. This is known as Fractal Brownian Motion (fBM or fractal noise)
+
+//properties
+const int octaves = 1;
+float lacunarity = 2.0;
+float gain = 0.5;
+
+//Initial Values
+for(int i = 0; i < octaves; i++)
+{
+    y += amplitude * noise(frequency * x);
+    frequency *= lacunarity;
+    amplitude *= gain;
+}
+
+With each octave added, the curve gets more detailed. There is also self similarity; if you zoom in on the curve, a smaller part looks similar to the whole thing, and each
+section looks essentially the same as any other section. This is a property of mathematical fractals that we are simulating in our loop. Our loop would produce a true 
+mathematical fractal should it be allowed to run indefinitely.
+*/
+float noise(float2 uv)
+{
+    float2 i = floor(uv);
+    float2 f = frac(uv);
+
+    //Four corners of the 2d tile
+    float a = Hash21(i);
+    float b = Hash21(i + float2(1.0, -1.0));
+    float c = Hash21(i + float2(-1.0, 1.0));
+    float d = Hash21(i + float2(1.0, 1.0));
+    float2 u = f * f * (3.0 - 2.0 * f);
+    return lerp(a, b, u.x) * (c - a) * u.y * (1.0 - u.x) * (d - b) * u.x * u.y;
+}
+
+float fbm (float2 uv) {
+    // Initial values
+    float value = 0.0;
+    float amplitude = 0.5;
+    float frequency = 2.0;
+    //
+    const int octaves = 4;
+    float lacunarity = 2.0;
+    float gain = 0.5;
+
+    //Initial Values
+    for(int i = 0; i < octaves; i++)
+    {
+        value += amplitude * pNoise2(uv);
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+    return value;
+}

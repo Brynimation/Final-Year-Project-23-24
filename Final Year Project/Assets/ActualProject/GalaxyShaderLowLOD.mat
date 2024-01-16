@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UniverseLOD1Mat 3
+  m_Name: GalaxyShaderLowLOD
   m_Shader: {fileID: 4800000, guid: 550d107cb36b62f4b9da1cbf5ea9f744, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -111,6 +111,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _GridSize: 5
     - _MaxEccentricity: 1
     - _MaxStarSize: 100
     - _Metallic: 0

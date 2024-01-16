@@ -22,6 +22,7 @@ Shader "Custom/GalaxyShaderLowLOD"
         _EmissionMap("Emission Map", 2D) = "black"{}
         [HDR] _EmissionColour("Emission colour", Color) = (0,0,0,0)
         _Emission("Emission", Range(0, 100)) = 50
+        _GridSize("GridsSize", Int) = 5
     }
     SubShader
     {
@@ -61,6 +62,7 @@ Shader "Custom/GalaxyShaderLowLOD"
             float _Emission;
             float3 _CameraPosition;
             float _MaxStarSize;
+            int _GridSize;
             RWStructuredBuffer<MeshProperties> _Properties;
 
             struct GeomData
@@ -220,8 +222,90 @@ Shader "Custom/GalaxyShaderLowLOD"
                     outputStream.Append(o);
                 }
             }
+            float DrawStar(float2 uv)
+            {
+                float4 col = float4(0.0, 0.0, 0.0, 0.0);
+                float2 p = uv; 
 
-            float4 frag(Interpolators i) : SV_Target
+                //Create a "light" at the centre of the texture
+                float d = length(p);
+                float m = 0.1/d;
+                col += m;
+
+                col *= smoothstep(0.5, 0.2, d);
+                return col;
+            }
+
+            float4 DrawStarLayer(float2 p, int gridSize)
+            {
+                float4 col = float4(0.0, 0.0, 0.0, 1.0);
+                p *= gridSize;
+                float2 gv = frac(p) - 0.5; //fractional component of uv - creates a repeating grid over our texture. Number of repetitions is determined by len(p)
+                
+                //We want to create a random offset for each star within its cell of the grid. So that the boundaries between cells are not obvious, we need to account for the contribution of the 3x3 subgrid of neighbouring cells
+                float2 id = floor(p);
+
+                for(int y = -1; y <= 1; y++)
+                {
+                    for(int x = -1; x <= 1; x++)
+                    {
+                        float2 offs = float2(x, y); 
+                        float random = Hash21(id + offs);
+                        float size = frac(random * 126.34);
+                        float flare = smoothstep(0.5, 1.0, size) * 0.5;
+                        float2 centre = gv - offs -  float2(random, frac(random * 34.0)) + 0.5;
+                        centre.x += random * cos(_Time.y);
+                        centre.y += random * sin(_Time.y);
+                        float star = DrawStar(centre);
+                        float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);//float4(tanh(float3(0.2, 0.0, 0.95) * frac(random * 2353.34) * 2 * PI), 1.0);
+                        col += star * size * colour;
+                    }
+                }
+                //col += Hash21(id);
+                return col;
+            }
+
+            float4 DrawDust(float2 p)
+            {
+                float4 baseColor = float4(0.0, 0.0, 0.0, 1.0);
+
+                // Calculate noise or sample from a dust texture
+                float dustIntensity = pNoise(float3(p, p.x * p.y) + _Time.y); // Assuming noise() is a function that returns a noise value
+
+                // Apply blur and transparency
+                float alpha = smoothstep(0.0, 1.0, dustIntensity);
+
+                // Combine dust with base color
+                float4 dustColor = float4(1.0, 1.0, 1.0, alpha);
+                return lerp(baseColor, dustColor, dustColor.a);
+            }
+
+            float4 DrawDustLayer(float2 p, int gridSize)
+            {
+                float4 col = float4(0.0, 0.0, 0.0, 1.0);
+                p *= gridSize;
+                float2 gv = frac(p) - 0.5; //fractional component of uv - creates a repeating grid over our texture. Number of repetitions is determined by len(p)
+                
+                //We want to create a random offset for each star within its cell of the grid. So that the boundaries between cells are not obvious, we need to account for the contribution of the 3x3 subgrid of neighbouring cells
+                float2 id = floor(p);
+
+                for(int y = -1; y <= 1; y++)
+                {
+                    for(int x = -1; x <= 1; x++)
+                    {
+                        float2 offs = float2(x, y); 
+                        float random = Hash21(id + offs);
+                        float size = frac(random * 126.34);
+                        float flare = smoothstep(0.5, 1.0, size) * 0.5;
+                        float2 centre = gv - offs -  float2(random, frac(random * 34.0)) + 0.5;
+                        float4 dust = DrawDust(centre);
+                        col += dust;// * size;
+                    }
+                }
+                //col += Hash21(id);
+                return col;
+            }
+             float4 frag(Interpolators i) : SV_Target
             {
                 clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
                 float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
@@ -229,7 +313,65 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float2 centre = float2(0.0, 0.0);
                 float dist = distance(p, centre);
                 if(dist > radius) discard;
-                return i.colour;
+                //TO DO: Somehow make p move like one of the particles in the spiral galaxy
+                return fbm(_Time.x + 3.0 * p);
+                /*float4 col = 0.0;
+
+                float2 q = 0.0;
+                q.x = fbm(p + _Time.y);
+                q.y = fbm(p + 1.0);
+                
+                float2 r = 0.0;
+                r.x = fbm(p + 1.0 * q + float2(1.7, 9.2) + 0.15 * _Time.y);
+                r.y = fbm(p + 1.0 * q + float2(8.3, 2.8) + 0.126 * _Time.y);
+
+                float f = fbm(p + r);
+
+                col = float4(lerp(float3(0.101961,0.619608,0.666667),float3(0.666667,0.666667,0.498039),clamp((f*f)*4.0,0.0,1.0)), 1.0);
+                col = lerp(col, float4(0.0, 0.0, 0.164706, 1.0), saturate(float4(length(q), 0.0, 1.0, 1.0)));
+                col = lerp(col, float4(0.666667, 1.0, 1.0, 1.0), saturate(float4(length(r.x), 0.0, 1.0, 1.0)));
+                return float4((f * f * f + 0.6 * f * f + 0.5 * f) * col);
+                return col;*/
+            }
+            /*
+                vec2 q = vec2(0.);
+    q.x = fbm( st + 0.00*u_time);
+    q.y = fbm( st + vec2(1.0));
+
+    vec2 r = vec2(0.);
+    r.x = fbm( st + 1.0*q + vec2(1.7,9.2)+ 0.15*u_time );
+    r.y = fbm( st + 1.0*q + vec2(8.3,2.8)+ 0.126*u_time);
+
+    float f = fbm(st+r);
+
+    color = mix(vec3(0.101961,0.619608,0.666667),
+                vec3(0.666667,0.666667,0.498039),
+                clamp((f*f)*4.0,0.0,1.0));
+
+    color = mix(color,
+                vec3(0,0,0.164706),
+                clamp(length(q),0.0,1.0));
+
+    color = mix(color,
+                vec3(0.666667,1,1),
+                clamp(length(r.x),0.0,1.0));
+
+    gl_FragColor = vec4((f*f*f+.6*f*f+.5*f)*color,1.);
+            
+            
+            */
+
+            float4 frag1(Interpolators i) : SV_Target
+            {
+                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
+                float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+                float radius = 1.0;
+                float2 centre = float2(0.0, 0.0);
+                float dist = distance(p, centre);
+                if(dist > radius) discard;
+                float4 col = i.colour;
+                col = DrawStarLayer(p, _GridSize);
+                return col;
             }
             float4 frag2(Interpolators i)
             {

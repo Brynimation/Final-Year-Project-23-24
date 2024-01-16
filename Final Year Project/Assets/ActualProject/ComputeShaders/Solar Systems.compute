@@ -58,14 +58,13 @@ K - 0.79T, 0.7R, 20L
 M - 0.56T, 0.2R, L
 
 I want the peak wavelength to be returned in nanometres. This will make it easier to convert to colours as the visible range
-of colours is 350 - 700 nm
+of colours is 380 - 700 nm
 
 
 
 
 */
 
-// Example compute shader function
 [numthreads(8, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID) {
     if(_SolarSystemCount[0] == 0) return;
