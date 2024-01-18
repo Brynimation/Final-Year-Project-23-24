@@ -3,6 +3,17 @@
 #define _k 508.0 //Wien's displacement constant, 5.898 * 10-3, multiplied by 10^9 and divided by the sun's surface temperature * 5 in kelvin
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+struct MeshProperties
+{
+    float4x4 mat;
+    float scale;
+    float3 position;
+    float4 colour;
+    float fade;
+    int lodLevel;
+};
+
 struct SolarSystem
 {
     float3 starPosition;
@@ -23,14 +34,16 @@ struct Planet {
     float3 rotationAxis;
 };
 
-struct MeshProperties
+struct GalaxyProperties
 {
-    float4x4 mat;
-    float scale;
-    float3 position;
-    float4 colour;
-    float fade;
-    int lodLevel;
+    MeshProperties mp;
+    int numParticles;
+    float minEccentricity;
+    float maxEccentricity;
+    float galacticDiskRadius;
+    float galacticHaloRadius;
+    float galacticBulgeRadius;
+    float angularOffsetMultiplier;
 };
 
 struct Plane
@@ -305,7 +318,15 @@ float3 RotationFromPosition(float3 position)
     return val * PI * 2.0;
 
 }
-
+float2x2 RotationMatrix(float angle)
+{
+    float2x2 mat = 
+    {
+        cos(angle), -sin(angle),
+        sin(angle), cos(angle)
+    };
+    return mat;
+}
 
 MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel, float4 colour, float fade)
 {
@@ -329,6 +350,20 @@ MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float sc
     mp.lodLevel = lodLevel;
     mp.fade = fade;
     return mp;
+}
+
+GalaxyProperties GenerateGalaxyProperties(MeshProperties mp, float minEccentricity, float maxEccentricity, float haloRadius, float bulgeRadius, float diskRadius, float angularOffsetMultiplier, int numParticles)
+{
+    GalaxyProperties gp = (GalaxyProperties)0;
+    gp.mp = mp;
+    gp.minEccentricity = minEccentricity;
+    gp.maxEccentricity = maxEccentricity;
+    gp.galacticHaloRadius = haloRadius;
+    gp.galacticBulgeRadius = bulgeRadius;
+    gp.galacticDiskRadius = diskRadius;
+    gp.angularOffsetMultiplier = angularOffsetMultiplier;
+    gp.numParticles = numParticles;
+    return gp;
 }
 
 
@@ -500,4 +535,65 @@ float fbm (float2 uv) {
         amplitude *= gain;
     }
     return value;
+}
+
+float4 Galaxy(float2 uv, float a1, float a2, float cut) {
+    
+
+    float seed = Hash21(uv);
+        
+    float4 col = 0.0;
+    float3 dustCol = float3(0.3, 0.6, 1.0);
+
+    float alpha = 0.0;
+    int numStars = 15;
+        
+    float ringWidth = lerp(15.0, 25.0, seed);
+    float twist = lerp(0.3, 2.0, frac(seed * 10.0));
+    float flip = 1.0;
+    float t = _Time.y;
+    float z;
+    float r;
+    float ell;
+    float n;
+    float d;
+    float sL;
+    float sN;
+    float i;
+
+    if(cut==0.0) twist = 1.0;
+        
+    for(i=0.0; i<1.0; i+=1.0/40.0) {
+
+        flip *= -1.0;
+        z = lerp(.06, 0., i)*flip*frac(sin(i*563.2)*673.2);
+        r = lerp(.1, 1., i);
+        
+        float2 st = mul(RotationMatrix(i*6.2832*twist + _Time.y), uv);
+        st.x *= lerp(1.0, 0.5, i);
+
+        ell = exp(-0.5*abs(dot(st,st)-r)*ringWidth);
+        float3 dust = pNoise(float3(st, uv.x));
+        float3 dL = pow(ell * dust/r, 1.0);
+
+
+        float2 id = floor(st);
+        float n = Hash21(id);
+        d = length(st); 
+
+        sL = smoothstep(0.5, 0.0, d)*pow(dL.r,2.0)*0.2/d;
+           
+        sN = sL;
+        //sL *= sin(n*784.+T)*.5+.5;
+        //sL += sN*smoothstep(0.9999,1.0, sin(n*784.0 +_Time.x *0.05))*10.;
+        col.rgb += dL*dustCol;// * 100.0;
+
+        col.a += dL.r*dL.g*dL.b;
+
+        if(i>3./numStars)
+        col += sL;//* lerp(float3(0.5+sin(n*100.0)*0.5, 0.5, 1.0), v(1), n);
+    }
+
+    col.xyz = col.xyz/40.0;
+    return col;
 }

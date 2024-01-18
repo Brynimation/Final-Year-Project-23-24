@@ -6,8 +6,20 @@
 float lodSwitchDist;
 float galaxyFadeDist;
 float3 playerPosition;
+
+float2 minMaxMinimumEccentricity;
+float2 minMaxMaximumEccentricity;
+
+float2 minMaxAngularOffsetMultiplier;
+
+float2 minMaxHaloRadius;
+float2 minMaxBulgeRadius;
+float2 minMaxDiskRadius;
+
+int2 minMaxNumParticles;
+
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
-AppendStructuredBuffer<MeshProperties> _MainProperties;
+AppendStructuredBuffer<GalaxyProperties> _MainProperties;
 AppendStructuredBuffer<MeshProperties> _Properties4;
 
 
@@ -30,17 +42,28 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
     float dist = length(actualPosition - playerPosition);
 
+
     float random = Hash31(actualPosition);
-    float scale = lerp(0.25, 2.0, random);
+    float scale = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
     float lodDist = lodSwitchDist * max(1.0, scale) + galaxyFadeDist;
     float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, galaxyFadeDist);
     float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
     float3 rotation = Hash33(actualPosition) * 2.0 * PI;
     MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);
+
+    float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
+    float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
+    float haloRadius = scale;
+    float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
+    float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
+    float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
+    int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
+    GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
     
     if (dist < lodDist && _ChunksBuffer[0].chunkType == 3)
     {
-        _MainProperties.Append(mp);
+        _MainProperties.Append(gp);
     }
 
 }
+

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GalaxyProperties 
+public class GalaxyProperties2 
 {
     public Vector3 galacticCentre;
     public float minEccentricity;
@@ -17,7 +17,7 @@ public class GalaxyProperties
     public Color H2RegionColour;
 
     private uint nLehmerSeed = 0;
-    public GalaxyProperties(Vector3 position, Vector2Int minMaxDisc, Vector2Int minMaxBulge, Vector2Int minMaxAngularOffset, Vector2Int minMaxStarCount) 
+    public GalaxyProperties2(Vector3 position, Vector2Int minMaxDisc, Vector2Int minMaxBulge, Vector2Int minMaxAngularOffset, Vector2Int minMaxStarCount) 
     {
         nLehmerSeed = (uint)(((int)position.x & 0xffff) << 16 | ((int)position.y & 0xffff));
         nLehmerSeed = (uint)(nLehmerSeed | (int)position.z & 0xffff);
@@ -64,7 +64,7 @@ public class Galaxy : MonoBehaviour
         PlayerController player = other.gameObject.GetComponent<PlayerController>();
         if (player != null) 
         {
-            UniGenerator.currentGalaxyProperties = new GalaxyProperties(transform.position, minMaxDisc, minMaxBulge, minMaxAngularOffset, minMaxStarCount);
+            UniGenerator.currentGalaxyProperties = new GalaxyProperties2(transform.position, minMaxDisc, minMaxBulge, minMaxAngularOffset, minMaxStarCount);
             StartCoroutine(LoadNextScene());
             
         }

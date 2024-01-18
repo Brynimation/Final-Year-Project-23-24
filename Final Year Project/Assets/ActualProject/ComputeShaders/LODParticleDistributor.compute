@@ -7,7 +7,7 @@
 
 //AppendStructuredBuffer<float3> _PositionsLOD0;
 //AppendStructuredBuffer<float3> _PositionsLOD1;
-RWStructuredBuffer<MeshProperties> _MainPropertiesBuffer;
+RWStructuredBuffer<GalaxyProperties> _MainPropertiesBuffer;
 RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
@@ -21,7 +21,7 @@ uniform float _GalaxyDensity;
 uniform float4 _LargeStarRadius;
 uniform float4 _SmallStarRadius;
 uniform float4 _H2RegionColour;
-uniform MeshProperties _GalacticProperties;
+uniform GalaxyProperties _GalacticProperties;
 uniform float _MinEccentricity;
 uniform float _MaxEccentricity;
 uniform float _GalacticDiskRadius;
@@ -63,8 +63,8 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset;
     float zPos = 0.0;
-    float3 scale = _MainPropertiesBuffer[0].scale;
-    float4x4 matNoScale = _MainPropertiesBuffer[0].mat;
+    float3 scale = _MainPropertiesBuffer[0].mp.scale;
+    float4x4 matNoScale = _MainPropertiesBuffer[0].mp.mat;
     matNoScale[0][0] /= scale.x;
     matNoScale[0][1] /= scale.y;
     matNoScale[0][2] /= scale.z;
@@ -252,21 +252,28 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 float4 GetColour(uint id)
 {
     float random = Hash21(float2(id, id * 123.42));
-    float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
+    float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), (float) id / (float)_NumParticles);
     return colour;
 }
 [numthreads(1024, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= _NumParticles || _MainPositionBufferCount[0] == 0)
+    if (_MainPositionBufferCount[0] == 0)
         return;
     _GalacticProperties = _MainPropertiesBuffer[0];
-
-    float curDist = length(_GalacticProperties.position - _PlayerPosition);
-    float multiplier = _GalacticProperties.scale;//_ThresholdDist < curDist ? 0.35 : exp((float) _ThresholdDist / curDist) - 1.0;
-    _GalacticBulgeRadius = multiplier / 4.0;
-    _GalacticDiskRadius = multiplier / 2.0;
-    _GalacticHaloRadius = multiplier;
+    _NumParticles = _GalacticProperties.numParticles;
+    if(id.x >= _NumParticles)
+    {
+        return;
+    }
+    float curDist = length(_GalacticProperties.mp.position - _PlayerPosition);
+    float multiplier = _GalacticProperties.mp.scale;//_ThresholdDist < curDist ? 0.35 : exp((float) _ThresholdDist / curDist) - 1.0;
+    _GalacticBulgeRadius = _GalacticProperties.galacticBulgeRadius;
+    _GalacticDiskRadius = _GalacticProperties.galacticDiskRadius;
+    _GalacticHaloRadius = _GalacticProperties.galacticHaloRadius;
+    _MinEccentricity = _GalacticProperties.minEccentricity;
+    _MaxEccentricity = _GalacticProperties.maxEccentricity;
+    _AngularOffsetMultiplier = _GalacticProperties.angularOffsetMultiplier;
 
     float curLargeStarRadius = min(10, multiplier * _LargeStarRadius);
     float curSmallStarRadius = min(5, multiplier * _SmallStarRadius);

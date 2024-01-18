@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class UniGenerator : MonoBehaviour
 {
-    public static GalaxyProperties currentGalaxyProperties;
+    public static GalaxyProperties2 currentGalaxyProperties;
     public Mesh galaxyMesh;
     public Material galaxyMaterial;
     public int width;
@@ -35,7 +35,7 @@ public class UniGenerator : MonoBehaviour
 
     void Awake() 
     {
-        currentGalaxyProperties = new GalaxyProperties(transform.position, minMaxDisc, minMaxBulge, minMaxAngularOffset, minMaxStarCount);
+        currentGalaxyProperties = new GalaxyProperties2(transform.position, minMaxDisc, minMaxBulge, minMaxAngularOffset, minMaxStarCount);
         indirectArgs[0] = galaxyMesh.GetIndexCount(0);
         //positionData = new Vector3[numGalaxiesX * numGalaxiesY * numGalaxiesZ];
         indirectArgs[1] = (uint) (numGalaxiesX * numGalaxiesY * numGalaxiesZ);

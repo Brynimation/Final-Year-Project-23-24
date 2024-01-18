@@ -170,7 +170,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &971011121
 PrefabInstance:
@@ -193,7 +193,7 @@ PrefabInstance:
       objectReference: {fileID: 1538453084}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: numInstances
-      value: 1
+      value: 10000
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: LODSwitchDist
@@ -237,7 +237,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_LocalPosition.x
@@ -346,8 +346,8 @@ MonoBehaviour:
   positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
-  galaxyLodSwitchDist: 0.1
-  galaxyFadeDist: 0
+  galaxyLodSwitchDist: 5
+  galaxyFadeDist: 2
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
@@ -397,12 +397,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1960476555}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1538453083}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1964290581
@@ -482,7 +482,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5487334654235042315, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_BackGroundColor.r
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}

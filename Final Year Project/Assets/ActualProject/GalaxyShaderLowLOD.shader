@@ -33,8 +33,9 @@ Shader "Custom/GalaxyShaderLowLOD"
         LOD 100
         Pass
         {
-
+            //Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
+
             #pragma vertex vert 
             #pragma geometry geom 
             #pragma fragment frag
@@ -63,8 +64,20 @@ Shader "Custom/GalaxyShaderLowLOD"
             float3 _CameraPosition;
             float _MaxStarSize;
             int _GridSize;
-            RWStructuredBuffer<MeshProperties> _Properties;
+            RWStructuredBuffer<GalaxyProperties> _Properties;
 
+            /*
+                int numParticles;
+    float minEccentricity;
+    float maxEccentricity;
+    float galacticDiskRadius;
+    float galacticHaloRadius;
+    float galacticBulgeRadius;
+    float angularOffsetMultiplier;
+            
+            
+            
+            */
             struct GeomData
             {
                 //float size : PSIZE;
@@ -72,10 +85,15 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
                 float fade : TEXCOORD1;
-                float radius : TEXCOORD2;
-                float3 forward : TEXCOORD3;
-                float3 right : TEXCOORD4;
-                float3 up : TEXCOORD5;
+                float haloRadius : TEXCOORD2;
+                float minEccentricity : TEXCOORD3;
+                float maxEccentricity : TEXCOORD4;
+                float diskRadius : TEXCOORD5;
+                float bulgeRadius : TEXCOORD6;
+                float angularOffsetMultiplier : TEXCOORD7;
+                float3 forward : TEXCOORD8;
+                float3 right : TEXCOORD9;
+                float3 up : TEXCOORD10;
             };
 
                 struct Interpolators
@@ -87,6 +105,12 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float fade : TEXCOORD1;
                 float3 positionWS : TEXCOORD2;
                 float4 centreHCS : TEXCOORD3;
+                float haloRadius : TEXCOORD4;
+                float minEccentricity : TEXCOORD5;
+                float maxEccentricity : TEXCOORD6;
+                float diskRadius : TEXCOORD7;
+                float bulgeRadius : TEXCOORD8;
+                float angularOffsetMultiplier : TEXCOORD9;
 
             };
 
@@ -139,19 +163,36 @@ Shader "Custom/GalaxyShaderLowLOD"
                         
                 }
             }
+            /*
+            
+                float minEccentricity;
+    float maxEccentricity;
+    float galacticDiskRadius;
+    float galacticHaloRadius;
+    float galacticBulgeRadius;
+    float angularOffsetMultiplier;
+            
+            
+            */
                 
             GeomData vert(uint id : SV_INSTANCEID)
             {
                 GeomData o;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                MeshProperties mp = _Properties[id];
+                GalaxyProperties gp = _Properties[id];
+                MeshProperties mp = gp.mp;
                 float4 posOS = mul(mp.mat, float4(0.0, 0.0, 0.0, 1.0));
                 //can't use id to determine properties - let's use position
                 o.positionWS = mul(unity_ObjectToWorld, posOS);
                 int seed = GenerateRandom(o.positionWS.xy);
                 o.colour = mp.colour;
-                o.radius = mp.scale;
+                o.haloRadius = mp.scale;
+                o.bulgeRadius = gp.galacticBulgeRadius;
+                o.diskRadius = gp.galacticDiskRadius;
+                o.angularOffsetMultiplier = gp.angularOffsetMultiplier;
+                o.maxEccentricity = gp.maxEccentricity;
+                o.minEccentricity = gp.minEccentricity;
                 //We need to extract the 3x3 rotation (and scale) matrix from our 4x4 trs matrix so we can properly orient our quad in the geometry shader
                 float3x3 rotMat = float3x3(mp.mat[0].xyz, mp.mat[1].xyz, mp.mat[2].xyz);
                 rotMat[0][0] /= mp.scale;
@@ -193,8 +234,8 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float2 uvs[4];
 
 
-                up *= inputs[0].radius;
-                right *= inputs[0].radius;
+                up *= inputs[0].haloRadius;
+                right *= inputs[0].haloRadius;
 
                 // We get the points by using the billboards right vector and the billboards height
                 WSPositions[0] = centre.positionWS - right - up; // Get bottom left vertex
@@ -219,6 +260,12 @@ Shader "Custom/GalaxyShaderLowLOD"
                     o.uv = uvs[i];
                     o.colour = centre.colour;
                     o.fade = centre.fade;
+                    o.haloRadius = centre.haloRadius;
+                    o.bulgeRadius = centre.bulgeRadius;
+                    o.diskRadius = centre.diskRadius;
+                    o.angularOffsetMultiplier = centre.angularOffsetMultiplier;
+                    o.maxEccentricity = centre.maxEccentricity;
+                    o.minEccentricity = centre.minEccentricity;
                     outputStream.Append(o);
                 }
             }
@@ -305,34 +352,146 @@ Shader "Custom/GalaxyShaderLowLOD"
                 //col += Hash21(id);
                 return col;
             }
-             float4 frag(Interpolators i) : SV_Target
-            {
-                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
-                float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
-                float radius = 1.0;
-                float2 centre = float2(0.0, 0.0);
-                float dist = distance(p, centre);
-                if(dist > radius) discard;
-                //TO DO: Somehow make p move like one of the particles in the spiral galaxy
-                return fbm(_Time.x + 3.0 * p);
-                /*float4 col = 0.0;
 
-                float2 q = 0.0;
-                q.x = fbm(p + _Time.y);
-                q.y = fbm(p + 1.0);
+     float2 calculatePosition(float theta, float angleOffset, float a, float b)
+    {
+        float cosTheta = cos(theta);
+        float sinTheta = sin(theta);
+        float cosOffset = cos(angleOffset);
+        float sinOffset = sin(angleOffset);
+
+        float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset;
+        float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset;
+        return float2(xPos, yPos);
+    }
+    float GetEccentricity(float r, float _GalacticBulgeRadius, float _GalacticDiskRadius, float _GalacticHaloRadius, float _MaxEccentricity, float _MinEccentricity)
+    {
+        if (r < _GalacticBulgeRadius)
+        {
+            return lerp(_MaxEccentricity, _MinEccentricity, r / _GalacticBulgeRadius);
+        }
+        else if (r >= _GalacticBulgeRadius && r < _GalacticDiskRadius)
+        {
+            return lerp(_MinEccentricity, _MaxEccentricity, (r - _GalacticBulgeRadius) / (_GalacticDiskRadius - _GalacticBulgeRadius));
+        }
+        else if (r >= _GalacticDiskRadius && r < _GalacticHaloRadius)
+        {
+            return lerp(_MaxEccentricity, 0.0, (r - _GalacticDiskRadius) / (_GalacticHaloRadius - _GalacticDiskRadius));
+        }
+        else
+        {
+            return 0.0;
+        }
+    }
+
+    /*Generates a random, initial angle based on the id of the star. This angle is known as the true anomaly, and is a measure of how far through its orbit the orbitting body is*/
+    float GetRandomAngle(float2 uv)
+    {
+        return radians(Hash21(uv) * 360);
+    }
+
+    float GetExpectedAngularVelocity(float r, float _GalacticBulgeRadius, float _GalaxyDensity)
+    {
+        float galaxyMass = (4 / 3) * PI * pow(_GalacticBulgeRadius, 3.0) * _GalaxyDensity;
+        float discSpeed = sqrt(galaxyMass / pow(r, 3));
+        float bulgeSpeed = 5.0; //angular velocity in the bulge is constant.
+        float interpolationDist = _GalacticBulgeRadius / 2.0;
+        // Calculate a smooth transition factor between bulgeSpeed and discSpeed
+        float t = smoothstep(_GalacticBulgeRadius - interpolationDist, _GalacticBulgeRadius, r);
+
+        // Calculate the interpolated speed
+        float speed = lerp(bulgeSpeed, discSpeed, t);
+
+        return speed;
+
+        //return sqrt((i * 50)/((_NumParticles - 1) * r)); //angularVel = sqrt(G * mass within the radius r / radius^3)
+
+        //Using Newton's form of Kepler's third law:
+        //T = 4
+    }
+
+    /*Determines the angle of inclination of the elliptical orbit. Based on this article: https://beltoforion.de/en/spiral_galaxy_renderer/, by
+    having the inclination of the orbit increase with the size of the semi-major axis of the orbit, we produce the desired spiral structure of the galaxy*/
+    float GetAngularOffset(uint id, float _AngularOffsetMultiplier, int _NumParticles)
+    {
+        int multiplier = id * _AngularOffsetMultiplier;
+        int finalParticle = _NumParticles - 1;
+        return radians((multiplier / (float) finalParticle) * 360);
+    }
+    float2 GetPointOnEllipse(float2 p, float _AngularOffsetMultiplier, float _GalacticBulgeRadius, float _GalacticDiskRadius, float _GalacticHaloRadius, float _MaxEccentricity, float _MinEccentricity)
+    {
+        float semiMajorAxis = length(p);
+        float eccentricity = GetEccentricity(semiMajorAxis, _GalacticBulgeRadius, _GalacticDiskRadius, _GalacticHaloRadius, _MaxEccentricity, _MinEccentricity);
+        float semiMinorAxis = semiMajorAxis * sqrt(1.0 - pow(eccentricity, 2));
+        float angularVelocity = GetExpectedAngularVelocity(semiMajorAxis, _GalacticBulgeRadius, 10.0);
+        float theta = atan2(p.y, p.x) + angularVelocity * _Time.x;
+        float currentAngularOffset = 0.0;
+        return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis);
+    }
+
+     float4 frag(Interpolators i) : SV_Target
+    {
+        clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
+        float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+        float radius = 1.0;
+        float2 centre = float2(0.0, 0.0);
+        float dist = distance(p, centre);
+        if(dist > radius) discard;
+        //TO DO: Somehow make p move like one of the particles in the spiral galaxy
+        float4 col = 0.0;
+        //col += Galaxy(p, 0.0, 0.0, 0.0);
+        float angularOffsetMultiplier = i.angularOffsetMultiplier;
+        float galacticHaloRadius = 1.0;
+        float galacticBulgeRadius = i.bulgeRadius / i.haloRadius;
+        float galacticDiskRadius = i.diskRadius / i.haloRadius;
+        float maxEccentricity = i.maxEccentricity;
+        float minEccentricity = i.minEccentricity;
+        p = GetPointOnEllipse(p, angularOffsetMultiplier, galacticBulgeRadius, galacticDiskRadius, galacticHaloRadius, maxEccentricity, minEccentricity);
+        col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, (p + 1.0)/2.0);
+        return col * lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), dist);
+        return fbm(p);
+        /*float4 col = 0.0;
+
+        float2 q = 0.0;
+        q.x = fbm(p + _Time.y);
+        q.y = fbm(p + 1.0);
                 
-                float2 r = 0.0;
-                r.x = fbm(p + 1.0 * q + float2(1.7, 9.2) + 0.15 * _Time.y);
-                r.y = fbm(p + 1.0 * q + float2(8.3, 2.8) + 0.126 * _Time.y);
+        float2 r = 0.0;
+        r.x = fbm(p + 1.0 * q + float2(1.7, 9.2) + 0.15 * _Time.y);
+        r.y = fbm(p + 1.0 * q + float2(8.3, 2.8) + 0.126 * _Time.y);
 
-                float f = fbm(p + r);
+        float f = fbm(p + r);
 
-                col = float4(lerp(float3(0.101961,0.619608,0.666667),float3(0.666667,0.666667,0.498039),clamp((f*f)*4.0,0.0,1.0)), 1.0);
-                col = lerp(col, float4(0.0, 0.0, 0.164706, 1.0), saturate(float4(length(q), 0.0, 1.0, 1.0)));
-                col = lerp(col, float4(0.666667, 1.0, 1.0, 1.0), saturate(float4(length(r.x), 0.0, 1.0, 1.0)));
-                return float4((f * f * f + 0.6 * f * f + 0.5 * f) * col);
-                return col;*/
-            }
+        col = float4(lerp(float3(0.101961,0.619608,0.666667),float3(0.666667,0.666667,0.498039),clamp((f*f)*4.0,0.0,1.0)), 1.0);
+        col = lerp(col, float4(0.0, 0.0, 0.164706, 1.0), saturate(float4(length(q), 0.0, 1.0, 1.0)));
+        col = lerp(col, float4(0.666667, 1.0, 1.0, 1.0), saturate(float4(length(r.x), 0.0, 1.0, 1.0)));
+        return float4((f * f * f + 0.6 * f * f + 0.5 * f) * col);
+        return col;*/
+    }
+
+         float4 fraga(Interpolators i) : SV_Target
+    {
+        clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
+        float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+        float radius = 1.0;
+        float2 centre = float2(0.0, 0.0);
+        float dist = distance(p, centre);
+        if(dist > radius) discard;
+        //TO DO: Somehow make p move like one of the particles in the spiral galaxy
+        float4 col = 0.0;
+        //col += Galaxy(p, 0.0, 0.0, 0.0);
+        float2 toCentre = p;
+        float angle = atan2(toCentre.y, toCentre.x);
+        angle += _Time.z * (1.0 - dist);
+        float numArms = 2.0;
+        float armSpread = 1.0;
+    // Model the spiral arms
+        float spiralArm = cos(numArms * angle) + armSpread;
+
+        // Compute star brightness based on distance and proximity to spiral arms
+        return smoothstep(0.0, 0.05, spiralArm - dist) * (1.0 - dist);
+
+   }
             /*
                 vec2 q = vec2(0.);
     q.x = fbm( st + 0.00*u_time);
@@ -387,3 +546,4 @@ Shader "Custom/GalaxyShaderLowLOD"
         }
     }
 }
+

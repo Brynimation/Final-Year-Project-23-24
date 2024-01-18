@@ -10,7 +10,7 @@
 AppendStructuredBuffer<MeshProperties> _Properties;
 AppendStructuredBuffer<MeshProperties> _Properties2;
 AppendStructuredBuffer<MeshProperties> _Properties3;
-AppendStructuredBuffer<MeshProperties> _Properties4;
+AppendStructuredBuffer<GalaxyProperties> _Properties4;
 AppendStructuredBuffer<MeshProperties> _Properties5;
 
 RWStructuredBuffer<uint> _DispatchBuffer;
@@ -37,6 +37,18 @@ float minWavelength;
 float maxWavelength;
 
 float4 colours[6];
+
+//GalaxyProperties
+float2 minMaxMinimumEccentricity;
+float2 minMaxMaximumEccentricity;
+
+float2 minMaxAngularOffsetMultiplier;
+
+float2 minMaxHaloRadius;
+float2 minMaxBulgeRadius;
+float2 minMaxDiskRadius;
+
+int2 minMaxNumParticles;
 
 
 //actualPosition, 1, _ChunksBuffer[0].chunkType)
@@ -69,7 +81,15 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
             {
                 //Start fading the sprites 
                 mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
-                _Properties4.Append(mp);
+                float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
+                float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
+                float haloRadius = scale;
+                float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
+                float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
+                float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
+                int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
+                GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
+                _Properties4.Append(gp);
             }
             break;
         case 4:

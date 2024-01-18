@@ -16,6 +16,18 @@ public struct SolarSystem
     public int planetCount;
     public float fade;
 }
+
+public struct GalaxyProperties
+{
+    public MeshProperties mp;
+    public int numParticles;
+    public float minEccentricity;
+    public float maxEccentricity;
+    public float galacticDiskRadius;
+    public float galacticHaloRadius;
+    public float galacticBulgeRadius;
+    public float angularOffsetMultiplier;
+}
 public struct MeshProperties
 {
     public Matrix4x4 mat;
@@ -221,7 +233,7 @@ public class BufferManager : MonoBehaviour
         planetSphereGeneratorDispatchArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 3, ComputeBufferType.IndirectArguments);
         planetSphereGeneratorDispatchArgsBuffer.SetData(new uint[] { (uint)planetResolution, 1u, 1u });
 
-        positionsBuffer4 = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        positionsBuffer4 = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyProperties)), ComputeBufferType.Append);
         argsBuffer4 = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         argsBuffer4.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
 
@@ -229,7 +241,7 @@ public class BufferManager : MonoBehaviour
         argsBuffer5 = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         argsBuffer5.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
 
-        mainProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        mainProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyProperties)), ComputeBufferType.Append);
         mainPropertiesCount = new ComputeBuffer(1, sizeof(uint));
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);

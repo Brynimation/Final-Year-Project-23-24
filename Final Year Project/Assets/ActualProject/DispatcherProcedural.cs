@@ -161,7 +161,7 @@ public class DispatcherProcedural : MonoBehaviour
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
-        int starCount = UniGenerator.currentGalaxyProperties == null ? numInstances : UniGenerator.currentGalaxyProperties.starCount;
+        int starCount = numInstances;
 
         _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
         _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
