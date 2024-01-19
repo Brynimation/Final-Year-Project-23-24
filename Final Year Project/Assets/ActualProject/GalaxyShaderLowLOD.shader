@@ -63,6 +63,7 @@ Shader "Custom/GalaxyShaderLowLOD"
             float _Emission;
             float3 _CameraPosition;
             float _MaxStarSize;
+            float _TimeStep;
             int _GridSize;
             RWStructuredBuffer<GalaxyProperties> _Properties;
 
@@ -83,17 +84,16 @@ Shader "Custom/GalaxyShaderLowLOD"
                 //float size : PSIZE;
                 float4 positionWS : POSITION;
                 float4 colour : COLOR;
-                float2 uv : TEXCOORD0;
-                float fade : TEXCOORD1;
-                float haloRadius : TEXCOORD2;
-                float minEccentricity : TEXCOORD3;
-                float maxEccentricity : TEXCOORD4;
-                float diskRadius : TEXCOORD5;
-                float bulgeRadius : TEXCOORD6;
-                float angularOffsetMultiplier : TEXCOORD7;
-                float3 forward : TEXCOORD8;
-                float3 right : TEXCOORD9;
-                float3 up : TEXCOORD10;
+                float fade : TEXCOORD0;
+                float haloRadius : TEXCOORD1;
+                float minEccentricity : TEXCOORD2;
+                float maxEccentricity : TEXCOORD3;
+                float diskRadius : TEXCOORD4;
+                float bulgeRadius : TEXCOORD5;
+                float angularOffsetMultiplier : TEXCOORD6;
+                float3 forward : TEXCOORD7;
+                float3 right : TEXCOORD8;
+                float3 up : TEXCOORD9;
             };
 
                 struct Interpolators
@@ -172,7 +172,17 @@ Shader "Custom/GalaxyShaderLowLOD"
     float galacticBulgeRadius;
     float angularOffsetMultiplier;
             
-            
+            struct GalaxyProperties
+            {
+                MeshProperties mp;
+                int numParticles;
+                float minEccentricity;
+                float maxEccentricity;
+                float galacticDiskRadius;
+                float galacticHaloRadius;
+                float galacticBulgeRadius;
+                float angularOffsetMultiplier;
+            };
             */
                 
             GeomData vert(uint id : SV_INSTANCEID)
@@ -187,7 +197,7 @@ Shader "Custom/GalaxyShaderLowLOD"
                 o.positionWS = mul(unity_ObjectToWorld, posOS);
                 int seed = GenerateRandom(o.positionWS.xy);
                 o.colour = mp.colour;
-                o.haloRadius = mp.scale;
+                o.haloRadius = gp.galacticHaloRadius;
                 o.bulgeRadius = gp.galacticBulgeRadius;
                 o.diskRadius = gp.galacticDiskRadius;
                 o.angularOffsetMultiplier = gp.angularOffsetMultiplier;
@@ -195,17 +205,17 @@ Shader "Custom/GalaxyShaderLowLOD"
                 o.minEccentricity = gp.minEccentricity;
                 //We need to extract the 3x3 rotation (and scale) matrix from our 4x4 trs matrix so we can properly orient our quad in the geometry shader
                 float3x3 rotMat = float3x3(mp.mat[0].xyz, mp.mat[1].xyz, mp.mat[2].xyz);
-                rotMat[0][0] /= mp.scale;
-                rotMat[0][1] /= mp.scale;
-                rotMat[0][2] /= mp.scale;
+                rotMat[0][0] /= o.haloRadius;
+                rotMat[0][1] /= o.haloRadius;
+                rotMat[0][2] /= o.haloRadius;
 
-                rotMat[1][0] /= mp.scale;
-                rotMat[1][1] /= mp.scale;
-                rotMat[1][2] /= mp.scale;
+                rotMat[1][0] /= o.haloRadius;
+                rotMat[1][1] /= o.haloRadius;
+                rotMat[1][2] /= o.haloRadius;
 
-                rotMat[2][0] /= mp.scale;
-                rotMat[2][1] /= mp.scale;
-                rotMat[2][2] /= mp.scale;
+                rotMat[2][0] /= o.haloRadius;
+                rotMat[2][1] /= o.haloRadius;
+                rotMat[2][2] /= o.haloRadius;
                 o.forward = normalize(mul(rotMat, float3(0.0, 0.0, 1.0)));
                 o.right = normalize(mul(rotMat, float3(1.0, 0.0, 0.0)));
                 o.up = normalize(mul(rotMat, float3(0.0, 1.0, 0.0)));
@@ -268,89 +278,6 @@ Shader "Custom/GalaxyShaderLowLOD"
                     o.minEccentricity = centre.minEccentricity;
                     outputStream.Append(o);
                 }
-            }
-            float DrawStar(float2 uv)
-            {
-                float4 col = float4(0.0, 0.0, 0.0, 0.0);
-                float2 p = uv; 
-
-                //Create a "light" at the centre of the texture
-                float d = length(p);
-                float m = 0.1/d;
-                col += m;
-
-                col *= smoothstep(0.5, 0.2, d);
-                return col;
-            }
-
-            float4 DrawStarLayer(float2 p, int gridSize)
-            {
-                float4 col = float4(0.0, 0.0, 0.0, 1.0);
-                p *= gridSize;
-                float2 gv = frac(p) - 0.5; //fractional component of uv - creates a repeating grid over our texture. Number of repetitions is determined by len(p)
-                
-                //We want to create a random offset for each star within its cell of the grid. So that the boundaries between cells are not obvious, we need to account for the contribution of the 3x3 subgrid of neighbouring cells
-                float2 id = floor(p);
-
-                for(int y = -1; y <= 1; y++)
-                {
-                    for(int x = -1; x <= 1; x++)
-                    {
-                        float2 offs = float2(x, y); 
-                        float random = Hash21(id + offs);
-                        float size = frac(random * 126.34);
-                        float flare = smoothstep(0.5, 1.0, size) * 0.5;
-                        float2 centre = gv - offs -  float2(random, frac(random * 34.0)) + 0.5;
-                        centre.x += random * cos(_Time.y);
-                        centre.y += random * sin(_Time.y);
-                        float star = DrawStar(centre);
-                        float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);//float4(tanh(float3(0.2, 0.0, 0.95) * frac(random * 2353.34) * 2 * PI), 1.0);
-                        col += star * size * colour;
-                    }
-                }
-                //col += Hash21(id);
-                return col;
-            }
-
-            float4 DrawDust(float2 p)
-            {
-                float4 baseColor = float4(0.0, 0.0, 0.0, 1.0);
-
-                // Calculate noise or sample from a dust texture
-                float dustIntensity = pNoise(float3(p, p.x * p.y) + _Time.y); // Assuming noise() is a function that returns a noise value
-
-                // Apply blur and transparency
-                float alpha = smoothstep(0.0, 1.0, dustIntensity);
-
-                // Combine dust with base color
-                float4 dustColor = float4(1.0, 1.0, 1.0, alpha);
-                return lerp(baseColor, dustColor, dustColor.a);
-            }
-
-            float4 DrawDustLayer(float2 p, int gridSize)
-            {
-                float4 col = float4(0.0, 0.0, 0.0, 1.0);
-                p *= gridSize;
-                float2 gv = frac(p) - 0.5; //fractional component of uv - creates a repeating grid over our texture. Number of repetitions is determined by len(p)
-                
-                //We want to create a random offset for each star within its cell of the grid. So that the boundaries between cells are not obvious, we need to account for the contribution of the 3x3 subgrid of neighbouring cells
-                float2 id = floor(p);
-
-                for(int y = -1; y <= 1; y++)
-                {
-                    for(int x = -1; x <= 1; x++)
-                    {
-                        float2 offs = float2(x, y); 
-                        float random = Hash21(id + offs);
-                        float size = frac(random * 126.34);
-                        float flare = smoothstep(0.5, 1.0, size) * 0.5;
-                        float2 centre = gv - offs -  float2(random, frac(random * 34.0)) + 0.5;
-                        float4 dust = DrawDust(centre);
-                        col += dust;// * size;
-                    }
-                }
-                //col += Hash21(id);
-                return col;
             }
 
      float2 calculatePosition(float theta, float angleOffset, float a, float b)
@@ -424,8 +351,8 @@ Shader "Custom/GalaxyShaderLowLOD"
         float eccentricity = GetEccentricity(semiMajorAxis, _GalacticBulgeRadius, _GalacticDiskRadius, _GalacticHaloRadius, _MaxEccentricity, _MinEccentricity);
         float semiMinorAxis = semiMajorAxis * sqrt(1.0 - pow(eccentricity, 2));
         float angularVelocity = GetExpectedAngularVelocity(semiMajorAxis, _GalacticBulgeRadius, 10.0);
-        float theta = atan2(p.y, p.x) + angularVelocity * _Time.x;
-        float currentAngularOffset = 0.0;
+        float theta = atan2(p.y, p.x) + angularVelocity * _Time * _TimeStep;
+        float currentAngularOffset = lerp(0, radians(360 * _AngularOffsetMultiplier), semiMajorAxis);
         return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis);
     }
 
@@ -438,6 +365,7 @@ Shader "Custom/GalaxyShaderLowLOD"
         float dist = distance(p, centre);
         if(dist > radius) discard;
         //TO DO: Somehow make p move like one of the particles in the spiral galaxy
+        //return 1.0;
         float4 col = 0.0;
         //col += Galaxy(p, 0.0, 0.0, 0.0);
         float angularOffsetMultiplier = i.angularOffsetMultiplier;
@@ -449,7 +377,6 @@ Shader "Custom/GalaxyShaderLowLOD"
         p = GetPointOnEllipse(p, angularOffsetMultiplier, galacticBulgeRadius, galacticDiskRadius, galacticHaloRadius, maxEccentricity, minEccentricity);
         col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, (p + 1.0)/2.0);
         return col * lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), dist);
-        return fbm(p);
         /*float4 col = 0.0;
 
         float2 q = 0.0;
@@ -520,18 +447,6 @@ Shader "Custom/GalaxyShaderLowLOD"
             
             */
 
-            float4 frag1(Interpolators i) : SV_Target
-            {
-                clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));
-                float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
-                float radius = 1.0;
-                float2 centre = float2(0.0, 0.0);
-                float dist = distance(p, centre);
-                if(dist > radius) discard;
-                float4 col = i.colour;
-                col = DrawStarLayer(p, _GridSize);
-                return col;
-            }
             float4 frag2(Interpolators i)
             {
                 clip(DiscardPixelLODCrossFade(i.positionHCS, i.fade));

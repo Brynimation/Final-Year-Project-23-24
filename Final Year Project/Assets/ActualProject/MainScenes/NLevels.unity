@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414727, b: 0.12107857, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -170,7 +170,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &971011121
 PrefabInstance:
@@ -228,16 +228,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: material.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: sphereGeneratorPrefab
       value: 
       objectReference: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: material.Array.data[2]
+      value: 
+      objectReference: {fileID: 2100000, guid: 48495ce42c89c4f4981a26ace0c25329, type: 2}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _AngularOffsetMultiplier
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_LocalPosition.x
@@ -343,11 +351,19 @@ MonoBehaviour:
   zSize: 1000
   _EmissionColour: {r: 1, g: 1, b: 1, a: 0}
   _EmissionColour2: {r: 0.0048109293, g: 1, b: 0, a: 0}
+  timeStep: 1
   positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
-  galaxyLodSwitchDist: 5
-  galaxyFadeDist: 2
+  galaxyLodSwitchDist: 2
+  galaxyFadeDist: 5
+  minMaxMinimumEccentricity: {x: 0.4, y: 0.7}
+  minMaxMaximumEccentricity: {x: 0.7, y: 1}
+  minMaxAngularOffsetMultiplier: {x: 1, y: 8}
+  minMaxHaloRadius: {x: 1, y: 4}
+  minMaxBulgeRadius: {x: 0.02, y: 0.5}
+  minMaxDiskRadius: {x: 0.05, y: 1}
+  minMaxNumParticles: 1027000010270000
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
@@ -374,7 +390,6 @@ MonoBehaviour:
   - {r: 1, g: 0.42769682, b: 0, a: 0}
   - {r: 0.972549, g: 0.14481398, b: 0, a: 0}
   floatColours: []
-  timeStep: 1
   planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
@@ -382,7 +397,7 @@ MonoBehaviour:
   planetResolution: 4
   chunkSize: 180
   renderDistance: 360
-  lodSwitchDist: 0.75
+  lodSwitchDist: 0.5
   shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
   material2: {fileID: 2100000, guid: 42b2cd426dd15234893f3817a6f26c34, type: 2}
@@ -398,11 +413,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1960476555}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5, y: -0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1538453083}
+  m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1964290581

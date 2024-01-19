@@ -21,6 +21,7 @@ public class DispatcherProcedural : MonoBehaviour
     public ComputeShader sphereGenerator;
     public ComputeShader positionCalculator;
     public PlayerController player;
+    public BufferManager bufferManager;
     [Header("Sphere Generation")]
     [Range(1, 10)]
     public int Resolution = 10;
@@ -67,23 +68,27 @@ public class DispatcherProcedural : MonoBehaviour
     bool buffersSet;
     public ComputeBuffer _MainPositionBuffer;
     public ComputeBuffer _MainPositionBufferCount;
-    private ComputeBuffer _PositionsBufferLOD0;
-    private ComputeBuffer _PositionsBufferLOD1;
     private ComputeBuffer _PositionsBufferLODAppend0;
     private ComputeBuffer _PositionsBufferLODAppend1;
+    private ComputeBuffer _PositionsBufferLODAppend2;
     private ComputeBuffer _VertexBuffer;
     private ComputeBuffer _NormalBuffer;
     private ComputeBuffer _UVBuffer;
     private GraphicsBuffer _IndexBuffer;
 
+    private ComputeBuffer _PositionsBufferLOD0;
+    private ComputeBuffer _PositionsBufferLOD1;
+
     private ComputeBuffer sphereArgsBuffer;
     private ComputeBuffer billboardArgsBuffer;
+    private ComputeBuffer cloudArgsBuffer;
     private ComputeBuffer viewFrustumPlanesBuffer;
     private ComputeBuffer sphereGeneratorDispatchArgsBuffer;
     private ComputeBuffer positionCalculatorDispatchArgsBuffer;
     private void Awake()
     {
         player = FindObjectOfType<PlayerController>();
+        bufferManager = FindObjectOfType<BufferManager>();
     }
 
     private void OnDrawGizmos()
@@ -155,22 +160,20 @@ public class DispatcherProcedural : MonoBehaviour
     }
     void Start()
     {
+        numInstances = bufferManager.minMaxNumParticles[1];
         //Create vertex and index buffers 
         Application.targetFrameRate = 300;
         sphereGenerator = Instantiate(sphereGeneratorPrefab);
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
-        int starCount = numInstances;
-
-        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
-        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Structured);
         _PositionsBufferLODAppend0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
         _PositionsBufferLODAppend1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
-        _VertexBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 3, ComputeBufferType.Structured);
-        _NormalBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 3, ComputeBufferType.Structured);
-        _UVBuffer = new ComputeBuffer(numVertsPerInstance * starCount, sizeof(float) * 2, ComputeBufferType.Structured);
-        _IndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerInstance * starCount, sizeof(uint));
+        _PositionsBufferLODAppend2 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
+        _VertexBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
+        _NormalBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
+        _UVBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 2, ComputeBufferType.Structured);
+        _IndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerInstance * numInstances, sizeof(uint));
         viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         //Bind buffers to material
         SphereGeneratorHandle = sphereGenerator.FindKernel("CSMain");
@@ -184,14 +187,15 @@ public class DispatcherProcedural : MonoBehaviour
         //bind relevant buffers to positionCalculator computeShader.
         positionCalculator.SetBuffer(positionCalculatorHandle, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
         StartCoroutine(InitExternalBuffers());
-        positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLOD0", _PositionsBufferLOD0);
-        positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLOD1", _PositionsBufferLOD1);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend1", _PositionsBufferLODAppend1);
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend2", _PositionsBufferLODAppend2);
 
         material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLODAppend1);
         material[1].SetColor("_EmissionColour", _EmissionColour);
         material[1].SetTexture("_MainTex", billboardTexture);
+
+        material[2].SetBuffer("_Positions", _PositionsBufferLODAppend2);
 
         //calculate thread group sizes 
         positionCalculator.GetKernelThreadGroupSizes(positionCalculatorHandle, out threadGroupSizeX, out _, out _);
@@ -216,9 +220,10 @@ public class DispatcherProcedural : MonoBehaviour
 
         sphereArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
         billboardArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
+        cloudArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         sphereGeneratorDispatchArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 3,ComputeBufferType.IndirectArguments);
         positionCalculatorDispatchArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 3, ComputeBufferType.IndirectArguments);
-        
+
         // index 0 : index count per instance
         // index 1 : instance count
         // index 2 : start vertex location
@@ -226,6 +231,8 @@ public class DispatcherProcedural : MonoBehaviour
         // index 4 : start instance location
         sphereArgsBuffer.SetData(new uint[] { (uint)numIndicesPerInstance, (uint)numInstances, 0u, 0u, 0u });
         billboardArgsBuffer.SetData(new uint[] { (uint)1, (uint)numInstances, 0u, 0u });
+        cloudArgsBuffer.SetData(new uint[] { (uint)1, (uint)numInstances, 0u, 0u });
+
         sphereGeneratorDispatchArgsBuffer.SetData(new uint[] { (uint) Resolution, 1u, 1u });
         positionCalculatorDispatchArgsBuffer.SetData(new uint[] { (uint)positionGroupSizeX, 1u, 1u });
 
@@ -316,6 +323,7 @@ public class DispatcherProcedural : MonoBehaviour
         }
         _PositionsBufferLODAppend0.SetCounterValue(0);
         _PositionsBufferLODAppend1.SetCounterValue(0);
+        _PositionsBufferLODAppend2.SetCounterValue(0);
         material[1].SetColor("_EmissionColour", _EmissionColour);
         //_PositionsBufferLOD0.SetCounterValue(0);
         //_PositionsBufferLOD1.SetCounterValue(0);
@@ -346,6 +354,7 @@ public class DispatcherProcedural : MonoBehaviour
 
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend0, sphereArgsBuffer, sizeof(uint));
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend1, billboardArgsBuffer, sizeof(uint));
+        ComputeBuffer.CopyCount(_PositionsBufferLODAppend2, cloudArgsBuffer, sizeof(uint));
 
         if (Input.GetKeyDown(KeyCode.Space)) 
         {
@@ -365,8 +374,19 @@ public class DispatcherProcedural : MonoBehaviour
                 Debug.Log($"Sphere args{i}.) {args[i]}");
             }
         }
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            int[] args = new int[4];
+            cloudArgsBuffer.GetData(args);
+            for (int i = 0; i < args.Length; i++)
+            {
+                Debug.Log($"Cloud args{i}.) {args[i]}");
+            }
+        }
+
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
+        Graphics.DrawProceduralIndirect(material[2], bounds, MeshTopology.Points, cloudArgsBuffer);
 
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;

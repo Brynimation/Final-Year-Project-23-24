@@ -11,6 +11,7 @@ RWStructuredBuffer<GalaxyProperties> _MainPropertiesBuffer;
 RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
 AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
+AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend2;
 RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
@@ -292,11 +293,6 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
     float semiMajorAxis = GetAccurateSemiMajorAxis(id); //GetSemiMajorAxis(id.x/(float)_NumParticles);
-    if (abs(semiMajorAxis - 26080) < 10)
-    {
-        data.radius = 1000;
-        data.colour = float4(1.0, 0.0, 1.0, 1.0);
-    }
     float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
     uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)
@@ -309,6 +305,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
         _PositionsLODAppend1.Append(data);
     }
+    //dust 
+    if (id.x % 100 != 0)
+    {
+        _PositionsLODAppend2.Append(data);
+    }
+
 }
 
 [numthreads(256, 1, 1)]

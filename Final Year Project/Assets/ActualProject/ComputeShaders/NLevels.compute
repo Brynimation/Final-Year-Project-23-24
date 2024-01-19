@@ -83,7 +83,7 @@ void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float sca
                 mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
                 float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
                 float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
-                float haloRadius = scale;
+                float haloRadius = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
                 float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
                 float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
                 float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);

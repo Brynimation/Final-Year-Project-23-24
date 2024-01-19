@@ -70,6 +70,10 @@ public class BufferManager : MonoBehaviour
     public Color _EmissionColour;
     public Color _EmissionColour2;
 
+
+
+    //General
+    public float timeStep;
     public ComputeShader positionCalculator;
 
     //Big galaxy
@@ -77,6 +81,16 @@ public class BufferManager : MonoBehaviour
     public ComputeShader galaxyPositioner;
     public float galaxyLodSwitchDist;
     public float galaxyFadeDist;
+    public Vector2 minMaxMinimumEccentricity;
+    public Vector2 minMaxMaximumEccentricity;
+
+    public Vector2 minMaxAngularOffsetMultiplier;
+
+    public Vector2 minMaxHaloRadius;
+    public Vector2 minMaxBulgeRadius;
+    public Vector2 minMaxDiskRadius;
+
+    public int[] minMaxNumParticles;
 
     //Solar systems
     public ComputeShader sphereGeneratorPrefab;
@@ -107,11 +121,9 @@ public class BufferManager : MonoBehaviour
     private ComputeBuffer starNormalBuffer;
     private ComputeBuffer starUVBuffer;
     private GraphicsBuffer starIndexBuffer;
-    private ComputeBuffer starSphereArgsBuffer;
     private ComputeBuffer starSphereGeneratorDispatchArgsBuffer;
 
     //planets
-    public float timeStep;
     public ComputeShader planetSphereGenerator;
     public ComputeBuffer planetsBuffer;
     public ComputeBuffer planetsArgsBuffer;
@@ -294,6 +306,13 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetVector("playerPosition", playerPosition.position);
         positionCalculator.SetFloat("galaxyFadeDist", galaxyFadeDist);
         positionCalculator.SetFloats("colours", floatColours);
+        positionCalculator.SetVector("minMaxMinimumEccentricity", minMaxMinimumEccentricity);
+        positionCalculator.SetVector("minMaxMaximumEccentricity", minMaxMaximumEccentricity);
+        positionCalculator.SetVector("minMaxAngularOffsetMultiplier", minMaxAngularOffsetMultiplier);
+        positionCalculator.SetVector("minMaxHaloRadius", minMaxHaloRadius);
+        positionCalculator.SetVector("minMaxBulgeRadius", minMaxBulgeRadius);
+        positionCalculator.SetVector("minMaxDiskRadius", minMaxDiskRadius);
+        positionCalculator.SetInts("minMaxNumParticles", minMaxNumParticles);
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
@@ -301,6 +320,23 @@ public class BufferManager : MonoBehaviour
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
         galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
+        galaxyPositioner.SetVector("minMaxMinimumEccentricity", minMaxMinimumEccentricity);
+        galaxyPositioner.SetVector("minMaxMaximumEccentricity", minMaxMaximumEccentricity);
+        galaxyPositioner.SetVector("minMaxAngularOffsetMultiplier", minMaxAngularOffsetMultiplier);
+        galaxyPositioner.SetVector("minMaxHaloRadius", minMaxHaloRadius);
+        galaxyPositioner.SetVector("minMaxBulgeRadius", minMaxBulgeRadius);
+        galaxyPositioner.SetVector("minMaxDiskRadius", minMaxDiskRadius);
+        galaxyPositioner.SetInts("minMaxNumParticles", minMaxNumParticles);
+        /*float2 minMaxMinimumEccentricity;
+        float2 minMaxMaximumEccentricity;
+
+        float2 minMaxAngularOffsetMultiplier;
+
+        float2 minMaxHaloRadius;
+        float2 minMaxBulgeRadius;
+        float2 minMaxDiskRadius;
+
+        int2 minMaxNumParticles;*/
 
         dispatcherProcedural._MainPositionBuffer = mainProperties;
         dispatcherProcedural._MainPositionBufferCount = mainPropertiesCount;
@@ -326,6 +362,8 @@ public class BufferManager : MonoBehaviour
         material2.SetColor("_EmissionColour", _EmissionColour2);
         material3.SetFloat("_CellSize", cellSize);
         starMaterial.SetFloat("_CellSize", cellSize);
+
+        material4.SetFloat("_TimeStep", timeStep);
     }
 
     // Update is called once per frame
@@ -379,6 +417,8 @@ public class BufferManager : MonoBehaviour
 
         material3.SetFloat("_BorderWidth", lowLodBorderWidth);
         starMaterial.SetFloat("_BorderWidth", highLodBorderWidth);
+
+        material4.SetFloat("_TimeStep", timeStep);
 
         ComputeBuffer.CopyCount(mainProperties, mainPropertiesCount, 0);
         ComputeBuffer.CopyCount(positionsBuffer3, solarSystemBufferCount, 0);
