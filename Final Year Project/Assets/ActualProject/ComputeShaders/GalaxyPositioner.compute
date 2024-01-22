@@ -62,10 +62,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
 
-    if (IntersectSphereAtTrigger(actualPosition, _TriggerBuffer[0].cid.chunkSize) == 0)
-    {
-        return;
-    }
+
         
     
     float dist = length(actualPosition - playerPosition);
@@ -86,6 +83,18 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
     float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
     int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
+
+    //We want to check if a given position is behind the trigger position
+    int index = ChunkTypeToIndex(4);
+    float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
+    //If we just moved down from the galactic cluster scale, then we only spawn points (galaxies) in front of the player
+
+    if (_TriggerBuffer[index].cid.chunkType > 3 && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
+    {
+        return;
+    }
+
+
     GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
     
     if (dist < lodDist)

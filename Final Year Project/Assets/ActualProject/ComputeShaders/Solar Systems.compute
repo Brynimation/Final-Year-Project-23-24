@@ -5,6 +5,9 @@ float3 playerPosition;
 
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<int> _SolarSystemCount;
+RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
+RWStructuredBuffer<Plane> _ViewFrustumPlanes;
+RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
 AppendStructuredBuffer<SolarSystem> _SolarSystems; 
 AppendStructuredBuffer<MeshProperties> _Properties3;
 AppendStructuredBuffer<Planet> _Planets;
@@ -93,6 +96,13 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     float3 rotation = Hash33(actualPosition) * 2.0 * PI;
     float fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
     MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);
+
+    int index = ChunkTypeToIndex(3);
+    float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
+    if (_TriggerBuffer[index].cid.chunkType > 2 && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
+    {
+        return;
+    }
     if (dist < lodDist)
     {
         float random = Hash31(actualPosition);

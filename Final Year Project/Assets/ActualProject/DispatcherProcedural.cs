@@ -355,7 +355,7 @@ public class DispatcherProcedural : MonoBehaviour
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend1, billboardArgsBuffer, sizeof(uint));
         ComputeBuffer.CopyCount(_PositionsBufferLODAppend2, cloudArgsBuffer, sizeof(uint));
 
-        if (Input.GetKeyDown(KeyCode.Space)) 
+        /*if (Input.GetKeyDown(KeyCode.Space)) 
         {
             int[] args = new int[4];
             billboardArgsBuffer.GetData(args);
@@ -381,7 +381,7 @@ public class DispatcherProcedural : MonoBehaviour
             {
                 Debug.Log($"Cloud args{i}.) {args[i]}");
             }
-        }
+        }*/
 
         Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);

@@ -82,9 +82,51 @@ struct TriggerChunkIdentifier
     float3 cameraForward;
 };
 
+int ChunkTypeToIndex(int ChunkType)
+{
+    //chunk type 4 = 0
+    //chunk type 3 = 1
+    //chunk type 2 = 2
+    switch(ChunkType)
+    {
+        case 4:
+            return 0;
+            break;
+        case 3:
+            return 1;
+            break;
+        case 2:
+            return 2;
+            break;
+        default:
+            break;
+            return 1;
+    }
+    return 1;
+}
+float ChunkTypeToDistanceMultiplier(int chunkType)
+{
 
+    switch(chunkType)
+    {
+        case 4:
+            return 1.5;
+            break;
+        case 3:
+            return 1.2;
+            break;
+        case 2:
+            return 0.5;
+            break;
+        default:
+            return 1.0;
+            break;
+    }
+    return 1.0;
+
+}
 //Abundances of different
-luminosities from: https://astrobackyard.com/types-of-stars/ (adapted to only include main sequence stars)
+//luminosities from: https://astrobackyard.com/types-of-stars/ (adapted to only include main sequence stars)
 float weightedRandomSample(float r, float typeM = 0.01, float typeK = 0.1, float typeG = 1.0, float typeF= 20.0, float typeAB = 1000.0, float typeO = 10000.0) {
     if (r < 0.85) return typeM;
     else if (r < 0.93) return typeK;

@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Linq;
+using static UnityEditor.Rendering.FilterWindow;
 
 public struct SolarSystem
 {
@@ -276,8 +277,8 @@ public class BufferManager : MonoBehaviour
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
         chunksBufferPrevFrame = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
-        triggerBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(TriggerChunkIdentifier)), ComputeBufferType.Structured);
-        triggerBuffer.SetData(new TriggerChunkIdentifier[] { new TriggerChunkIdentifier(chunksVisible[0], Camera.main.transform.forward) });
+        triggerBuffer = new ComputeBuffer(3, System.Runtime.InteropServices.Marshal.SizeOf(typeof(TriggerChunkIdentifier)), ComputeBufferType.Structured);
+        triggerBuffer.SetData(Enumerable.Repeat(new TriggerChunkIdentifier(chunksVisible[0], Camera.main.transform.forward), 3).ToArray());
         viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         viewFrustumPlanesBufferAtTrigger = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
 
@@ -383,6 +384,9 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystemCount", solarSystemBufferCount);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystems", solarSystemBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Planets", planetsBuffer);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_TriggerBuffer", triggerBuffer);
 
         material.SetBuffer("_Properties", positionsBuffer);
         material2.SetBuffer("_Properties", positionsBuffer2);
@@ -414,7 +418,9 @@ public class BufferManager : MonoBehaviour
         debugPosBuffer.SetCounterValue(0);
 
         Vector3 camForward = Camera.main.transform.forward;
+        //Debug.Log(camForward);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+        positionCalculator.SetVector("cameraForward", camForward);
         positionCalculator.SetFloat("lodSwitchBackDist", lodSwitchBackDist);
         positionCalculator.SetFloat("minWavelength", minWavelength);
         positionCalculator.SetFloat("maxWavelength", maxWavelength);
@@ -535,25 +541,25 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(x);
             }
         }
-        Vector3Int[] pos = new Vector3Int[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
+        ChunkIdentifier[] chunk = new ChunkIdentifier[1];
         if (Input.GetKeyDown(KeyCode.X))
         {
-            debugPosBuffer.GetData(pos);
-            foreach (var p in pos)
+            chunksBuffer.GetData(chunk);
+            foreach (var c in chunk)
             {
-                Debug.Log(p);
+                Debug.Log(c.pos);
+                Debug.Log(c.chunkType);
             }
         }
-        ChunkIdentifier[] chunks = new ChunkIdentifier[1];
+        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[3];
         if (Input.GetKeyDown(KeyCode.B))
         {
-            chunksBuffer.GetData(chunks);
+            triggerBuffer.GetData(chunks);
             foreach (var p in chunks)
             {
-                Debug.Log(p.pos);
-                Debug.Log(p.chunksInViewDist);
-                Debug.Log(p.chunkSize);
-                Debug.Log(p.chunkType);
+                Debug.Log(p.cid.pos);
+                Debug.Log(p.cid.chunkType);
+                Debug.Log(p.cameraForward);
             }
         }
         Vector3[] mainPos = new Vector3[1];
