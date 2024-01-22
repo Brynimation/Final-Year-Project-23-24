@@ -237,7 +237,6 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculatorDispatchArgsBuffer.SetData(new uint[] { (uint)positionGroupSizeX, 1u, 1u });
 
         Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-        Debug.Log(viewFrustumPlanesBuffer);
         viewFrustumPlanesBuffer.SetData(planes);
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;

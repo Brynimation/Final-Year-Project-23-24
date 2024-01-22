@@ -76,7 +76,15 @@ struct ChunkIdentifier
     float3 pos;
 };
 
-//Abundances of different luminosities from: https://astrobackyard.com/types-of-stars/ (adapted to only include main sequence stars)
+struct TriggerChunkIdentifier
+{
+    ChunkIdentifier cid;
+    float3 cameraForward;
+};
+
+
+//Abundances of different
+luminosities from: https://astrobackyard.com/types-of-stars/ (adapted to only include main sequence stars)
 float weightedRandomSample(float r, float typeM = 0.01, float typeK = 0.1, float typeG = 1.0, float typeF= 20.0, float typeAB = 1000.0, float typeO = 10000.0) {
     if (r < 0.85) return typeM;
     else if (r < 0.93) return typeK;

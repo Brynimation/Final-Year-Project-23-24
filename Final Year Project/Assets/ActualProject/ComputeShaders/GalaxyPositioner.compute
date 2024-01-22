@@ -20,13 +20,34 @@ int2 minMaxNumParticles;
 
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 AppendStructuredBuffer<GalaxyProperties> _MainProperties;
-AppendStructuredBuffer<MeshProperties> _Properties4;
+AppendStructuredBuffer<GalaxyProperties> _Properties4;
+RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
+RWStructuredBuffer<Plane> _ViewFrustumPlanes;
+RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
+
+uint IntersectSphereAtTrigger(float3 centre, float radius)
+{
+    for (uint i = 0; i < 6; i++)
+    {
+        Plane plane = _ViewFrustumPlanesAtTrigger[i];
+        float normalDotCentre = dot(plane.normal, centre);
+        float cullDist = plane.distance * 1;
+        if (normalDotCentre + cullDist + radius <= 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 
 [numthreads(8, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
+    if (_ChunksBuffer[0].chunkType != 3)
+        return;
+    if (id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist)
+        return;
     int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
     int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
     int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
@@ -40,6 +61,13 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     uint height;
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+
+    if (IntersectSphereAtTrigger(actualPosition, _TriggerBuffer[0].cid.chunkSize) == 0)
+    {
+        return;
+    }
+        
+    
     float dist = length(actualPosition - playerPosition);
 
 
@@ -60,9 +88,24 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
     GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
     
-    if (dist < lodDist && _ChunksBuffer[0].chunkType == 3)
+    if (dist < lodDist)
     {
         _MainProperties.Append(gp);
+    }
+    float finalGalaxySwitchDist = lodSwitchDist * max(1.0, scale);
+    if (dist > finalGalaxySwitchDist)
+    {
+                //Start fading the sprites 
+        mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
+        float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
+        float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
+        float haloRadius = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
+        float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
+        float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
+        float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
+        int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
+        GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
+        _Properties4.Append(gp);
     }
 
 }

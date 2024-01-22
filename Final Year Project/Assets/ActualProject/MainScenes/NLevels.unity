@@ -353,6 +353,7 @@ MonoBehaviour:
   _EmissionColour2: {r: 0.0048109293, g: 1, b: 0, a: 0}
   timeStep: 1
   positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
+  lodSwitchBackDist: 20
   dispatcherProcedural: {fileID: 971011122}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 2
@@ -397,7 +398,7 @@ MonoBehaviour:
   planetResolution: 4
   chunkSize: 180
   renderDistance: 360
-  lodSwitchDist: 0.5
+  lodSwitchDist: 2
   shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
   material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
   material2: {fileID: 2100000, guid: 42b2cd426dd15234893f3817a6f26c34, type: 2}

@@ -52,6 +52,17 @@ public struct ChunkIdentifier
         this.pos = pos;
     }
 }
+
+public struct TriggerChunkIdentifier 
+{
+    public ChunkIdentifier cid;
+    public Vector3 cameraForward;
+    public TriggerChunkIdentifier(ChunkIdentifier cid, Vector3 forward) 
+    {
+        this.cid = cid;
+        this.cameraForward = forward;
+    }
+}
 public struct Planet
 {
     Vector3 position;
@@ -75,6 +86,11 @@ public class BufferManager : MonoBehaviour
     //General
     public float timeStep;
     public ComputeShader positionCalculator;
+    public float lodSwitchBackDist;
+    ComputeBuffer viewFrustumPlanesBuffer;
+    ComputeBuffer viewFrustumPlanesBufferAtTrigger;
+    ComputeBuffer triggerBuffer;
+
 
     //Big galaxy
     public DispatcherProcedural dispatcherProcedural;
@@ -193,7 +209,7 @@ public class BufferManager : MonoBehaviour
         //material2 = new Material(shader);
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
         chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -1) };
-        mainKernelIndex = positionCalculator.FindKernel("CSMain");
+        mainKernelIndex = positionCalculator.FindKernel("CSMainNew");
         galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
         solarSystemCreatorIndex = solarSystemCreator.FindKernel("CSMain");
         starSphereGeneratorIndex = starSphereGenerator.FindKernel("CSMain");
@@ -255,9 +271,16 @@ public class BufferManager : MonoBehaviour
 
         mainProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyProperties)), ComputeBufferType.Append);
         mainPropertiesCount = new ComputeBuffer(1, sizeof(uint));
+
+
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
         chunksBufferPrevFrame = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
+        triggerBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(TriggerChunkIdentifier)), ComputeBufferType.Structured);
+        triggerBuffer.SetData(new TriggerChunkIdentifier[] { new TriggerChunkIdentifier(chunksVisible[0], Camera.main.transform.forward) });
+        viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
+        viewFrustumPlanesBufferAtTrigger = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
+
         chunksBufferPrevFrame.SetData(chunksVisible);
         debugPosBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3Int)), ComputeBufferType.Append);
         dispatchBuffer = new ComputeBuffer(3, sizeof(uint), ComputeBufferType.IndirectArguments);
@@ -287,14 +310,17 @@ public class BufferManager : MonoBehaviour
         planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_UVBuffer", planetUVBuffer);
         planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_IndexBuffer", planetIndexBuffer);
 
-        positionCalculator.SetBuffer(mainKernelIndex, "_Properties", positionsBuffer);
-        positionCalculator.SetBuffer(mainKernelIndex, "_Properties2", positionsBuffer2);
-        positionCalculator.SetBuffer(mainKernelIndex, "_Properties3", positionsBuffer3);
-        positionCalculator.SetBuffer(mainKernelIndex, "_Properties4", positionsBuffer4);
+        //positionCalculator.SetBuffer(mainKernelIndex, "_Properties", positionsBuffer);
+        //positionCalculator.SetBuffer(mainKernelIndex, "_Properties2", positionsBuffer2);
+        //positionCalculator.SetBuffer(mainKernelIndex, "_Properties3", positionsBuffer3);
+        //positionCalculator.SetBuffer(mainKernelIndex, "_Properties4", positionsBuffer4);
         positionCalculator.SetBuffer(mainKernelIndex, "_Properties5", positionsBuffer5);
 
         positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBuffer", chunksBuffer);
         positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBufferPrevFrame", chunksBufferPrevFrame);
+        positionCalculator.SetBuffer(mainKernelIndex, "_TriggerBuffer", triggerBuffer);
+        positionCalculator.SetBuffer(mainKernelIndex, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
+        positionCalculator.SetBuffer(mainKernelIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
         positionCalculator.SetBuffer(mainKernelIndex, "_DispatchBuffer", dispatchBuffer);
 
         positionCalculator.SetInt("chunkSize", chunkSize);
@@ -304,6 +330,9 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetFloat("solarSystemSwitchDist", solarSystemSwitchDist);
         positionCalculator.SetInt("chunksVisibleInViewDist", chunksVisibleInViewDist);
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+        positionCalculator.SetVector("playerRight", playerPosition.right);
+        positionCalculator.SetVector("playerUp", playerPosition.up);
+        positionCalculator.SetVector("playerForward", playerPosition.forward);
         positionCalculator.SetFloat("galaxyFadeDist", galaxyFadeDist);
         positionCalculator.SetFloats("colours", floatColours);
         positionCalculator.SetVector("minMaxMinimumEccentricity", minMaxMinimumEccentricity);
@@ -315,6 +344,9 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetInts("minMaxNumParticles", minMaxNumParticles);
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_TriggerBuffer", triggerBuffer);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Properties4", positionsBuffer4);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
@@ -347,6 +379,7 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetFloat("timeStep", timeStep);
         solarSystemCreator.SetFloats("colours", floatColours);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ChunksBuffer", chunksBuffer);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Properties3", positionsBuffer3);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystemCount", solarSystemBufferCount);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystems", solarSystemBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Planets", planetsBuffer);
@@ -369,8 +402,8 @@ public class BufferManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        positionsBuffer.SetCounterValue(0);
-        positionsBuffer2.SetCounterValue(0);
+        //positionsBuffer.SetCounterValue(0);
+        //positionsBuffer2.SetCounterValue(0);
         positionsBuffer3.SetCounterValue(0);
         positionsBuffer4.SetCounterValue(0);
         positionsBuffer5.SetCounterValue(0);
@@ -379,16 +412,23 @@ public class BufferManager : MonoBehaviour
         mainProperties.SetCounterValue(0);
 
         debugPosBuffer.SetCounterValue(0);
+
+        Vector3 camForward = Camera.main.transform.forward;
         positionCalculator.SetVector("playerPosition", playerPosition.position);
+        positionCalculator.SetFloat("lodSwitchBackDist", lodSwitchBackDist);
         positionCalculator.SetFloat("minWavelength", minWavelength);
         positionCalculator.SetFloat("maxWavelength", maxWavelength);
         positionCalculator.SetFloat("minLuminosity", minLuminosity);
         positionCalculator.SetFloat("maxLuminosity", maxLuminosity);
         positionCalculator.SetFloat("minRadius", minRadius);
         positionCalculator.SetFloat("maxRadius", maxRadius);
+        positionCalculator.SetBool("goBack", Input.GetKeyDown(KeyCode.K));
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+        viewFrustumPlanesBuffer.SetData(planes);
         positionCalculator.DispatchIndirect(mainKernelIndex, dispatchBuffer);
 
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
+        galaxyPositioner.SetVector("cameraForward", camForward);
         galaxyPositioner.DispatchIndirect(galaxyPositionerIndex, dispatchBuffer);
 
         solarSystemCreator.SetVector("playerPosition", playerPosition.position);
@@ -457,6 +497,15 @@ public class BufferManager : MonoBehaviour
             foreach (var p in mp)
             {
                 Debug.Log(p.mat);
+            }
+        }
+        Plane[] plns = new Plane[6];
+        if (Input.GetKeyDown(KeyCode.T)) 
+        {
+            viewFrustumPlanesBufferAtTrigger.GetData(plns);
+            foreach (var pl in plns) 
+            {
+                Debug.Log(pl);
             }
         }
         int[] ss = new int[5];

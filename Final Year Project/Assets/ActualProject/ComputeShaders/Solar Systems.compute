@@ -6,6 +6,7 @@ float3 playerPosition;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<int> _SolarSystemCount;
 AppendStructuredBuffer<SolarSystem> _SolarSystems; 
+AppendStructuredBuffer<MeshProperties> _Properties3;
 AppendStructuredBuffer<Planet> _Planets;
 float time;
 float fadeDist;
@@ -67,7 +68,8 @@ of colours is 380 - 700 nm
 
 [numthreads(8, 8, 8)]
 void CSMain(uint3 id : SV_DispatchThreadID) {
-    if(_SolarSystemCount[0] == 0) return;
+    if (_ChunksBuffer[0].chunkType != 2)
+        return;
     if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
     int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
     int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
@@ -84,17 +86,24 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
     float dist = length(actualPosition - playerPosition);
     float lodDist = solarSystemSwitchDist + fadeDist;
-    if (dist < lodDist && _ChunksBuffer[0].chunkType == 2)
+    float random = Hash31(actualPosition);
+    float scale =  lerp(minRadius, maxRadius, random);
+    float starLuminosity = weightedRandomSample(random);
+    float4 colour = ColourFromLuminosity(starLuminosity, scale, colours[0], colours[1], colours[2], colours[3], colours[4], colours[5]);
+    float3 rotation = Hash33(actualPosition) * 2.0 * PI;
+    float fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
+    MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);
+    if (dist < lodDist)
     {
         float random = Hash31(actualPosition);
         SolarSystem system = (SolarSystem)0;
         system.starPosition = actualPosition;
-        system.starRadius = lerp(minRadius, maxRadius, random);
-        system.starLuminosity = weightedRandomSample(random);
+        system.starRadius = scale;
+        system.starLuminosity = starLuminosity;
         system.starMass = calculateSphereMass(system.starRadius, 1.0);
-        system.starColour = ColourFromLuminosity(system.starLuminosity, system.starRadius, colours[0], colours[1], colours[2], colours[3], colours[4], colours[5]);;
+        system.starColour = colour;
+        system.fade = fade;
         system.planetCount = ceil(10 * random);
-        system.fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
         _SolarSystems.Append(system);
         float maxDist = 10.0;
         for(int i = 0; i < system.planetCount; i++)
@@ -116,6 +125,10 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
             _Planets.Append(planet);
         }
-
+    }
+    if (dist > solarSystemSwitchDist)
+    {
+    
+        _Properties3.Append(mp);
     }
 }
