@@ -241,24 +241,32 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     uint numThreadGroupsX = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
     uint numThreadGroupsY = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
     uint numThreadGroupsZ = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
+    ChunkIdentifier prevCid = _ChunksBuffer[0]; 
     ChunkIdentifier cid;
     cid.pos = actualPosition;
     cid.chunksInViewDist = chunksVisibleInViewDist;
-    if (goBack)
+    //chunks buffer contains the current scale of the chunks being viewed currently
+    //Trigger buffer stores the position at which a scale change was made, as well as the camera properties at which the switch was made.
+    //TriggerBuffer[0] = Switch from galactic cluster -> galaxy
+    //TriggerBuffer[1] = Switch from galaxy -> solar system
+    //TriggerBuffer[2] = currently not needed?
+    
+    
+    if (goBack) //if the user presses k
     {
-        ChunkIdentifier prevCid = _ChunksBuffer[0];
+        //If our chunk type is less than 4 (since 4 is our maximum scale), then we permit going up a level
         if (prevCid.chunkType < 4 && prevCid.chunkType > -1)
         {
-            cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
-            cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
-            cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 5);
+            cid.chunksInViewDist = max(prevCid.chunksInViewDist / 2, chunksVisibleInViewDist); // Half number of chunks visible
+            cid.chunkSize = min(prevCid.chunkSize * 2, chunkSize); //double chunk size
+            cid.chunkType = min(prevCid.chunkType + 1, 4); //increase chunk type / scale 
             _ChunksBuffer[0] = cid;
         }
 
     }
     
     //Conditions for returning to an upper level
-   int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType - 1);
+   int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
    float3 playerToTrigger = _TriggerBuffer[chunkIndex].cid.pos - playerPosition;
    float playerToTriggerDist = length(playerToTrigger);
    float trueSwitchBackDist = ChunkTypeToDistanceMultiplier(_ChunksBuffer[0].chunkType) * lodSwitchBackDist;
@@ -274,7 +282,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
                 cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
                 cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
                 cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
-                cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 5);
+                cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 4);
                 _ChunksBuffer[0] = cid;
 
                 _TriggerBuffer[chunkIndex].cid = cid;
@@ -305,7 +313,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
             cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
             cid.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, chunksVisibleInViewDist * 5);
             cid.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, 1);
-            cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 0);
+            cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 2);
             _ChunksBuffer[0] = cid;
             _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 8);
             _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 8);
@@ -333,14 +341,6 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
         ChunkIdentifier prevCid = _ChunksBuffer[0];
         if (prevCid.pos.x == -0.1 && prevCid.pos.y == -0.1 && prevCid.pos.z == -0.1 || prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z) //if there is currently nothing in the buffer OR we've just moved away from a chunk enough such that we want to drop its level of detail
         {
-            //reduce the number of threads we wish to spawn, and add the current position to our properties list with an lod of 2
-            /* cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist/2, chunksVisibleInViewDist);// chunksVisibleInViewDist;
-             cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
-             cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 5);
-             _ChunksBuffer[0] = cid;
-            _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
-            _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
-            _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);*/
 
 
             //if the chunk we added to the chunk list in our previous frame equals the one we're looking at currently, that means we need to remove it from the buffer as we're no longer close enough to view it at a higher lod'
