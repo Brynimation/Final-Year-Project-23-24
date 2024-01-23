@@ -23,6 +23,7 @@ float lodSwitchDist;
 float galaxyFadeDist;
 float solarSystemSwitchDist;
 float galaxySwitchDist;
+float dontSpawnRadius; //We don't want to spawn any bodies on the trigger - things get too confusing.
 int chunkSize;
 float3 playerPosition;
 int3 playerChunkCoord;
@@ -233,10 +234,20 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     int curZOffset = -round(_ChunksBuffer[0].chunksInViewDist / 2) + currentChunkCoordZ + id.z;
 
     int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
+    
+    int3 playerChunkCoord = int3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ);
+
+
+    
     uint width;
     uint height;
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+
+    int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
+    /*float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
+    if(distance(triggerPos, actualPosition) <= dontSpawnRadius) return; //We don't want the player to spawn inside any bodies when they enter a new level'
+    */
     float dist = length(actualPosition - playerPosition);
     uint numThreadGroupsX = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
     uint numThreadGroupsY = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
@@ -266,7 +277,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     }
     
     //Conditions for returning to an upper level
-   int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
+
    float3 playerToTrigger = _TriggerBuffer[chunkIndex].cid.pos - playerPosition;
    float playerToTriggerDist = length(playerToTrigger);
    float trueSwitchBackDist = ChunkTypeToDistanceMultiplier(_ChunksBuffer[0].chunkType) * lodSwitchBackDist;
@@ -305,7 +316,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
         {
             //_Properties.Append(GenerateMeshProperties(actualPosition, 1, 0));
         }
-        else
+        else if (_ChunksBuffer[0].chunkType > 2)
         {
             //Otherwise, we have moved close enough to a new chunk to trigger a level of detail change, so increase the number of threads spawned to accommodate 
             //for the reduced chunk size and increased number of chunks in view.

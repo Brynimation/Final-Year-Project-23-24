@@ -1,6 +1,7 @@
 ﻿#pragma kernel CSMain
 #include "Assets/ActualProject/Utility.hlsl"
 float solarSystemSwitchDist;
+float dontSpawnRadius;
 float3 playerPosition;
 
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
@@ -87,6 +88,11 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     uint height;
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+    int index = ChunkTypeToIndex(3);
+    float3 triggerPos = _TriggerBuffer[index].cid.pos;
+    if(distance(triggerPos, actualPosition) <= dontSpawnRadius) return; //We don't want the player to spawn inside any bodies when they enter a new level'
+    
+
     float dist = length(actualPosition - playerPosition);
     float lodDist = solarSystemSwitchDist + fadeDist;
     float random = Hash31(actualPosition);
@@ -97,7 +103,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     float fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
     MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);
 
-    int index = ChunkTypeToIndex(3);
+
     float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
     if (_TriggerBuffer[index].cid.chunkType > 2 && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
     {

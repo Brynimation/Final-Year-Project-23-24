@@ -88,9 +88,13 @@ public class BufferManager : MonoBehaviour
     public float timeStep;
     public ComputeShader positionCalculator;
     public float lodSwitchBackDist;
+    public float dontSpawnRadius;
     ComputeBuffer viewFrustumPlanesBuffer;
     ComputeBuffer viewFrustumPlanesBufferAtTrigger;
     ComputeBuffer triggerBuffer;
+    ComputeBuffer triggerArgsBuffer;
+    public Material triggerMaterial;
+    public Mesh sphereMesh;
 
 
     //Big galaxy
@@ -273,7 +277,8 @@ public class BufferManager : MonoBehaviour
         mainProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyProperties)), ComputeBufferType.Append);
         mainPropertiesCount = new ComputeBuffer(1, sizeof(uint));
 
-
+        triggerArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
+        triggerArgsBuffer.SetData(new uint[] { sphereMesh.GetIndexCount(0), 100u, 0u, 0u, 0u });
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
         chunksBufferPrevFrame = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
@@ -325,6 +330,7 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetBuffer(mainKernelIndex, "_DispatchBuffer", dispatchBuffer);
 
         positionCalculator.SetInt("chunkSize", chunkSize);
+        positionCalculator.SetFloat("dontSpawnRadius", dontSpawnRadius);
         positionCalculator.SetInt("renderDistance", renderDistance);
         positionCalculator.SetFloat("lodSwitchDist", lodSwitchDist);
         positionCalculator.SetFloat("galaxySwitchDist", galaxyLodSwitchDist);
@@ -351,6 +357,7 @@ public class BufferManager : MonoBehaviour
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Properties4", positionsBuffer4);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
+        galaxyPositioner.SetFloat("dontSpawnRadius", dontSpawnRadius);
         galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
         galaxyPositioner.SetVector("playerPosition", playerPosition.position);
         galaxyPositioner.SetVector("minMaxMinimumEccentricity", minMaxMinimumEccentricity);
@@ -387,6 +394,7 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_TriggerBuffer", triggerBuffer);
+        solarSystemCreator.SetFloat("dontSpawnRadius", dontSpawnRadius);
 
         material.SetBuffer("_Properties", positionsBuffer);
         material2.SetBuffer("_Properties", positionsBuffer2);
@@ -401,6 +409,9 @@ public class BufferManager : MonoBehaviour
         starMaterial.SetFloat("_CellSize", cellSize);
 
         material4.SetFloat("_TimeStep", timeStep);
+
+        triggerMaterial.SetBuffer("_ChunksBuffer", chunksBuffer);
+        triggerMaterial.SetBuffer("_TriggerBuffer", triggerBuffer);
     }
 
     // Update is called once per frame
@@ -495,6 +506,7 @@ public class BufferManager : MonoBehaviour
         //Graphics.DrawMeshInstancedIndirect(planetMesh, 0, planetMaterial, bounds, planetsArgsBuffer);
         Graphics.DrawProceduralIndirect(starMaterial, bounds, MeshTopology.Triangles, starIndexBuffer, solarSystemArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
+        Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
         MeshProperties[] mp = new MeshProperties[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
         if (Input.GetKeyDown(KeyCode.Q))
@@ -549,6 +561,7 @@ public class BufferManager : MonoBehaviour
             {
                 Debug.Log(c.pos);
                 Debug.Log(c.chunkType);
+                Debug.Log(c.chunkSize);
             }
         }
         TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[3];
