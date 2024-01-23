@@ -95,14 +95,11 @@ int ChunkTypeToIndex(int ChunkType)
         case 3:
             return 1;
             break;
-        case 2:
-            return 2;
-            break;
         default:
             break;
-            return 1;
+            return -1;
     }
-    return 1;
+    return -1;
 }
 float ChunkTypeToDistanceMultiplier(int chunkType)
 {

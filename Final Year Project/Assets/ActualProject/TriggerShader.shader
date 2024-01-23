@@ -84,9 +84,17 @@ Shader "Custom/TriggerShader"
             Interpolators vert(Attributes i)
             {
                 Interpolators o;
-                float3 pos = _TriggerBuffer[ChunkTypeToIndex(_ChunksBuffer[0].chunkType)].cid.pos;
+                int chunkIndex = ChunkTypeToIndex(4);
+                float3 pos;
+                if(chunkIndex == -1)
+                {
+                    pos = -10000.0;
+                }else{
+                    pos = _TriggerBuffer[chunkIndex].cid.pos;
+                }
                 o.positionHCS = TransformObjectToHClip(pos + i.vertexPosOS);
                 o.colour = float4(1.0, 0.0, 0.0, 1.0);
+                o.colour *= 1000.0;
                 return o;
             }
 

@@ -283,9 +283,9 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
    float trueSwitchBackDist = ChunkTypeToDistanceMultiplier(_ChunksBuffer[0].chunkType) * lodSwitchBackDist;
    if (playerToTriggerDist > trueSwitchBackDist)
     {
-        float3 dir = normalize(_TriggerBuffer[chunkIndex].cid.pos - playerPosition);
+        float3 dir = normalize(playerPosition -_TriggerBuffer[chunkIndex].cid.pos);
         //If the player is moving backwards from the trigger point (so do not trigger an lod change if they are simply seeking to explore the level they're currently in)
-        if (dot(_TriggerBuffer[chunkIndex].cameraForward, dir) > 0.0)
+        if (dot(_TriggerBuffer[chunkIndex].cameraForward, dir) < 0.0)
         {
             ChunkIdentifier prevCid = _ChunksBuffer[0];
             if (prevCid.chunkType < 4 && prevCid.chunkType > -1)

@@ -282,8 +282,8 @@ public class BufferManager : MonoBehaviour
         chunksBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
         chunksBuffer.SetData(chunksVisible);
         chunksBufferPrevFrame = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ChunkIdentifier)), ComputeBufferType.Structured);
-        triggerBuffer = new ComputeBuffer(3, System.Runtime.InteropServices.Marshal.SizeOf(typeof(TriggerChunkIdentifier)), ComputeBufferType.Structured);
-        triggerBuffer.SetData(Enumerable.Repeat(new TriggerChunkIdentifier(chunksVisible[0], Camera.main.transform.forward), 3).ToArray());
+        triggerBuffer = new ComputeBuffer(2, System.Runtime.InteropServices.Marshal.SizeOf(typeof(TriggerChunkIdentifier)), ComputeBufferType.Structured);
+        triggerBuffer.SetData(Enumerable.Repeat(new TriggerChunkIdentifier(chunksVisible[0], Camera.main.transform.forward), 2).ToArray());
         viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         viewFrustumPlanesBufferAtTrigger = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
 
@@ -508,6 +508,11 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
+        if (Input.GetKeyDown(KeyCode.C)) 
+        {
+            Debug.Log(Camera.main.transform.forward);
+        }
+
         MeshProperties[] mp = new MeshProperties[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
         if (Input.GetKeyDown(KeyCode.Q))
         {
@@ -564,7 +569,7 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(c.chunkSize);
             }
         }
-        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[3];
+        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[2];
         if (Input.GetKeyDown(KeyCode.B))
         {
             triggerBuffer.GetData(chunks);
@@ -575,17 +580,6 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(p.cameraForward);
             }
         }
-        Vector3[] mainPos = new Vector3[1];
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            Debug.Log(mainPos.Length);
-            mainProperties.GetData(mainPos);
-            foreach (var p in mainPos)
-            {
-                Debug.Log(p);
-            }
-        }
-
     }
 
     private void ReleaseBuffer(ComputeBuffer buffer) 
