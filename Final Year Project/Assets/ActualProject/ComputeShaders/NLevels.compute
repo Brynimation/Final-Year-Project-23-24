@@ -18,6 +18,7 @@ RWStructuredBuffer<uint> _DispatchBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
+RWStructuredBuffer<float3> _ChunkOffset;
 float renderDistance;
 float lodSwitchDist;
 float galaxyFadeDist;
@@ -243,7 +244,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     uint width;
     uint height;
 
-    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
+    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize - _ChunkOffset[0];
 
     int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType); //initially this is 4
 
@@ -337,6 +338,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     if (dist < lodSwitchDist)
     {
 
+        //_ChunkOffset[0] = 0.0;
         //chunk currently in the chunk buffer 
         ChunkIdentifier prevCid = _ChunksBuffer[0];
         //If the chunk currently in the buffer equals the currently viewed chunk, do nothing
@@ -390,7 +392,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
 
         }
         float random = Hash31(actualPosition);
-        float scale = lerp(0.25, 2.0, random);
+        float scale = lerp(4.0, 20.0, random);
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         float3 rotation = Hash33(actualPosition) * 2.0 * PI;
         AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0, random);

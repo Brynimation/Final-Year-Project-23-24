@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Linq;
-using static UnityEditor.Rendering.FilterWindow;
+using System.Linq.Expressions;
 
 public struct SolarSystem
 {
@@ -95,6 +95,7 @@ public class BufferManager : MonoBehaviour
     ComputeBuffer viewFrustumPlanesBufferAtTrigger;
     ComputeBuffer triggerBuffer;
     ComputeBuffer triggerArgsBuffer;
+    ComputeBuffer chunkOffsetBuffer;
     public Material triggerMaterial;
     public Mesh sphereMesh;
 
@@ -293,6 +294,7 @@ public class BufferManager : MonoBehaviour
         viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         viewFrustumPlanesBufferAtTrigger = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
 
+        chunkOffsetBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         chunksBufferPrevFrame.SetData(chunksVisible);
         debugPosBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3Int)), ComputeBufferType.Append);
         dispatchBuffer = new ComputeBuffer(3, sizeof(uint), ComputeBufferType.IndirectArguments);
@@ -327,6 +329,7 @@ public class BufferManager : MonoBehaviour
         //positionCalculator.SetBuffer(mainKernelIndex, "_Properties3", positionsBuffer3);
         //positionCalculator.SetBuffer(mainKernelIndex, "_Properties4", positionsBuffer4);
         positionCalculator.SetBuffer(mainKernelIndex, "_Properties5", positionsBuffer5);
+        positionCalculator.SetBuffer(mainKernelIndex, "_ChunkOffset", chunkOffsetBuffer);
 
         positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBuffer", chunksBuffer);
         positionCalculator.SetBuffer(mainKernelIndex, "_ChunksBufferPrevFrame", chunksBufferPrevFrame);
@@ -514,9 +517,12 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
+        Vector3[] offset = new Vector3[1];
         if (Input.GetKeyDown(KeyCode.C)) 
         {
-            Debug.Log(Camera.main.transform.forward);
+            //Debug.Log(Camera.main.transform.forward);
+            chunkOffsetBuffer.GetData(offset);
+            Debug.Log(offset[0]);
         }
 
         MeshProperties[] mp = new MeshProperties[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
