@@ -88,7 +88,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     uint height;
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
-    int index = ChunkTypeToIndex(3);
+    int index = ChunkTypeToIndex(2);
     float3 triggerPos = _TriggerBuffer[index].cid.pos;
     if(distance(triggerPos, actualPosition) <= dontSpawnRadius) return; //We don't want the player to spawn inside any bodies when they enter a new level'
     
@@ -105,7 +105,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
 
     float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
-    if (_TriggerBuffer[index].cid.chunkType > 2 && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
+    if (_TriggerBuffer[index].entered == 1u && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
     {
         return;
     }

@@ -84,7 +84,7 @@ Shader "Custom/TriggerShader"
             Interpolators vert(Attributes i)
             {
                 Interpolators o;
-                int chunkIndex = ChunkTypeToIndex(4);
+                int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
                 float3 pos;
                 if(chunkIndex == -1)
                 {

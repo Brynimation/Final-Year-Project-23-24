@@ -80,6 +80,7 @@ struct TriggerChunkIdentifier
 {
     ChunkIdentifier cid;
     float3 cameraForward;
+    uint entered;
 };
 
 int ChunkTypeToIndex(int ChunkType)
@@ -89,10 +90,10 @@ int ChunkTypeToIndex(int ChunkType)
     //chunk type 2 = 2
     switch(ChunkType)
     {
-        case 4:
+        case 3:
             return 0;
             break;
-        case 3:
+        case 2:
             return 1;
             break;
         default:

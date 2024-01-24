@@ -58,10 +58,12 @@ public struct TriggerChunkIdentifier
 {
     public ChunkIdentifier cid;
     public Vector3 cameraForward;
+    public uint entered;
     public TriggerChunkIdentifier(ChunkIdentifier cid, Vector3 forward) 
     {
         this.cid = cid;
         this.cameraForward = forward;
+        this.entered = 0u;
     }
 }
 public struct Planet
@@ -96,6 +98,9 @@ public class BufferManager : MonoBehaviour
     public Material triggerMaterial;
     public Mesh sphereMesh;
 
+
+    Ray[] triggerRays;
+    bool drawRays;
 
     //Big galaxy
     public DispatcherProcedural dispatcherProcedural;
@@ -206,6 +211,7 @@ public class BufferManager : MonoBehaviour
     Bounds bounds;
     void Start()
     {
+        triggerRays = new Ray[2];
         floatColours =  colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();  //needed to pass to shader
         starSphereGenerator = Instantiate(sphereGeneratorPrefab);
         planetSphereGenerator = Instantiate(sphereGeneratorPrefab);
@@ -569,19 +575,32 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(c.chunkSize);
             }
         }
-        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[2];
+        TriggerChunkIdentifier[]chunks = new TriggerChunkIdentifier[2];
         if (Input.GetKeyDown(KeyCode.B))
         {
             triggerBuffer.GetData(chunks);
-            foreach (var p in chunks)
+            for (int i = 0; i < chunks.Length; i++) 
             {
-                Debug.Log(p.cid.pos);
-                Debug.Log(p.cid.chunkType);
-                Debug.Log(p.cameraForward);
+                TriggerChunkIdentifier t = chunks[i];
+                Debug.Log("type: "+ t.cid.chunkType);
+                Debug.Log("pos: "+ t.cid.pos);
+                Debug.Log("forward: "+ t.cameraForward);
+                triggerRays[i] = new Ray(t.cid.pos, t.cameraForward * 10000.0f);
+                drawRays = true;
             }
         }
+
     }
 
+    private void OnDrawGizmos()
+    {
+        if (!drawRays) return;
+        for (int i = 0; i < triggerRays.Length; i++) 
+        {
+            Gizmos.color = new Color(i, i, i, 1.0f);
+            Gizmos.DrawRay(triggerRays[i]);
+        }
+    }
     private void ReleaseBuffer(ComputeBuffer buffer) 
     {
         if(buffer != null) 

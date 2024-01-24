@@ -222,6 +222,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 [numthreads(8, 8, 8)]
 void CSMainNew(uint3 id : SV_DispatchThreadID)
 {
+    //chunksBuffer[0].chunkType stores the scale of the level currently being viewed
     if (id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist)
         return;
     bool localSwitch = false;
@@ -244,7 +245,12 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
 
-    int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
+    int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType); //initially this is 4
+
+    //4 = 0 (Intergalactic trigger - should be visible from galactic view)
+    //3 = 1 (Galactic trigger - should be visible from solar system view)
+    //default = -1 (no trigger beyond intergalactic level or solar system level)
+
     /*float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
     if(distance(triggerPos, actualPosition) <= dontSpawnRadius) return; //We don't want the player to spawn inside any bodies when they enter a new level'
     */
@@ -252,11 +258,12 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     uint numThreadGroupsX = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
     uint numThreadGroupsY = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
     uint numThreadGroupsZ = ceil(_ChunksBuffer[0].chunksInViewDist / 8);
+
     ChunkIdentifier prevCid = _ChunksBuffer[0]; 
     ChunkIdentifier cid;
     cid.pos = actualPosition;
     cid.chunksInViewDist = chunksVisibleInViewDist;
-    //chunks buffer contains the current scale of the chunks being viewed currently
+    //chunks buffer contains the scale of the chunks being viewed currently
     //Trigger buffer stores the position at which a scale change was made, as well as the camera properties at which the switch was made.
     //TriggerBuffer[0] = Switch from galactic cluster -> galaxy
     //TriggerBuffer[1] = Switch from galaxy -> solar system
@@ -272,24 +279,35 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
             cid.chunkSize = min(prevCid.chunkSize * 2, chunkSize); //double chunk size
             cid.chunkType = min(prevCid.chunkType + 1, 4); //increase chunk type / scale 
             _ChunksBuffer[0] = cid;
+
+            _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
+            _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
+            _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);
         }
 
     }
     
     //Conditions for returning to an upper level
 
-   float3 playerToTrigger = _TriggerBuffer[chunkIndex].cid.pos - playerPosition;
-   float playerToTriggerDist = length(playerToTrigger);
-   float trueSwitchBackDist = ChunkTypeToDistanceMultiplier(_ChunksBuffer[0].chunkType) * lodSwitchBackDist;
-   if (playerToTriggerDist > trueSwitchBackDist)
-    {
+    //TriggerBuffer[0] should store the ChunkIdentifier at which the switch was made from intergalactic -> galactic level.
+    //TriggerBuffer[1] should store the ChunkIdentifier at which the switch was made from galactic -> solar system level
+
+    //we can't go up a level if we're already at the top
+   if(_ChunksBuffer[0].chunkType < 4)
+   {
+     float3 playerToTrigger = (chunkIndex == -1) ? playerPosition : _TriggerBuffer[chunkIndex].cid.pos - playerPosition;
+     float playerToTriggerDist = length(playerToTrigger);
+     float trueSwitchBackDist = ChunkTypeToDistanceMultiplier(_ChunksBuffer[0].chunkType) * lodSwitchBackDist;
+     if (playerToTriggerDist > trueSwitchBackDist)
+     {
         float3 dir = normalize(playerPosition -_TriggerBuffer[chunkIndex].cid.pos);
-        //If the player is moving backwards from the trigger point (so do not trigger an lod change if they are simply seeking to explore the level they're currently in)
+        //If the player is behind the trigger point (so do not trigger an lod change if they are simply seeking to explore the level they're currently in)
         if (dot(_TriggerBuffer[chunkIndex].cameraForward, dir) < 0.0)
         {
             ChunkIdentifier prevCid = _ChunksBuffer[0];
             if (prevCid.chunkType < 4 && prevCid.chunkType > -1)
             {
+                //chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType)
                 cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
                 cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
                 cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
@@ -297,15 +315,25 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
                 _ChunksBuffer[0] = cid;
 
                 _TriggerBuffer[chunkIndex].cid = cid;
-                _TriggerBuffer[chunkIndex].cid.chunkType -= 1; //if we move up a scale level (eg, stars -> galaxies), then we set the trigger to have a chunk type one less than the current chunk type to signify that we're going up not down'
+                //_TriggerBuffer[chunkIndex].cid.chunkType -= 1; 
                 _TriggerBuffer[chunkIndex].cameraForward = cameraForward;
+                _TriggerBuffer[chunkIndex].entered = 0u;
 
                 _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
                 _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
                 _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);
             }
         }
-    }
+     }
+   }
+
+   //4 = 1.5, 3 = 1.2, 2 = 0.5
+
+   //Maybe we need two conditions. We also need the velocity of the player. So if the velocity of the player is in the opposite direction to the cached forward direction 
+   //AND the distance between the player and position is increasing maybw?
+
+
+
     if (dist < lodSwitchDist)
     {
 
@@ -321,7 +349,6 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
             //Otherwise, we have moved close enough to a new chunk to trigger a level of detail change, so increase the number of threads spawned to accommodate 
             //for the reduced chunk size and increased number of chunks in view.
 
-            cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
             cid.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, chunksVisibleInViewDist * 5);
             cid.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, 1);
             cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 2);
@@ -332,9 +359,10 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
             
             //Cache the location that the user entered the next level of detail
 
-            _TriggerBuffer[chunkIndex].cid = cid;
-            _TriggerBuffer[chunkIndex].cid.chunkType += 1; //If we move a scale level down (eg, galaxies -> stars), then we set the trigger to have a chunk type one more than the current chunk type to signify that we're moving up'
-            _TriggerBuffer[chunkIndex].cameraForward = cameraForward;
+            _TriggerBuffer[chunkIndex + 1].cid = cid;
+            //_TriggerBuffer[chunkIndex].cid.chunkType += 1; //If we move a scale level down (eg, galaxies -> stars), then we set the trigger to have a chunk type one more than the current chunk type to signify that we're moving up'
+            _TriggerBuffer[chunkIndex + 1].cameraForward = cameraForward;
+            _TriggerBuffer[chunkIndex + 1].entered = 1u;
             localSwitch = true;
             for (uint i = 0; i < 6; i++)
             {

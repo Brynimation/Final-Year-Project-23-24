@@ -89,11 +89,11 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
 
     //We want to check if a given position is behind the trigger position
-    int index = ChunkTypeToIndex(4);
+    int index = ChunkTypeToIndex(3);
     float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
     //If we just moved down from the galactic cluster scale, then we only spawn points (galaxies) in front of the player
 
-    if (_TriggerBuffer[index].cid.chunkType > 3 && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
+    if (_TriggerBuffer[index].entered == 1u && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
     {
         return;
     }
