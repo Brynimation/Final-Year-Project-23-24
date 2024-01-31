@@ -138,6 +138,26 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
             planet.rotationSpeed = 5.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
+            /*struct PlanetTerrainProperties
+            {
+                float roughness;
+                float baseRoughness;
+                float persistence;
+                float minVal;
+                float noiseStrength;
+                float3 noiseCentre;
+                int octaves;
+            };*/
+            PlanetTerrainProperties properties = (PlanetTerrainProperties) 0;
+            properties.baseRoughness = lerp(2.0, 5.0, planetRandom);
+            properties.roughness = lerp(1.5, 2.0, planetRandom);
+            properties.persistence = lerp(0.25, 0.75, planetRandom);
+            properties.octaves = lerp(1, 8, planetRandom);
+            properties.minVal = 1.5;
+            properties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(1.0, 1.0, 1.0), planetRandom);
+            properties.noiseStrength = lerp(0.5, 2.0, planetRandom);
+            
+            planet.properties = properties;
 
             _Planets.Append(planet);
         }

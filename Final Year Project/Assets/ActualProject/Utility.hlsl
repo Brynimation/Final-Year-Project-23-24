@@ -25,6 +25,16 @@ struct SolarSystem
     float fade;
 };
 
+struct PlanetTerrainProperties
+{
+    float roughness;
+    float baseRoughness;
+    float persistence;
+    float minVal;
+    float noiseStrength;
+    float3 noiseCentre;
+    int octaves;
+};
 struct Planet {
     float3 position;
     float mass;
@@ -32,6 +42,7 @@ struct Planet {
     float4 colour;
     float rotationSpeed;
     float3 rotationAxis;
+    PlanetTerrainProperties properties;
 };
 
 struct GalaxyProperties
@@ -70,17 +81,17 @@ struct ThreadIdentifier
 
 struct ChunkIdentifier 
 { 
-    int chunksInViewDist;
-    int chunkSize;
-    int chunkType;
-    float3 pos;
+    int chunksInViewDist; //Number of chunks rendered within the player's view radius
+    int chunkSize;  //Distance between adjacent chunks
+    int chunkType; //Represents whether the chunk will hold a galactic cluster, galaxy or solar system
+    float3 pos; //The position of the chunk most recently entered by the player
 };
 
 struct TriggerChunkIdentifier
 {
     ChunkIdentifier cid;
-    float3 cameraForward;
-    uint entered;
+    float3 cameraForward; //The direction of the camera's local z-axis at the instant the player enters the chunk
+    uint entered; //1 if the player just entered a lower scale, 0 if they just left it
 };
 
 int ChunkTypeToIndex(int ChunkType)
@@ -583,6 +594,29 @@ float fbm (float2 uv) {
         amplitude *= gain;
     }
     return value;
+}
+
+float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties)
+{
+    float noiseVal = 0.0;
+    float amplitude = 1.0;
+    float frequency = properties.baseRoughness;
+    float lacunarity = properties.roughness;
+    float persistence = properties.persistence;
+    float3 centre = properties.noiseCentre;
+    float minVal = properties.minVal;
+    int numOctaves = properties.octaves;
+    for (int i = 0; i < numOctaves; i++)
+    {
+        float v = 0.5 * (pNoise(pos * frequency + centre) + 1.0);
+        noiseVal += v;
+        frequency *= lacunarity;
+        amplitude *= persistence;
+
+    }
+    noiseVal = max(0.0, noiseVal - minVal);
+    return noiseVal * properties.noiseStrength;
+
 }
 
 float4 Galaxy(float2 uv, float a1, float a2, float cut) {

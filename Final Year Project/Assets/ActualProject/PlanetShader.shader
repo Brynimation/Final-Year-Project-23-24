@@ -46,18 +46,35 @@ Shader "Custom/PlanetShader"
             {
                 Interpolators o;
                 Planet planetData = _Planets[i.instanceId];
+                PlanetTerrainProperties properties = planetData.properties;
                 float4x4 modelMatrix = GenerateTRSMatrix(planetData.position, planetData.radius); //Create TRS matrix
 
-                //We want to rotate the vertices so that the planet spins about its axis.
-                float4 worldPos = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
-                worldPos.xyz -= planetData.position;
+                /*
+                //wobble
+                float noiseValue = pNoise(vertexPosOS.xyz);
+                float dist = distance(systemData.starPosition, playerPosition);
+                float maxWobbleMagnitude = _WobbleMagnitude * systemData.starRadius / 2.0; //modulate wobble amount by star radius
+                float wobbleMagnitude = lerp(0.0, maxWobbleMagnitude, systemData.fade);
+                vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue);
+                */
+
+                //Use perlin noise to perturb the height of this vertex so the planet is no longer perfectly spherical.
+                //pNoise returns a value in range [-1, 1], so we compress this to [0, 1]
+                float3 vertexPosUnitSphere = _VertexBuffer[i.vertexId];
+                float noiseValue = fractalBrownianMotion(vertexPosUnitSphere, properties);
+                vertexPosUnitSphere += _NormalBuffer[i.vertexId] * noiseValue;
+
+                //Transform vertex position in vertex buffer of the unit sphere centred at (0,0,0) to the object space of the planet
+                float4 vertexPosOS = mul(modelMatrix, float4(vertexPosUnitSphere, 1.0));
+
+                //Rotate the vertices so that the planet spins about its axis.
+                vertexPosOS.xyz -= planetData.position;
                 float3x3 rotationMatrix = rotateAroundAxis(planetData.rotationAxis, planetData.rotationSpeed);
-                worldPos.xyz = mul(worldPos.xyz, rotationMatrix);
+                vertexPosOS.xyz = mul(vertexPosOS.xyz, rotationMatrix);
+                float4 rotatedVertexPos = float4(vertexPosOS.xyz + planetData.position, 1.0);
 
-                float4 vertexPosOS = float4(worldPos.xyz + planetData.position, 1.0);
 
-
-                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
+                VertexPositionInputs positionData = GetVertexPositionInputs(rotatedVertexPos); //compute world space and clip space position
                 VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
                 o.positionHCS = positionData.positionCS;
 

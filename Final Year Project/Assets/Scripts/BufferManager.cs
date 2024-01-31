@@ -66,6 +66,16 @@ public struct TriggerChunkIdentifier
         this.entered = 0u;
     }
 }
+public struct PlanetTerrainProperties 
+{
+    float roughness;
+    float baseRoughness;
+    float persistence;
+    float minVal;
+    float noiseStrength;
+    Vector3 noiseCentre;
+    int octaves;
+}
 public struct Planet
 {
     Vector3 position;
@@ -74,6 +84,7 @@ public struct Planet
     Color colour;
     float rotationSpeed;
     Vector3 rotationAxis;
+    PlanetTerrainProperties properties;
 }
 public class BufferManager : MonoBehaviour
 {
