@@ -138,6 +138,9 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
             planet.rotationSpeed = 5.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
+            planet.primaryBodyPos = system.starPosition;
+            planet.primaryBodyRadius = system.starRadius;
+            planet.primaryBodyColour = system.starColour;
             /*struct PlanetTerrainProperties
             {
                 float roughness;
@@ -148,16 +151,16 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
                 float3 noiseCentre;
                 int octaves;
             };*/
-            PlanetTerrainProperties properties = (PlanetTerrainProperties) 0;
-            properties.baseRoughness = lerp(2.0, 5.0, planetRandom);
-            properties.roughness = lerp(1.5, 2.0, planetRandom);
-            properties.persistence = lerp(0.25, 0.75, planetRandom);
-            properties.octaves = lerp(1, 8, planetRandom);
-            properties.minVal = 1.5;
-            properties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(1.0, 1.0, 1.0), planetRandom);
-            properties.noiseStrength = lerp(0.5, 2.0, planetRandom);
+            PlanetTerrainProperties planetProperties = (PlanetTerrainProperties) 0;
+            planetProperties.baseRoughness = lerp(2.0, 6.0, planetRandom);
+            planetProperties.roughness = lerp(1.0, 3.0, planetRandom);
+            planetProperties.persistence = lerp(0.25, 0.75, planetRandom);
+            planetProperties.octaves = lerp(1, 4, planetRandom);
+            planetProperties.minVal = lerp(0.75, 1.25, planetRandom);
+            planetProperties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(32.0, 11.5, 17.2), planetRandom);
+            planetProperties.noiseStrength = lerp(0.25, 0.75, planetRandom);
             
-            planet.properties = properties;
+            planet.properties = planetProperties;
 
             _Planets.Append(planet);
         }

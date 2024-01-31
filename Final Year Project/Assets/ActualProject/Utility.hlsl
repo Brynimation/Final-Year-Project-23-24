@@ -42,6 +42,9 @@ struct Planet {
     float4 colour;
     float rotationSpeed;
     float3 rotationAxis;
+    float3 primaryBodyPos;
+    float primaryBodyRadius;
+    float4 primaryBodyColour;
     PlanetTerrainProperties properties;
 };
 
@@ -609,7 +612,7 @@ float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties)
     for (int i = 0; i < numOctaves; i++)
     {
         float v = 0.5 * (pNoise(pos * frequency + centre) + 1.0);
-        noiseVal += v;
+        noiseVal += v * amplitude;
         frequency *= lacunarity;
         amplitude *= persistence;
 
