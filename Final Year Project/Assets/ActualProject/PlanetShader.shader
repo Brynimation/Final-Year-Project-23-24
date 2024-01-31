@@ -130,8 +130,8 @@ struct PlanetTerrainProperties
                 float2 uv = _UVBuffer[i.vertexId];
                 o.uv = uv;
                 o.positionWS = positionData.positionWS;
-                o.lightPosWS = planetData.primaryBodyPos;
-                o.lightColour = planetData.primaryBodyColour;
+                o.lightPosWS = planetData.primaryBody.starPosition;
+                o.lightColour = planetData.primaryBody.starColour;
                 o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
                 o.colour = planetData.colour;

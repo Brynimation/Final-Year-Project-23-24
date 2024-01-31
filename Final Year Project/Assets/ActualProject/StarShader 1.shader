@@ -62,14 +62,14 @@ Shader "Custom/StarShader"
             {
                 Interpolators o;
                 SolarSystem systemData = _SolarSystems[i.instanceId];
-                float4x4 modelMatrix = GenerateTRSMatrix(systemData.starPosition, systemData.starRadius); //Create TRS matrix
+                float4x4 modelMatrix = GenerateTRSMatrix(systemData.star.starPosition, systemData.star.starRadius); //Create TRS matrix
 
                 float4 vertexPosOS = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
 
                 //wobble
                 float noiseValue = pNoise(vertexPosOS.xyz);
-                float dist = distance(systemData.starPosition, playerPosition);
-                float maxWobbleMagnitude = _WobbleMagnitude * systemData.starRadius / 2.0; //modulate wobble amount by star radius
+                float dist = distance(systemData.star.starPosition, playerPosition);
+                float maxWobbleMagnitude = _WobbleMagnitude * systemData.star.starRadius / 2.0; //modulate wobble amount by star radius
                 float wobbleMagnitude = lerp(0.0, maxWobbleMagnitude, systemData.fade);
                 vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue); 
 
@@ -84,8 +84,8 @@ Shader "Custom/StarShader"
                 o.normWS = normalData.normalWS;
                 o.positionWS = positionData.positionWS.xyz;
                 o.positionHCS = positionData.positionCS;
-                o.mainColour = systemData.starColour;
-                o.mainColour += o.mainColour * sqrt(systemData.starRadius);
+                o.mainColour = systemData.star.starColour;
+                o.mainColour += o.mainColour * sqrt(systemData.star.starRadius);
                 return o;
 
             }

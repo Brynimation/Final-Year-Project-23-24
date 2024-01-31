@@ -14,13 +14,18 @@ struct MeshProperties
     int lodLevel;
 };
 
-struct SolarSystem
+struct Star
 {
     float3 starPosition;
     float starRadius;
     float starMass;
     float starLuminosity;
     float4 starColour;
+};
+
+struct SolarSystem
+{
+    Star star;
     int planetCount;  
     float fade;
 };
@@ -42,9 +47,7 @@ struct Planet {
     float4 colour;
     float rotationSpeed;
     float3 rotationAxis;
-    float3 primaryBodyPos;
-    float primaryBodyRadius;
-    float4 primaryBodyColour;
+    Star primaryBody;
     PlanetTerrainProperties properties;
 };
 

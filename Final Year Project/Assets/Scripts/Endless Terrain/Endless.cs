@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
 public class Endless : MonoBehaviour
 {
     public float renderDistance;
@@ -80,7 +80,7 @@ public class Endless : MonoBehaviour
 
 /*Split Each chunk up into cells*/
 
-
+/*
 public class TerrainChunk 
 {
 
@@ -137,7 +137,7 @@ public class TerrainChunk
      It will then find the distance between that point and the viewer. If this is 
     less than the render distance, the mesh will be enabled. Otherwise, it'll be 
     disabled.*/
-    public void UpdateChunk(Vector3 pos, float renderDistance) 
+  /*  public void UpdateChunk(Vector3 pos, float renderDistance) 
     {
         float closestViewerDstSqrd = bounds.SqrDistance(pos); //returns the smallest squared distance between the passed point and the bounding box
         bool visible = closestViewerDstSqrd <= renderDistance * renderDistance;
@@ -160,3 +160,4 @@ public class TerrainChunk
         return closestViewerDstSqrd  <= renderDistance * renderDistance;
     }
 }
+*/

@@ -7,13 +7,18 @@ using UnityEngine.Rendering;
 using System.Linq;
 using System.Linq.Expressions;
 
-public struct SolarSystem
+
+public struct Star 
 {
     public Vector3 starPosition;
     public float starRadius;
     public float starMass;
     public float starLuminosity;
     public Color starColour;
+}
+public struct SolarSystem
+{
+    public Star star;
     public int planetCount;
     public float fade;
 }
@@ -84,6 +89,7 @@ public struct Planet
     Color colour;
     float rotationSpeed;
     Vector3 rotationAxis;
+    Star primaryBody;
     PlanetTerrainProperties properties;
 }
 public class BufferManager : MonoBehaviour

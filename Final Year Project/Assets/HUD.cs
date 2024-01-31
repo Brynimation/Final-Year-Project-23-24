@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+/*
 public class HUD : MonoBehaviour
 {
     [SerializeField] Camera cam;
@@ -41,3 +41,4 @@ public class HUD : MonoBehaviour
         Gizmos.DrawRay(ray);
     }
 }
+*/

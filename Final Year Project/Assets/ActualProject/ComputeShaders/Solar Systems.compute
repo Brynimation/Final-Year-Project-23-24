@@ -113,11 +113,11 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     {
         float random = Hash31(actualPosition);
         SolarSystem system = (SolarSystem)0;
-        system.starPosition = actualPosition;
-        system.starRadius = scale;
-        system.starLuminosity = starLuminosity;
-        system.starMass = calculateSphereMass(system.starRadius, 1.0);
-        system.starColour = colour;
+        system.star.starPosition = actualPosition;
+        system.star.starRadius = scale;
+        system.star.starLuminosity = starLuminosity;
+        system.star.starMass = calculateSphereMass(system.star.starRadius, 1.0);
+        system.star.starColour = colour;
         system.fade = fade;
         system.planetCount = ceil(10 * random);
         _SolarSystems.Append(system);
@@ -127,9 +127,9 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             float planetRandom = Hash1(float(i)/float(system.planetCount) * length(actualPosition));
             
             Planet planet = (Planet)0;
-            float distFromStar = system.starRadius + maxDist * planetRandom;
+            float distFromStar = system.star.starRadius + maxDist * planetRandom;
             float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
-            float angle = initialAngle + CalculatePlanetAngularVelocity(distFromStar, system.starMass, 1.0) * time * timeStep;
+            float angle = initialAngle + CalculatePlanetAngularVelocity(distFromStar, system.star.starMass, 1.0) * time * timeStep;
             float x = distFromStar * cos(angle);
             float z = distFromStar * sin(angle);
             planet.position = actualPosition + float3(x, 0, z);
@@ -138,9 +138,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
             planet.rotationSpeed = 5.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
-            planet.primaryBodyPos = system.starPosition;
-            planet.primaryBodyRadius = system.starRadius;
-            planet.primaryBodyColour = system.starColour;
+            planet.primaryBody = system.star;
             /*struct PlanetTerrainProperties
             {
                 float roughness;
