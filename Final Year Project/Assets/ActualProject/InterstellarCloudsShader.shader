@@ -1,16 +1,4 @@
-//ShaderLab is a Unity specific language that bridges the gap between HLSL and Unity. Everything
-//defined outside of the Passes is written in ShaderLab. Everything within the passes
-//is written in HLSL.
-
-//https://www.braynzarsoft.net/viewtutorial/q16390-36-billboarding-geometry-shader - billboarding in geometry shader tutorial
-//https://www.youtube.com/watch?v=gY1Mx4kkZPU&t=603s
-//https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics
-//https://gist.github.com/fuqunaga/1a649158d69241d31b023ec9983b0164
-
-/*In spiral galaxies the velocities of stars in the outer orbits are much faster than expected.- https://sites.ualberta.ca/~pogosyan/teaching/ASTRO_122/lect24/lecture24.html*/
-
-
-Shader "Custom/ParticleShader2"
+Shader "Custom/InterstellarCloudShader"
 {
     Properties
     {
@@ -39,19 +27,11 @@ Shader "Custom/ParticleShader2"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma target 5.0
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Assets/ActualProject/Utility.hlsl"
 
             UNITY_INSTANCING_BUFFER_START(MyProps)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
             UNITY_INSTANCING_BUFFER_END(MyProps)
-
-            struct ThreadIdentifier
-            {
-                float3 position;
-                float4 colour;
-                float radius;
-                uint id;
-            };
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
@@ -62,7 +42,7 @@ Shader "Custom/ParticleShader2"
             float _Emission;
             float3 _CameraPosition;
             float _CloudSize;
-            RWStructuredBuffer<ThreadIdentifier> _Positions;
+            RWStructuredBuffer<GalaxyStar> _Positions;
 
             struct GeomData
             {
@@ -71,7 +51,6 @@ Shader "Custom/ParticleShader2"
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
                 float radius : TEXCOORD2;
-                uint id : TEXCOORD3;
             };
 
              struct Interpolators 
@@ -84,31 +63,14 @@ Shader "Custom/ParticleShader2"
                 float4 centreHCS : TEXCOORD2;
             };
 
-            float4x4 CreateMatrix(float3 pos, float3 dir, float3 up, uint id) {
-                float3 zaxis = normalize(dir);
-                float3 xaxis = normalize(cross(up, zaxis));
-                float3 yaxis = cross(zaxis, xaxis);
-                //float scale = GenerateRandom(id) * _MaxStarSize;
-                //Transform the vertex into the object space of the currently drawn mesh using a Transform Rotation Scale matrix.
-                return float4x4(
-                    xaxis.x, yaxis.x, zaxis.x, pos.x,
-                    xaxis.y, yaxis.y, zaxis.y, pos.y,
-                    xaxis.z, yaxis.z, zaxis.z, pos.z,
-                    0, 0, 0, 1
-                );
-            }
-
             GeomData vert(uint id : SV_INSTANCEID)
             {
                 GeomData o;
-                o.id = id;
-                //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
-                //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                ThreadIdentifier tid = _Positions[id];
-                o.positionWS = mul(unity_ObjectToWorld, float4(tid.position, 1.0));
-                o.colour = tid.colour;//(tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
-                o.radius = tid.radius * _CloudSize;//(tid.id % 100 == 0) ? 100 : 50;
-                o.colour += tid.colour;//* _Emission;//_EmissionColour;
+                GalaxyStar star = _Positions[id];
+                o.positionWS = mul(unity_ObjectToWorld, float4(star.position, 1.0));
+                o.colour = star.colour;//(tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
+                o.radius = star.radius * _CloudSize;//(tid.id % 100 == 0) ? 100 : 50;
+                o.colour += star.colour;//* _Emission;//_EmissionColour;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }
@@ -161,13 +123,6 @@ Shader "Custom/ParticleShader2"
                 
                 
             }
-
-            
-            //Fragment Shader
-            /*In a process known as rasterisation, post vertex shader, HLSL takes all triangle pixels currently
-            on screen and turns them to fragments. Our fragment shader will operate on every one of these and 
-            return a colour : the final colour of those fragments.
-            */
             float4 frag(Interpolators i) : SV_Target 
             {
 

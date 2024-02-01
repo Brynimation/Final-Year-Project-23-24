@@ -29,17 +29,11 @@ Shader "Custom/DrawProceduralShader"
 
             uniform float4 _EmissionColour;
             uniform float _Emission;
-            RWStructuredBuffer<ThreadIdentifier> _PositionsLOD0;
+            RWStructuredBuffer<GalaxyStar> _PositionsLOD0;
             StructuredBuffer<float3> _VertexBuffer;
             StructuredBuffer<float3> _NormalBuffer;
             StructuredBuffer<float2> _UVBuffer;
             float4x4 _ModelMatrix;
-
-            float GenerateRandom(int x)
-            {
-                float2 p = float2(x, sqrt(x));
-                return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
-            }
 
             struct Attributes
             {
@@ -60,8 +54,8 @@ Shader "Custom/DrawProceduralShader"
            Interpolators vert(Attributes i)
             {
                 Interpolators o;
-                ThreadIdentifier ti = _PositionsLOD0[i.instanceId]; //Sphere centre position 
-                _ModelMatrix = GenerateTRSMatrix(ti.position, ti.radius); //Create TRS matrix
+                GalaxyStar star = _PositionsLOD0[i.instanceId]; //Sphere centre position 
+                _ModelMatrix = GenerateTRSMatrix(star.position, star.radius); //Create TRS matrix
                 float4 vertexPosOS = mul(_ModelMatrix, float4(_VertexBuffer[i.vertexId], 1.0)); //transform to object space of sphere 
 
                 VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
@@ -71,7 +65,7 @@ Shader "Custom/DrawProceduralShader"
                 o.positionHCS = positionData.positionCS;
 
                 float2 uv = _UVBuffer[i.vertexId];
-                o.colour = ti.colour + ti.colour * _Emission;
+                o.colour = star.colour + star.colour * _Emission;
                 o.uv = uv;
                 return o;
             }

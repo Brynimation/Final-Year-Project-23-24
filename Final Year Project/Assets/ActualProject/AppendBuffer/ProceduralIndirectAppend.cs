@@ -5,13 +5,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 
-struct ThreadIdentifier 
-{
-    public Vector3 position;
-    public Color colour;
-    public float radius;
-    public uint id;
-}
+
 public class ProceduralIndirectAppend : MonoBehaviour
 {
     [Header("Shaders")]
@@ -71,8 +65,8 @@ public class ProceduralIndirectAppend : MonoBehaviour
         int numVertsPerInstance = Resolution * Resolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerInstance = 6 * 6 * Resolution * Resolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
-        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
-        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ThreadIdentifier)), ComputeBufferType.Append);
+        _PositionsBufferLOD0 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyStar)), ComputeBufferType.Append);
+        _PositionsBufferLOD1 = new ComputeBuffer(numInstances, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyStar)), ComputeBufferType.Append);
         _VertexBuffer = new ComputeBuffer(numVertsPerInstance * numInstances, sizeof(float) * 3, ComputeBufferType.Structured);
         _IndexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Raw, numIndicesPerInstance * numInstances, sizeof(uint));
 
@@ -141,20 +135,20 @@ public class ProceduralIndirectAppend : MonoBehaviour
         Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
         if (Input.GetKeyDown(KeyCode.P))
         {
-            ThreadIdentifier[] data = new ThreadIdentifier[numInstances];
+            GalaxyStar[] data = new GalaxyStar[numInstances];
             _PositionsBufferLOD0.GetData(data);
             Debug.Log("length: " + data.Length);
-            foreach (ThreadIdentifier pos in data)
+            foreach (GalaxyStar pos in data)
             {
                 Debug.Log(pos.position);
             }
         }
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            ThreadIdentifier[] data = new ThreadIdentifier[numInstances];
+            GalaxyStar[] data = new GalaxyStar[numInstances];
             _PositionsBufferLOD1.GetData(data);
             Debug.Log("length: " + data.Length);
-            foreach (ThreadIdentifier pos in data)
+            foreach (GalaxyStar pos in data)
             {
                 Debug.Log(pos.position);
             }

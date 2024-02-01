@@ -9,9 +9,9 @@
 //AppendStructuredBuffer<float3> _PositionsLOD1;
 RWStructuredBuffer<GalaxyProperties> _MainPropertiesBuffer;
 RWStructuredBuffer<uint> _MainPositionBufferCount;
-AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend0;
-AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend1;
-AppendStructuredBuffer<ThreadIdentifier> _PositionsLODAppend2;
+AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend0;
+AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend1;
+AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend2;
 RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
@@ -280,10 +280,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float curSmallStarRadius = min(5, multiplier * _SmallStarRadius);
     /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
     positions that don't fall inside the view frustum to a position outside the bounds of the object*/
-    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    ThreadIdentifier data;
-    data.id = id.x;
+    GalaxyStar data;
     data.radius = (id.x % 100) == 0 ? curLargeStarRadius : curSmallStarRadius; //100 : 50;
     data.colour = (id.x % 100) == 0 ? _H2RegionColour : GetColour(id.x);
 

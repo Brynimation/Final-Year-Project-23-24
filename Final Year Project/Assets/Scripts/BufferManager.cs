@@ -219,7 +219,7 @@ public class BufferManager : MonoBehaviour
     ComputeBuffer mainPropertiesCount;
     public Material skyboxMat;
 
-    ThreadIdentifier[] positions;
+    GalaxyStar[] positions;
     int mainKernelIndex;
     int galaxyPositionerIndex;
     int solarSystemCreatorIndex;

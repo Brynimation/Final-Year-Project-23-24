@@ -1,6 +1,8 @@
 #define _G 1.0 //Universal Gravitational Constant - 6.67 * 10 - 11
 #define _sigma 1.0/(4.0 * PI)//Stefan-Boltzmann Constant - 5.67 * 10^-8, calculated when the sun has luminosity, radius and temperature = 1
 #define _k 508.0 //Wien's displacement constant, 5.898 * 10-3, multiplied by 10^9 and divided by the sun's surface temperature * 5 in kelvin
+#define _SPECULAR_COLOR 
+#define _SPECGLOSSMAP
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -77,12 +79,11 @@ struct InstanceData
     uint culled;
 };
 
-struct ThreadIdentifier
+struct GalaxyStar
 {
     float3 position;
     float4 colour;
     float radius;
-    uint id;
 };
 
 struct ChunkIdentifier 
@@ -95,7 +96,7 @@ struct ChunkIdentifier
 
 struct TriggerChunkIdentifier
 {
-    ChunkIdentifier cid;
+    ChunkIdentifier cid; //Holds the properties of the chunk that caused the change in scale
     float3 cameraForward; //The direction of the camera's local z-axis at the instant the player enters the chunk
     uint entered; //1 if the player just entered a lower scale, 0 if they just left it
 };

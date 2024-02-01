@@ -136,7 +136,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.radius = lerp(0.1, 0.4, planetRandom);
             planet.mass = calculateSphereMass(planet.radius, 1.0);
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
-            planet.rotationSpeed = 5.0 * time * timeStep;
+            planet.rotationSpeed = 50.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
             planet.primaryBody = system.star;
             /*struct PlanetTerrainProperties
