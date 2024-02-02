@@ -92,6 +92,10 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     int index = ChunkTypeToIndex(3);
     float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
     //If we just moved down from the galactic cluster scale, then we only spawn points (galaxies) in front of the player
+    
+    float3 triggerPos = _TriggerBuffer[index].cid.pos;
+    if (distance(triggerPos, actualPosition) <= dontSpawnRadius)
+        return; //We don't want the player to spawn inside any bodies when they enter a new level'
 
     if (_TriggerBuffer[index].entered == 1u && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
     {

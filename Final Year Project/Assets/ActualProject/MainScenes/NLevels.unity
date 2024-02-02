@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414727, b: 0.12107857, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -399,6 +399,30 @@ MonoBehaviour:
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}
   planetMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   planetResolution: 8
+  oceanColours:
+  - {r: 0, g: 0.06951809, b: 1, a: 0}
+  - {r: 0.47798735, g: 0.99999976, b: 1, a: 0}
+  - {r: 0.9528302, g: 0.6004295, b: 0.51836354, a: 0}
+  - {r: 0.47843134, g: 1, b: 0.94961756, a: 0}
+  groundColours:
+  - {r: 0, g: 1, b: 0, a: 0}
+  - {r: 0.024175854, g: 0.3584906, b: 0.019164566, a: 0}
+  - {r: 1, g: 0.2618873, b: 0.025157154, a: 0}
+  - {r: 0, g: 0.06425047, b: 1, a: 0}
+  mountainColours:
+  - {r: 0, g: 0.3018868, b: 0.06259242, a: 0}
+  - {r: 0.33962262, g: 0.16707748, b: 0.014951907, a: 0}
+  - {r: 0.7647059, g: 0, b: 0.056421507, a: 0}
+  - {r: 0, g: 0.613097, b: 0.7735849, a: 0}
+  mountainTopColours:
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 0.64779866, g: 0.9690947, b: 1, a: 0}
+  - {r: 1, g: 0.39308167, b: 0.39308167, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  floatOceanColours: []
+  floatGroundColours: []
+  floatMountainColours: []
+  floatMountainTopColours: []
   chunkSize: 180
   renderDistance: 360
   lodSwitchDist: 2

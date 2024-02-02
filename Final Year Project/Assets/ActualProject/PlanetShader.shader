@@ -28,7 +28,6 @@ struct PlanetTerrainProperties
     }
     SubShader
     {
-
         Tags { "RenderType"="Opaque" "RenderPipeline" = "UniversalPipeline"}
         LOD 100
 
@@ -113,6 +112,7 @@ struct PlanetTerrainProperties
                 float3 vertexPosUnitSphere = _VertexBuffer[i.vertexId];
                 float3 normalOS = _NormalBuffer[i.vertexId];
                 float noiseValue = fractalBrownianMotion(vertexPosUnitSphere, planetProperties);
+                float maxHeightValue = fractalBrownianMotion(vertexPosUnitSphere, planetProperties, 1u);
                 vertexPosUnitSphere += normalOS * noiseValue;
 
                 //Transform vertex position in vertex buffer of the unit sphere centred at (0,0,0) to the object space of the planet
@@ -138,7 +138,9 @@ struct PlanetTerrainProperties
                 o.lightRadius = planetData.primaryBody.starRadius;
                 o.normWS = normalData.normalWS;
                 o.positionHCS = positionData.positionCS;
-                o.colour = planetData.colour;
+
+                float interpolator = noiseValue/maxHeightValue;
+                o.colour = InterpolateColours(planetProperties.colours.colours, interpolator);
                 return o;
 
             }

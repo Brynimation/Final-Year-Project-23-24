@@ -32,6 +32,10 @@ struct SolarSystem
     float fade;
 };
 
+struct PlanetTerrainColours
+{
+    float4 colours[4];
+};
 struct PlanetTerrainProperties
 {
     float roughness;
@@ -41,6 +45,7 @@ struct PlanetTerrainProperties
     float noiseStrength;
     float3 noiseCentre;
     int octaves;
+    PlanetTerrainColours colours;
 };
 struct Planet {
     float3 position;
@@ -603,7 +608,9 @@ float fbm (float2 uv) {
     return value;
 }
 
-float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties)
+//https://www.youtube.com/watch?v=uY9PAcNMu8s&list=PLFt_AvWsXl0cONs3T0By4puYy6GM22ko8&index=3
+//https://thebookofshaders.com/13/
+float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties, uint getMaxNoise = 0u)
 {
     float noiseVal = 0.0;
     float amplitude = 1.0;
@@ -615,7 +622,8 @@ float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties)
     int numOctaves = properties.octaves;
     for (int i = 0; i < numOctaves; i++)
     {
-        float v = 0.5 * (pNoise(pos * frequency + centre) + 1.0);
+        float noise = (getMaxNoise == 0u) ? pNoise(pos * frequency + centre) : 1.0;
+        float v = 0.5 * (noise + 1.0);
         noiseVal += v * amplitude;
         frequency *= lacunarity;
         amplitude *= persistence;
@@ -623,7 +631,32 @@ float fractalBrownianMotion(float3 pos, PlanetTerrainProperties properties)
     }
     noiseVal = max(0.0, noiseVal - minVal);
     return noiseVal * properties.noiseStrength;
+}
 
+
+float4 InterpolateColours(float4 colours[4], float t)
+{
+    if (t <= 0)
+        return colours[0];
+    if(t >= 1)
+        return colours[3];
+    float segmentWidth = (float) 1 / (4 - 1);
+    int index = floor(t / segmentWidth);
+    float localT = (t - index * segmentWidth) / segmentWidth;
+    return lerp(colours[index], colours[index + 1], localT);
+    /*
+    if t<= 0:
+        return values[0]
+    if t >= 1:
+        return values[n-1]
+
+    // Determine the segment
+    segmentWidth = 1 / (n - 1)
+    i = floor(t / segmentWidth)
+    localT = (t - i * segmentWidth) / segmentWidth
+
+    // Perform linear interpolation on the segment
+    return (1 - localT) * values[i] + localT * values[i + 1] */
 }
 
 float4 Galaxy(float2 uv, float a1, float a2, float cut) {

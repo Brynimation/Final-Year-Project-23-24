@@ -71,6 +71,11 @@ public struct TriggerChunkIdentifier
         this.entered = 0u;
     }
 }
+
+public struct PlanetTerrainColours 
+{
+    Color[] colours;
+}
 public struct PlanetTerrainProperties 
 {
     float roughness;
@@ -80,6 +85,7 @@ public struct PlanetTerrainProperties
     float noiseStrength;
     Vector3 noiseCentre;
     int octaves;
+    PlanetTerrainColours colours;
 }
 public struct Planet
 {
@@ -182,6 +188,17 @@ public class BufferManager : MonoBehaviour
     private ComputeBuffer planetSphereArgsBuffer;
     private ComputeBuffer planetSphereGeneratorDispatchArgsBuffer;
 
+    //Planet colours
+    public Color[] oceanColours;
+    public Color[] groundColours;
+    public Color[] mountainColours;
+    public Color[] mountainTopColours;
+
+    public float[] floatOceanColours;
+    public float[] floatGroundColours;
+    public float[] floatMountainColours;
+    public float[] floatMountainTopColours;
+
     public int chunkSize;
     public int renderDistance;
     public float lodSwitchDist;
@@ -227,10 +244,21 @@ public class BufferManager : MonoBehaviour
     int planetSphereGeneratorIndex;
 
     Bounds bounds;
-    void Start()
+
+    private float[] ColourToFloatArray(Color[] colours) 
+    {
+        return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
+    }
+        void Start()
     {
         triggerRays = new Ray[2];
-        floatColours =  colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();  //needed to pass to shader
+        floatColours = ColourToFloatArray(colours);  //needed to pass to shader
+
+        floatOceanColours = ColourToFloatArray(oceanColours);
+        floatGroundColours = ColourToFloatArray(groundColours);
+        floatMountainColours = ColourToFloatArray(mountainColours);
+        floatMountainTopColours = ColourToFloatArray(mountainTopColours); 
+
         starSphereGenerator = Instantiate(sphereGeneratorPrefab);
         planetSphereGenerator = Instantiate(sphereGeneratorPrefab);
         //RenderSettings.skybox = skyboxMat;
@@ -412,6 +440,10 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
         solarSystemCreator.SetFloats("colours", floatColours);
+        solarSystemCreator.SetFloats("oceanColours", floatOceanColours);
+        solarSystemCreator.SetFloats("groundColours", floatGroundColours);
+        solarSystemCreator.SetFloats("mountainColours", floatMountainColours);
+        solarSystemCreator.SetFloats("mountainTopColours", floatMountainTopColours);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ChunksBuffer", chunksBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Properties3", positionsBuffer3);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystemCount", solarSystemBufferCount);

@@ -263,27 +263,27 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     
     //Logic for going back up to a higher scale
     if(_ChunksBuffer[0].chunkType is not GALACTIC_CLUSTER_LEVEL):
-        float3 playerToTrigger = _TriggerBuffer[chunkIndex].cid.pos - playerPos
+        float3 playerToTrigger = _TriggerBuffer[chunkIndex].cid.position - playerPos
         if (length(playerToTrigger) > increaseScaleDist):
             float3 dir = -normalize(playerToTrigger)
-             //If the player is behind the trigger point (so do not trigger an lod change if they are simply seeking to explore the level they're currently in)
+             //If the player is behind the trigger point (so do not trigger a scale change if they are simply seeking to explore the scale they're currently in)
             if (dot(_TriggerBuffer[chunkIndex].cameraForward, dir) < 0.0):
                 //Update the type of chunk being viewed
                 currentChunkIdentifier.pos = playerChunkCoord * _ChunksBuffer[0].chunkSize;
                 currentChunkIdentifier.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist/2, MIN_CHUNKS_VISIBLE)
                 currentChunkIdentifier.chunkSize = max(_ChunksBuffer[0].chunkSize * 2, MIN_CHUNK_SIZE)
-                cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, GALACTIC_CLUSTER_LEVEL)
-                _ChunksBuffer[0] = currentChunkIdentifier;
+                currentChunkIdentifier.chunkType = min(_ChunksBuffer[0].chunkType + 1, GALACTIC_CLUSTER_LEVEL)
+                _ChunksBuffer[0] = currentChunkIdentifier
                 
                 //update the trigger buffer
-                _TriggerBuffer[chunkIndex].cid = currentChunkIdentifer;
-                _TriggerBuffer[chunkIndex].cameraForward = cameraForward;
-                _TriggerBuffer[chunkIndex].entered = 0u;
+                _TriggerBuffer[chunkIndex].cid = currentChunkIdentifer
+                _TriggerBuffer[chunkIndex].cameraForward = cameraForward
+                _TriggerBuffer[chunkIndex].entered = 0u
                 
                 //Update the dispatch buffer to reflect that we now require fewer threads (as there are fewer chunks to spawn)
-                _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
-                _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
-                _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);
+                _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1)
+                _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1)
+                _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1)
     
     //logic for going down to a lower scale
     
@@ -293,21 +293,21 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
 
         if (currentChunkIdentifier not equal to _ChunksBuffer[0] and _ChunksBuffer[0].chunkType is not SOLAR_SYSTEM_LEVEL ):
 
-            currentChunkIdentifier.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, MAX_CHUNKS_VISIBLE);
-            currentChunkIdentifier.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, MIN_CHUNK_TYPE);
-            currentChunkIdentifier.chunkType = max(_ChunksBuffer[0].chunkType - 1, SOLAR_SYSTEM_LEVEL);
+            currentChunkIdentifier.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, MAX_CHUNKS_VISIBLE)
+            currentChunkIdentifier.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, MIN_CHUNK_TYPE)
+            currentChunkIdentifier.chunkType = max(_ChunksBuffer[0].chunkType - 1, SOLAR_SYSTEM_LEVEL)
             _ChunksBuffer[0] = currentChunkIdentifier;
     
             //Update the dispatch buffer to reflect that we now require more threads (as there are more chunks to spawn)
-            _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 8);
-            _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 8);
-            _DispatchBuffer[2] = min(2 * _DispatchBuffer[2], 8);
+            _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 8)
+            _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 8)
+            _DispatchBuffer[2] = min(2 * _DispatchBuffer[2], 8)
             
     
             //Update the trigger buffer
-            _TriggerBuffer[chunkIndex + 1].cid = currentChunkIdentifer;
-            _TriggerBuffer[chunkIndex + 1].cameraForward = cameraForward;
-            _TriggerBuffer[chunkIndex + 1].entered = 1u;
+            _TriggerBuffer[chunkIndex + 1].cid = currentChunkIdentifer
+            _TriggerBuffer[chunkIndex + 1].cameraForward = cameraForward
+            _TriggerBuffer[chunkIndex + 1].entered = 1u
      
     //logic for removing a chunk from the chunk buffer if the player moves too far away from it
      else:

@@ -27,6 +27,11 @@ float maxWavelength;
 
 float4 colours[6];
 
+float4 oceanColours[4];
+float4 groundColours[4];
+float4 mountainColours[4];
+float4 mountainTopColours[4];
+
 /*
 https://www.teachastronomy.com/textbook/Properties-of-Stars/Stefan-Boltzmann-Law/
 Stefan-Boltzmann law: Flux energy emitted from a surface (Wm-2) = sigma * T4 
@@ -136,7 +141,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.radius = lerp(0.1, 0.4, planetRandom);
             planet.mass = calculateSphereMass(planet.radius, 1.0);
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
-            planet.rotationSpeed = 50.0 * time * timeStep;
+            planet.rotationSpeed = 10.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
             planet.primaryBody = system.star;
             /*struct PlanetTerrainProperties
@@ -158,6 +163,14 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planetProperties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(32.0, 11.5, 17.2), planetRandom);
             planetProperties.noiseStrength = lerp(0.25, 0.75, planetRandom);
             
+            int randomToIndex = round(Hash1(planetRandom) * 4);
+            PlanetTerrainColours colours = (PlanetTerrainColours) 0;
+            colours.colours[0] = oceanColours[randomToIndex];
+            colours.colours[1] = groundColours[randomToIndex];
+            colours.colours[2] = mountainColours[randomToIndex];
+            colours.colours[3] = mountainTopColours[randomToIndex];
+            
+            planetProperties.colours = colours;
             planet.properties = planetProperties;
 
             _Planets.Append(planet);
