@@ -84,6 +84,11 @@ public class DispatcherProcedural : MonoBehaviour
     private ComputeBuffer viewFrustumPlanesBuffer;
     private ComputeBuffer sphereGeneratorDispatchArgsBuffer;
     private ComputeBuffer positionCalculatorDispatchArgsBuffer;
+
+    [Header("Galaxy Star Distribution")]
+    public float _MaxGalacticHaloRadius;
+    public float _CentralIntensity = 1.0f;
+    public float kappa = 0.02f;
     private void Awake()
     {
         player = FindObjectOfType<PlayerController>();
@@ -157,9 +162,37 @@ public class DispatcherProcedural : MonoBehaviour
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBufferCount", _MainPositionBufferCount);
         buffersSet = true;
     }
+    /*
+     
+float pdf(float radius) {
+    return centralIntensity * exp(-kappa * pow(radius, 0.25));
+}
+
+float trapezoidalRule(float a, float b, int n) {
+    float h = (b - a) / float(n);
+    float sum = 0.5 * (pdf(a) + pdf(b));
+    for (int i = 1; i < n; ++i) {
+        float x = a + float(i) * h;
+        sum += pdf(x);
+    }
+    return sum * h;
+}
+
+
+float getCDF(float radius, int n) {
+    return trapezoidalRule(0.0, radius, n);
+}
+float normalizeCDF(float cdf, float maxRadius, int n) {
+    float maxCdf = getCDF(maxRadius, n); // This could be computed once if Rmax is fixed
+    return cdf / maxCdf;
+}  
+ */
+
+
     void Start()
     {
         numInstances = bufferManager.minMaxNumParticles[1];
+        _MaxGalacticHaloRadius = bufferManager.minMaxHaloRadius.y;
         //Create vertex and index buffers 
         Application.targetFrameRate = 300;
         sphereGenerator = Instantiate(sphereGeneratorPrefab);

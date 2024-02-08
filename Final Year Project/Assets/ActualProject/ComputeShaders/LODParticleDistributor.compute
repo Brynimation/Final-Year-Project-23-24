@@ -1,4 +1,4 @@
-// Each #kernel tells which function to compile; you can have many kernels
+﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -36,9 +36,71 @@ uniform float3 _PlayerPosition;
 uniform float _LODSwitchDist;
 uniform float _TimeStep;
 uniform int _NumParticles;
-uniform float _CentralIntensity;
 uniform float _time;
+
+//Realistic Star Distribution achieved using inverse transform sampling
+uniform float _CentralIntensity = 50.0;
+uniform float kappa = 0.02;
 uniform float _HalfLightRadius;
+
+// Define the PDF function - DE VACOULEURS’S LAW
+float pdf(float radius) {
+    return _CentralIntensity * exp(-kappa * pow(radius, 0.25));
+}
+
+// Trapezoidal rule function - used for numerical integration - required to compute the corresponding cdf of our pdf, as the pdf has 
+// no analytical solutions- https://en.wikipedia.org/wiki/Trapezoidal_rule
+//a - start of interval (minRadius), b - end of interval (maxRadius), n = number of steps (number of particles)
+float trapezoidalRule(float a, float b, int n) {
+    float h = (b - a) / float(n);
+    float sum = 0.5 * (pdf(a) + pdf(b));
+    for (int i = 1; i < n; ++i) {
+        float x = a + float(i) * h;
+        sum += pdf(x);
+    }
+    return sum * h;
+}
+
+// Generate the Cumulative Distribution Function for a given radius
+float getCDF(float radius, int n) {
+    return trapezoidalRule(0.0, radius, n);
+}
+float normalizeCDF(float cdf, float maxRadius, int n) {
+    float maxCdf = getCDF(maxRadius, n); // This could be computed once if Rmax is fixed
+    return cdf / maxCdf;
+}
+
+/*Binary search - used to find the radius such that the cumulative probability of finding a star within this radius is <= 
+prob, under our surface brightness distribution function.
+*/
+float InvertCdf(float prob, float minRadius, float maxRadius, float differenceThreshold)
+{
+    float cdfRadFromProb;
+    float radFromProb;
+    
+    int maxIterations = 2000;
+    int i = 0;
+    while ((maxRadius - minRadius) > differenceThreshold || i < maxIterations) {
+        radFromProb = (minRadius + maxRadius) / 2.0;
+        cdfRadFromProb = getCDF(radFromProb, _NumParticles); // Assume getCDF is a function we've defined to compute the CDF
+        
+        if (abs(cdfRadFromProb - prob) < differenceThreshold) {
+            // We've found a radius that's close enough to the desired CDF value
+            return radFromProb;
+        } else if (cdfRadFromProb > prob) {
+            // The CDF at m is too high, so we look in the lower half
+            maxRadius = radFromProb;
+        } else {
+            // The CDF at m is too low, so we look in the upper half
+            minRadius = radFromProb;
+        }
+        i++;
+    }
+    
+    // After the loop ends, m is an approximation of the inverse CDF value
+    return radFromProb;
+}
+
 
 float GenerateRandom(int x)
 {
@@ -83,6 +145,8 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
 float GetAccurateSemiMajorAxis(uint id)
 {
+    float p = float(id) / float(_NumParticles - 1.0);
+    return InvertCdf(p, 0.0, _GalacticHaloRadius, 0.1);
     float _FalloffCoefficient = 1.0;
     // Calculate the corresponding radius
     /*float radius = _GalacticHaloRadius * (exp(_Bias * (float) id / (float) _NumParticles) - 1.0);
