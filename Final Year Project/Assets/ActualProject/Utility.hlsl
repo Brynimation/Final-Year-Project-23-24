@@ -67,7 +67,7 @@ struct GalaxyProperties
     float galacticDiskRadius;
     float galacticHaloRadius;
     float galacticBulgeRadius;
-    float angularOffsetMultiplier;
+    int angularOffsetMultiplier;
     float maxHaloRadius;
 };
 
@@ -640,7 +640,7 @@ float4 InterpolateColours(float4 colours[4], float t)
 {
     if (t <= 0)
         return colours[0];
-    if(t >= 1)
+    if(t >= 0.99)
         return colours[3];
     float segmentWidth = (float) 1 / (4 - 1);
     int index = floor(t / segmentWidth);

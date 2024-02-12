@@ -36,15 +36,16 @@ public class CDF
 
     float SurfaceBrightnessDistributionPDF(float radius)
     {
-        return (radius > bulgeRadius) ? SurfaceBrightnessDistributionDisk(radius - bulgeRadius) : SurfaceBrightnessDistribtionBulge(radius);
+        return (radius > bulgeRadius) ? SurfaceBrightnessDistributionDisk(radius - bulgeRadius, SurfaceBrightnessDistribtionBulge(bulgeRadius, centralIntensity, kappa), scaleLength) 
+            : SurfaceBrightnessDistribtionBulge(radius, centralIntensity, kappa);
     }
-    float SurfaceBrightnessDistribtionBulge(float radius) 
+    float SurfaceBrightnessDistribtionBulge(float radius, float centralIntensity, float kappa) 
     {
         return centralIntensity * Mathf.Exp(-kappa * Mathf.Pow(radius, 0.25f));
     }
-    float SurfaceBrightnessDistributionDisk(float radius) 
+    float SurfaceBrightnessDistributionDisk(float radius, float centralIntensity, float scaleLength) 
     {
-        return centralIntensity * Mathf.Exp(radius / scaleLength);
+        return centralIntensity * Mathf.Exp(-radius / scaleLength);
     }
 
     // Trapezoidal rule function - used for numerical integration - required to compute the corresponding cdf of our pdf, as the pdf has 
@@ -87,7 +88,7 @@ public class CDF
             if (Mathf.Abs(cdfRadFromProb - prob) < differenceThreshold)
             {
                 // We've found a radius that's close enough to the desired CDF value
-                return radFromProb/maxRadius;
+                return radFromProb;
             }
             else if (cdfRadFromProb > prob)
             {
@@ -104,7 +105,7 @@ public class CDF
         }
 
         // After the loop ends, m is an approximation of the inverse CDF value
-        return radFromProb/maxRadius;
+        return radFromProb;
     }
 
     public float[] GenerateInverseCDFLookUpArray() 

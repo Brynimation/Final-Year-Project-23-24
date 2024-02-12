@@ -32,7 +32,7 @@ public struct GalaxyProperties
     public float galacticDiskRadius;
     public float galacticHaloRadius;
     public float galacticBulgeRadius;
-    public float angularOffsetMultiplier;
+    public int angularOffsetMultiplier;
     public float maxHaloRadius;
 }
 public struct MeshProperties

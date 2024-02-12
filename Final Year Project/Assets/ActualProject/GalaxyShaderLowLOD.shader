@@ -90,7 +90,7 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float maxEccentricity : TEXCOORD3;
                 float diskRadius : TEXCOORD4;
                 float bulgeRadius : TEXCOORD5;
-                float angularOffsetMultiplier : TEXCOORD6;
+                int angularOffsetMultiplier : TEXCOORD6;
                 float3 forward : TEXCOORD7;
                 float3 right : TEXCOORD8;
                 float3 up : TEXCOORD9;
@@ -110,7 +110,7 @@ Shader "Custom/GalaxyShaderLowLOD"
                 float maxEccentricity : TEXCOORD6;
                 float diskRadius : TEXCOORD7;
                 float bulgeRadius : TEXCOORD8;
-                float angularOffsetMultiplier : TEXCOORD9;
+                int angularOffsetMultiplier : TEXCOORD9;
 
             };
 
@@ -339,13 +339,13 @@ Shader "Custom/GalaxyShaderLowLOD"
 
     /*Determines the angle of inclination of the elliptical orbit. Based on this article: https://beltoforion.de/en/spiral_galaxy_renderer/, by
     having the inclination of the orbit increase with the size of the semi-major axis of the orbit, we produce the desired spiral structure of the galaxy*/
-    float GetAngularOffset(uint id, float _AngularOffsetMultiplier, int _NumParticles)
+    float GetAngularOffset(uint id, int _AngularOffsetMultiplier, int _NumParticles)
     {
         int multiplier = id * _AngularOffsetMultiplier;
         int finalParticle = _NumParticles - 1;
         return radians((multiplier / (float) finalParticle) * 360);
     }
-    float2 GetPointOnEllipse(float2 p, float _AngularOffsetMultiplier, float _GalacticBulgeRadius, float _GalacticDiskRadius, float _GalacticHaloRadius, float _MaxEccentricity, float _MinEccentricity)
+    float2 GetPointOnEllipse(float2 p, int _AngularOffsetMultiplier, float _GalacticBulgeRadius, float _GalacticDiskRadius, float _GalacticHaloRadius, float _MaxEccentricity, float _MinEccentricity)
     {
         float semiMajorAxis = length(p);
         float eccentricity = GetEccentricity(semiMajorAxis, _GalacticBulgeRadius, _GalacticDiskRadius, _GalacticHaloRadius, _MaxEccentricity, _MinEccentricity);

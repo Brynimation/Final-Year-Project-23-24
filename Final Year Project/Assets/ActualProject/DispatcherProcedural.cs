@@ -213,10 +213,10 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
          */
         numInstances = bufferManager.minMaxNumParticles[1];
         _MaxGalacticHaloRadius = bufferManager.minMaxHaloRadius.y;
-        _CDFBulgeRadius = bufferManager.minMaxBulgeRadius.y;
-        _ScaleLength = bufferManager.minMaxDiskRadius.y;
+        _CDFBulgeRadius = _MaxGalacticHaloRadius / 4f;
+        _ScaleLength = _MaxGalacticHaloRadius /2f;
         cdf = new CDF(0.0f, _MaxGalacticHaloRadius, _CDFBulgeRadius, 1000, 100, _CentralIntensity, _Kappa, _DifferenceThreshold, _ScaleLength);
-        _RadiusLookupTexture = new Texture2D(100, 1);
+        _RadiusLookupTexture = new Texture2D(100, 1, TextureFormat.RGBAFloat, false); //RGBAFloat accepts HDR values - lets us encode radii > 1 within our texture.
         _RadiusLookupTexture.filterMode = FilterMode.Bilinear;
         _RadiusLookupTexture.wrapMode = TextureWrapMode.Clamp;
         radii = new ComputeBuffer(numInstances, 2 * sizeof(float), ComputeBufferType.Append);

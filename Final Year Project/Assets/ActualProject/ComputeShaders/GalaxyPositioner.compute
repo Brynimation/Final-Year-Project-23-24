@@ -102,7 +102,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float haloRadius = scale;
     float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
     float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
-    float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
+    int angularOffsetMultiplier = round(lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random));
     int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
 
     //We want to check if a given position is behind the trigger position
@@ -119,6 +119,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
     }
 
+    /*
+    Because the radius output from the CDF function is normalized by maxRadius, the only thing currently affecting the outer radius of the galaxies is the central intensity.
+    Not ideal.
+    
+    */
+
 
     GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y);
     
@@ -131,7 +137,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
                 //Start fading the sprites 
         mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
-        haloRadius = mp.scale *  GetFinalRadius();
+        haloRadius = (mp.scale/minMaxHaloRadius.y) *  GetFinalRadius();
         GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y);
         _Properties4.Append(gp);
     }

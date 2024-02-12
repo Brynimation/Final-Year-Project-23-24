@@ -189,7 +189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _Kappa
-      value: 0.02
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: player
@@ -221,7 +221,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _CentralIntensity
-      value: 0.1
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _EmissionColour.b
@@ -375,7 +375,7 @@ MonoBehaviour:
   galaxyFadeDist: 5
   minMaxMinimumEccentricity: {x: 0.4, y: 0.7}
   minMaxMaximumEccentricity: {x: 0.7, y: 1}
-  minMaxAngularOffsetMultiplier: {x: 1, y: 8}
+  minMaxAngularOffsetMultiplier: {x: 0, y: 8}
   minMaxHaloRadius: {x: 1, y: 4}
   minMaxBulgeRadius: {x: 0.02, y: 0.5}
   minMaxDiskRadius: {x: 0.05, y: 1}
