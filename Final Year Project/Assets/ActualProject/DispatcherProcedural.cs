@@ -392,6 +392,7 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
             Vector2 maxRadX = new Vector2(float.MinValue, 1.0f);
             foreach (Vector2 rad in rads) 
             {
+                Debug.Log(rad);
                 minRadX = Mathf.Min(rad.x, minRadX.x) == rad.x ? rad : minRadX;
                 maxRadX = Mathf.Max(rad.x, maxRadX.x) == rad.x ? rad : maxRadX;
                 if (minRad.y > rad.y) 

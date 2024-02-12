@@ -90,8 +90,9 @@ float GetAccurateSemiMajorAxis(uint id)
     _Ids[id] = id;
     float p = float(id) / float(_NumParticles - 1);
     float radius = _RadiusLookupTexture.SampleLevel(sampler_RadiusLookupTexture, float2(p, 0.0), 0).r;
+    radius *= (_GalacticHaloRadius / _MaxGalacticHaloRadius);
     _Radii.Append(float2(radius, p));
-    return radius * (_GalacticHaloRadius / _MaxGalacticHaloRadius);
+    return radius;
     
     /*return InvertCdf(p, 0.0, _GalacticHaloRadius, 0.1);
     float _FalloffCoefficient = 1.0;
