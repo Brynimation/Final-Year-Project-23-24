@@ -188,6 +188,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: _Kappa
+      value: 0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: player
       value: 
       objectReference: {fileID: 1538453084}
@@ -216,6 +220,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: _CentralIntensity
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: _EmissionColour.b
       value: 0
       objectReference: {fileID: 0}
@@ -230,6 +238,10 @@ PrefabInstance:
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: material.Array.size
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+      propertyPath: _DifferenceThreshold
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: sphereGeneratorPrefab
@@ -367,7 +379,7 @@ MonoBehaviour:
   minMaxHaloRadius: {x: 1, y: 4}
   minMaxBulgeRadius: {x: 0.02, y: 0.5}
   minMaxDiskRadius: {x: 0.05, y: 1}
-  minMaxNumParticles: e8030000e8030000
+  minMaxNumParticles: 1027000010270000
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
@@ -405,7 +417,7 @@ MonoBehaviour:
   - {r: 0.9528302, g: 0.6004295, b: 0.51836354, a: 0}
   - {r: 0.47843134, g: 1, b: 0.94961756, a: 0}
   groundColours:
-  - {r: 0, g: 1, b: 0, a: 0}
+  - {r: 0, g: 1, b: 0.016950846, a: 0}
   - {r: 0.024175854, g: 0.3584906, b: 0.019164566, a: 0}
   - {r: 1, g: 0.2618873, b: 0.025157154, a: 0}
   - {r: 0, g: 0.06425047, b: 1, a: 0}

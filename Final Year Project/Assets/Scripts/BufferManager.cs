@@ -33,6 +33,7 @@ public struct GalaxyProperties
     public float galacticHaloRadius;
     public float galacticBulgeRadius;
     public float angularOffsetMultiplier;
+    public float maxHaloRadius;
 }
 public struct MeshProperties
 {
@@ -141,6 +142,8 @@ public class BufferManager : MonoBehaviour
     public Vector2 minMaxDiskRadius;
 
     public int[] minMaxNumParticles;
+
+    ComputeBuffer radii;
 
     //Solar systems
     public ComputeShader sphereGeneratorPrefab;
@@ -280,6 +283,7 @@ public class BufferManager : MonoBehaviour
         int numVertsPerPlanet = planetResolution * planetResolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerPlanet = 6 * 6 * planetResolution * planetResolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
 
+        radii = new ComputeBuffer(1, sizeof(float), ComputeBufferType.Structured);
         positionsBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
         argsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         argsBuffer.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
@@ -403,13 +407,14 @@ public class BufferManager : MonoBehaviour
         positionCalculator.SetVector("minMaxBulgeRadius", minMaxBulgeRadius);
         positionCalculator.SetVector("minMaxDiskRadius", minMaxDiskRadius);
         positionCalculator.SetInts("minMaxNumParticles", minMaxNumParticles);
-
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_TriggerBuffer", triggerBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", mainProperties);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Properties4", positionsBuffer4);
+        galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Radii", radii);
+        galaxyPositioner.SetTexture(galaxyPositionerIndex, "_RadiusLookupTexture", dispatcherProcedural._RadiusLookupTexture);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
         galaxyPositioner.SetFloat("dontSpawnRadius", dontSpawnRadius);
         galaxyPositioner.SetFloat("galaxyFadeDist", galaxyFadeDist);
@@ -477,6 +482,16 @@ public class BufferManager : MonoBehaviour
     {
         //positionsBuffer.SetCounterValue(0);
         //positionsBuffer2.SetCounterValue(0);
+
+        if (Input.GetKeyDown(KeyCode.V)) 
+        {
+            float[] rads = new float[1];
+            radii.GetData(rads);
+            foreach (float rad in rads) 
+            {
+                Debug.Log($"radius: {rad}");
+            }
+        }
         positionsBuffer3.SetCounterValue(0);
         positionsBuffer4.SetCounterValue(0);
         positionsBuffer5.SetCounterValue(0);

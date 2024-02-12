@@ -68,6 +68,7 @@ struct GalaxyProperties
     float galacticHaloRadius;
     float galacticBulgeRadius;
     float angularOffsetMultiplier;
+    float maxHaloRadius;
 };
 
 struct Plane
@@ -423,7 +424,7 @@ MeshProperties GenerateMeshProperties(float3 position, float3 rotation, float sc
     return mp;
 }
 
-GalaxyProperties GenerateGalaxyProperties(MeshProperties mp, float minEccentricity, float maxEccentricity, float haloRadius, float bulgeRadius, float diskRadius, float angularOffsetMultiplier, int numParticles)
+GalaxyProperties GenerateGalaxyProperties(MeshProperties mp, float minEccentricity, float maxEccentricity, float haloRadius, float bulgeRadius, float diskRadius, float angularOffsetMultiplier, int numParticles, float maxHaloRadius)
 {
     GalaxyProperties gp = (GalaxyProperties)0;
     gp.mp = mp;
@@ -434,6 +435,7 @@ GalaxyProperties GenerateGalaxyProperties(MeshProperties mp, float minEccentrici
     gp.galacticDiskRadius = diskRadius;
     gp.angularOffsetMultiplier = angularOffsetMultiplier;
     gp.numParticles = numParticles;
+    gp.maxHaloRadius = maxHaloRadius;
     return gp;
 }
 

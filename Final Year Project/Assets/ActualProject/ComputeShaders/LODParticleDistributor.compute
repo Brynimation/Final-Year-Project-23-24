@@ -12,9 +12,15 @@ RWStructuredBuffer<uint> _MainPositionBufferCount;
 AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend0;
 AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend1;
 AppendStructuredBuffer<GalaxyStar> _PositionsLODAppend2;
+AppendStructuredBuffer<float2> _Radii;
+RWStructuredBuffer<uint> _Ids;
 RWStructuredBuffer<InstanceData> _PositionsLOD0;
 RWStructuredBuffer<InstanceData> _PositionsLOD1;
 StructuredBuffer<Plane> _ViewFrustumPlanes;
+
+uniform Texture2D<float> _RadiusLookupTexture;
+uniform SamplerState sampler_RadiusLookupTexture;
+
 
 uniform float _ThresholdDist;
 uniform float4 _StandardColour;
@@ -28,6 +34,7 @@ uniform float _MaxEccentricity;
 uniform float _GalacticDiskRadius;
 uniform float _GalacticHaloRadius;
 uniform float _GalacticBulgeRadius;
+uniform float _MaxGalacticHaloRadius;
 uniform float _Bias;
 uniform float _ProportionOfStarsInBulge;
 uniform float _ProportionOfStarsInDisk;
@@ -42,71 +49,6 @@ uniform float _time;
 uniform float _CentralIntensity = 50.0;
 uniform float kappa = 0.02;
 uniform float _HalfLightRadius;
-
-// Define the PDF function - DE VACOULEURS’S LAW
-float pdf(float radius) {
-    return _CentralIntensity * exp(-kappa * pow(radius, 0.25));
-}
-
-// Trapezoidal rule function - used for numerical integration - required to compute the corresponding cdf of our pdf, as the pdf has 
-// no analytical solutions- https://en.wikipedia.org/wiki/Trapezoidal_rule
-//a - start of interval (minRadius), b - end of interval (maxRadius), n = number of steps (number of particles)
-float trapezoidalRule(float a, float b, int n) {
-    float h = (b - a) / float(n);
-    float sum = 0.5 * (pdf(a) + pdf(b));
-    for (int i = 1; i < n; ++i) {
-        float x = a + float(i) * h;
-        sum += pdf(x);
-    }
-    return sum * h;
-}
-
-// Generate the Cumulative Distribution Function for a given radius
-float getCDF(float radius, int n) {
-    return trapezoidalRule(0.0, radius, n);
-}
-float normalizeCDF(float cdf, float maxRadius, int n) {
-    float maxCdf = getCDF(maxRadius, n); // This could be computed once if Rmax is fixed
-    return cdf / maxCdf;
-}
-
-/*Binary search - used to find the radius such that the cumulative probability of finding a star within this radius is <= 
-prob, under our surface brightness distribution function.
-*/
-float InvertCdf(float prob, float minRadius, float maxRadius, float differenceThreshold)
-{
-    float cdfRadFromProb;
-    float radFromProb;
-    
-    int maxIterations = 2000;
-    int i = 0;
-    while ((maxRadius - minRadius) > differenceThreshold || i < maxIterations) {
-        radFromProb = (minRadius + maxRadius) / 2.0;
-        cdfRadFromProb = getCDF(radFromProb, _NumParticles); // Assume getCDF is a function we've defined to compute the CDF
-        
-        if (abs(cdfRadFromProb - prob) < differenceThreshold) {
-            // We've found a radius that's close enough to the desired CDF value
-            return radFromProb;
-        } else if (cdfRadFromProb > prob) {
-            // The CDF at m is too high, so we look in the lower half
-            maxRadius = radFromProb;
-        } else {
-            // The CDF at m is too low, so we look in the upper half
-            minRadius = radFromProb;
-        }
-        i++;
-    }
-    
-    // After the loop ends, m is an approximation of the inverse CDF value
-    return radFromProb;
-}
-
-
-float GenerateRandom(int x)
-{
-    float2 p = float2(x, sqrt(x));
-    return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
-}
 
 /*
 This function calculates the current position of a star in its orbit. This requires the star's current position in its orbit (theta),
@@ -145,13 +87,18 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
 float GetAccurateSemiMajorAxis(uint id)
 {
-    float p = float(id) / float(_NumParticles - 1.0);
-    return InvertCdf(p, 0.0, _GalacticHaloRadius, 0.1);
+    _Ids[id] = id;
+    float p = float(id) / float(_NumParticles - 1);
+    float radius = _RadiusLookupTexture.SampleLevel(sampler_RadiusLookupTexture, float2(p, 0.0), 0).r;
+    _Radii.Append(float2(radius, p));
+    return radius * _GalacticHaloRadius;
+    
+    /*return InvertCdf(p, 0.0, _GalacticHaloRadius, 0.1);
     float _FalloffCoefficient = 1.0;
     // Calculate the corresponding radius
-    /*float radius = _GalacticHaloRadius * (exp(_Bias * (float) id / (float) _NumParticles) - 1.0);
-    return radius;*/
-        // Normalized progress variable (from 0 to 1 as id goes from 0 to _NumParticles)
+    float radius = _GalacticHaloRadius * (exp(_Bias * (float) id / (float) _NumParticles) - 1.0);
+    return radius;
+    // Normalized progress variable (from 0 to 1 as id goes from 0 to _NumParticles)
     float t = (float) id / (float) (_NumParticles - 1.0);
 
     // Exponential falloff factor
@@ -161,6 +108,7 @@ float GetAccurateSemiMajorAxis(uint id)
     float radius = _GalacticHaloRadius * (1.0 - falloff);
 
     return lerp(0.0, _GalacticHaloRadius, t);
+    */
 }
 /*float GetAccurateSemiMajorAxis(uint id)
 {
@@ -218,7 +166,7 @@ float GetEccentricity(float r)
 /*Generates a random, initial angle based on the id of the star. This angle is known as the true anomaly, and is a measure of how far through its orbit the orbitting body is*/
 float GetRandomAngle(uint id)
 {
-    return radians((GenerateRandom(id) * 360));
+    return radians((Hash1(id) * 360));
 }
 
 float GetExpectedAngularVelocity(uint i, float r)
@@ -338,6 +286,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     _GalacticHaloRadius = _GalacticProperties.galacticHaloRadius;
     _MinEccentricity = _GalacticProperties.minEccentricity;
     _MaxEccentricity = _GalacticProperties.maxEccentricity;
+    _MaxGalacticHaloRadius = _GalacticProperties.maxHaloRadius;
     _AngularOffsetMultiplier = _GalacticProperties.angularOffsetMultiplier;
 
     float curLargeStarRadius = min(10, multiplier * _LargeStarRadius);
@@ -353,7 +302,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     data.position = posObjectSpace;
 
     //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
-    float semiMajorAxis = GetAccurateSemiMajorAxis(id); //GetSemiMajorAxis(id.x/(float)_NumParticles);
+    float semiMajorAxis = GetAccurateSemiMajorAxis(id.x); //GetSemiMajorAxis(id.x/(float)_NumParticles);
     float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
     uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)

@@ -25,6 +25,14 @@ AppendStructuredBuffer<GalaxyProperties> _Properties4;
 RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
 RWStructuredBuffer<Plane> _ViewFrustumPlanes;
 RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
+RWStructuredBuffer<float> _Radii;
+
+//We need the radius look up texture here, as the radius of the outermost particle in a galaxy may not correspond exactly to the _GalacticHaloRadius
+//(ie, all particles may fall strictly WITHIN the halo.)
+//So we need this texture to find the radius of the outermost particle and use this to determine the size of the billboard.
+uniform Texture2D<float> _RadiusLookupTexture;
+uniform SamplerState sampler_RadiusLookupTexture;
+
 
 uint IntersectSphereAtTrigger(float3 centre, float radius)
 {
@@ -39,6 +47,15 @@ uint IntersectSphereAtTrigger(float3 centre, float radius)
         }
     }
     return 1;
+}
+
+
+float GetFinalRadius()
+{
+    float p = 1.0;
+    float radius = _RadiusLookupTexture.SampleLevel(sampler_RadiusLookupTexture, float2(p, 0.0), 0).r;
+    _Radii[0] = radius;
+    return radius;
 }
 
 
@@ -103,7 +120,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     }
 
 
-    GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
+    GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y);
     
     if (dist < lodDist)
     {
@@ -114,14 +131,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     {
                 //Start fading the sprites 
         mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
-        float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
-        float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
-        float haloRadius = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
-        float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
-        float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
-        float angularOffsetMultiplier = lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random);
-        int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
-        GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles);
+        haloRadius = mp.scale *  GetFinalRadius();
+        GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y);
         _Properties4.Append(gp);
     }
 

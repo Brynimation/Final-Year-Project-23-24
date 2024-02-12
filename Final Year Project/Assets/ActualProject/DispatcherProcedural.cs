@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using System.Linq;
+using UnityEngine.Rendering;
 
 //https://forum.unity.com/threads/how-do-i-add-emission-to-a-custom-fragment-shader.1313034/
 struct GalaxyStar
@@ -86,9 +88,16 @@ public class DispatcherProcedural : MonoBehaviour
     private ComputeBuffer positionCalculatorDispatchArgsBuffer;
 
     [Header("Galaxy Star Distribution")]
+    public CDF cdf;
+    private ComputeBuffer radii;
+    private ComputeBuffer ids;
     public float _MaxGalacticHaloRadius;
+    public float _CDFBulgeRadius;
     public float _CentralIntensity = 1.0f;
-    public float kappa = 0.02f;
+    public float _DifferenceThreshold = 0.1f;
+    public float _Kappa = 0.02f;
+    public float _ScaleLength;
+    public Texture2D _RadiusLookupTexture;
     private void Awake()
     {
         player = FindObjectOfType<PlayerController>();
@@ -191,8 +200,29 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
 
     void Start()
     {
+        /*
+             float maxRadius;
+    float minRadius;
+    int numIntervals;
+    int tableSize;
+    float differenceThreshold;
+    float centralIntensity;
+    float kappa;
+         
+         
+         */
         numInstances = bufferManager.minMaxNumParticles[1];
         _MaxGalacticHaloRadius = bufferManager.minMaxHaloRadius.y;
+        _CDFBulgeRadius = bufferManager.minMaxBulgeRadius.y;
+        _ScaleLength = bufferManager.minMaxDiskRadius.y;
+        cdf = new CDF(0.0f, _MaxGalacticHaloRadius, _CDFBulgeRadius, 1000, 100, _CentralIntensity, _Kappa, _DifferenceThreshold, _ScaleLength);
+        _RadiusLookupTexture = new Texture2D(100, 1);
+        _RadiusLookupTexture.filterMode = FilterMode.Bilinear;
+        _RadiusLookupTexture.wrapMode = TextureWrapMode.Clamp;
+        radii = new ComputeBuffer(numInstances, 2 * sizeof(float), ComputeBufferType.Append);
+        ids = new ComputeBuffer(numInstances, sizeof(uint), ComputeBufferType.Structured);
+        _RadiusLookupTexture.SetPixels(cdf.GenerateInverseCDFLookUpArray().Select(radius => new Color(radius, 0.0f, 0.0f, 0.0f)).ToArray<Color>());
+        _RadiusLookupTexture.Apply();
         //Create vertex and index buffers 
         Application.targetFrameRate = 300;
         sphereGenerator = Instantiate(sphereGeneratorPrefab);
@@ -219,9 +249,12 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
         //bind relevant buffers to positionCalculator computeShader.
         positionCalculator.SetBuffer(positionCalculatorHandle, "_ViewFrustumPlanes", viewFrustumPlanesBuffer);
         StartCoroutine(InitExternalBuffers());
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_Radii", radii);
+        positionCalculator.SetBuffer(positionCalculatorHandle, "_Ids", ids);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend0", _PositionsBufferLODAppend0);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend1", _PositionsBufferLODAppend1);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_PositionsLODAppend2", _PositionsBufferLODAppend2);
+        positionCalculator.SetTexture(positionCalculatorHandle, "_RadiusLookupTexture", _RadiusLookupTexture);
 
         material[1].SetBuffer("_PositionsLOD1", _PositionsBufferLODAppend1);
         material[1].SetColor("_EmissionColour", _EmissionColour);
@@ -347,6 +380,74 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
 
     private void Update()
     {
+
+        if (Input.GetKeyDown(KeyCode.I)) 
+        {
+            Vector2[] rads = new Vector2[numInstances];
+            radii.GetData(rads);
+            Vector2 minRad = new Vector2(float.MaxValue, 1.0f);
+            Vector2 maxRad = new Vector2(float.MinValue, 0.0f);
+
+            Vector2 minRadX = new Vector2(float.MaxValue, 0.0f);
+            Vector2 maxRadX = new Vector2(float.MinValue, 1.0f);
+            foreach (Vector2 rad in rads) 
+            {
+                minRadX = Mathf.Min(rad.x, minRadX.x) == rad.x ? rad : minRadX;
+                maxRadX = Mathf.Max(rad.x, maxRadX.x) == rad.x ? rad : maxRadX;
+                if (minRad.y > rad.y) 
+                {
+                    minRad = rad;
+                }
+                else if (minRad.y == rad.y && minRad.x >= rad.x) 
+                {
+                    minRad = rad;
+                }
+                if (maxRad.y < rad.y)
+                {
+                    maxRad = rad;
+                }
+                else if (maxRad.y == rad.y && maxRad.x <= rad.x)
+                {
+                    maxRad = rad;
+                }
+                if (rad.y == 1.0) Debug.Log(rad);
+            }
+            Debug.Log($"minrad : {minRad}, maxRad: {maxRad}");
+            Debug.Log($"minradX : {minRadX}, maxRadX: {maxRadX}");
+        }
+
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            Color[] colors = _RadiusLookupTexture.GetPixels();
+            int width = _RadiusLookupTexture.width;
+            int height = _RadiusLookupTexture.height;
+
+            Debug.Log($"Texture width is {width}, texture height is {height}");
+            for (int i = 0; i < colors.Length; i++)
+            {
+                // Calculate the UV coordinates
+                float u = (i % width) / (float)width;
+                float v = (i / width) / (float)height;
+
+                Debug.Log($"Value at coordinate ({u}, {v}) is: {colors[i]}");
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.H)) 
+        {
+            int[] idArray = new int[numInstances];
+            int minId = int.MaxValue;
+            int maxId = int.MinValue;
+            ids.GetData(idArray);
+            foreach (int x in idArray) 
+            {
+                Debug.Log($"id: {x}");
+                minId = Mathf.Min(minId, x);
+                maxId = Mathf.Max(maxId, x);
+            }
+            Debug.Log($"minId: {minId}, maxId: {maxId}, numInstances: {numInstances}");
+        }
+        radii.SetCounterValue(0);
         if (numInstances != prevNumInstances) 
         {
             positionGroupSizeX = Mathf.CeilToInt((float)numInstances / (float)threadGroupSizeX);
@@ -422,6 +523,7 @@ float normalizeCDF(float cdf, float maxRadius, int n) {
         prevCameraPos = Camera.main.transform.position;
         prevCameraRot = Camera.main.transform.rotation;
         prevNumInstances = numInstances;
+        positionCalculator.SetFloat("_TimeStep", bufferManager.timeStep);
     }
     private void Update2()
     {
