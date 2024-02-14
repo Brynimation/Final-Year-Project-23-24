@@ -3,7 +3,8 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-#include "Assets/ActualProject/Utility.hlsl"
+
+#include "Assets/ActualProject/Helpers/Utility.hlsl"
 
 RWBuffer<uint> _IndexBuffer;
 RWStructuredBuffer<float3> _VertexBuffer;

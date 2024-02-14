@@ -172,6 +172,11 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &892779418 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8652540221597869344, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
+  m_PrefabInstance: {fileID: 971011121}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &971011121
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -183,78 +188,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Dispatcher
       objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869345, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _AngularOffsetMultiplier
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _Kappa
-      value: 0.01
-      objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: player
       value: 
       objectReference: {fileID: 1538453084}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: numInstances
-      value: 1000
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: LODSwitchDist
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _ThresholdDist
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: largeStarRadius
-      value: 0.0025
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: smallStarRadius
-      value: 0.001
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: sphereGenerator
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _CentralIntensity
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _EmissionColour.b
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _EmissionColour.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _EmissionColour.r
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: material.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _DifferenceThreshold
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: sphereGeneratorPrefab
-      value: 
-      objectReference: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: material.Array.data[2]
-      value: 
-      objectReference: {fileID: 2100000, guid: 48495ce42c89c4f4981a26ace0c25329, type: 2}
-    - target: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-      propertyPath: _AngularOffsetMultiplier
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 8652540221597869350, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
       propertyPath: m_RootOrder
       value: 3
@@ -299,19 +236,39 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
---- !u!114 &971011122 stripped
+--- !u!114 &971011124
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8652540221597869348, guid: 6bdfcf1bf4694ec4caab5e9b2f36af51, type: 3}
-  m_PrefabInstance: {fileID: 971011121}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 892779418}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 960bbdb925d04024d81a6b205b4ef0da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  material:
+  - {fileID: 2100000, guid: b7507d19421b0ef469aa2a0a6bb903c7, type: 2}
+  - {fileID: 2100000, guid: 53c2b83c19f67154085c5dbc6cfc989f, type: 2}
+  - {fileID: 2100000, guid: 48495ce42c89c4f4981a26ace0c25329, type: 2}
+  sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
+  positionCalculator: {fileID: 7200000, guid: 2a67e1ca62a4dc140bda8f4a4f90cb01, type: 3}
+  player: {fileID: 1538453084}
+  bufferManager: {fileID: 1960476556}
+  Resolution: 8
+  smallStarRadius: 0.001
+  largeStarRadius: 0.0025
+  numInstances: 10000
+  _TimeStep: 1
+  LODSwitchDist: 4
+  billboardTexture: {fileID: 2800000, guid: 51deade2e75c5b84888baffd5b3048c3, type: 3}
+  _EmissionColour: {r: 1, g: 1, b: 1, a: 0}
+  _StandardColour: {r: 1, g: 1, b: 1, a: 0}
+  _H2RegionColour: {r: 1, g: 0, b: 0, a: 0}
 --- !u!4 &1538453083 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5487334652439518707, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
@@ -357,19 +314,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4314efa8bc92e64a91764e1e519911f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numPositions: 10000
-  xSize: 1000
-  ySize: 1000
-  zSize: 1000
   _EmissionColour: {r: 1, g: 1, b: 1, a: 0}
   _EmissionColour2: {r: 0.0048109293, g: 1, b: 0, a: 0}
+  chunkManager: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   timeStep: 0.1
-  positionCalculator: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
   lodSwitchBackDist: 20
   dontSpawnRadius: 5
   triggerMaterial: {fileID: 2100000, guid: 2ff037a1ff470d343ab3e829ed51a667, type: 2}
   sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  dispatcherProcedural: {fileID: 971011122}
+  chunkSize: 180
+  renderDistance: 360
+  lodSwitchDist: 2
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 2
   galaxyFadeDist: 5
@@ -379,7 +334,24 @@ MonoBehaviour:
   minMaxHaloRadius: {x: 1, y: 4}
   minMaxBulgeRadius: {x: 0.02, y: 0.5}
   minMaxDiskRadius: {x: 0.05, y: 1}
+  minMaxGalaxyDensity: {x: 0.5, y: 2}
+  galaxyCentreColours:
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 0.3962264, g: 0, b: 0.15112816, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 0.4433962, g: 0, b: 0, a: 0}
+  galaxyOuterColours:
+  - {r: 0, g: 0.19517922, b: 1, a: 0}
+  - {r: 0.7605945, g: 0.495283, b: 1, a: 0}
+  - {r: 1, g: 0.1260585, b: 0, a: 0}
+  - {r: 0, g: 0.14176854, b: 0.5471698, a: 0}
   minMaxNumParticles: 1027000010270000
+  cdfBulgeRadius: 0
+  centralIntensity: 0.4
+  differenceThreshold: 0.01
+  kappa: 0.01
+  cdfScaleLength: 0
+  _RadiusLookupTexture: {fileID: 0}
   sphereGeneratorPrefab: {fileID: 7200000, guid: 15d984163a2cbd64bbfd781deb687daa, type: 3}
   starSphereGenerator: {fileID: 0}
   solarSystemCreator: {fileID: 7200000, guid: 241493af637fe8944926661806482351, type: 3}
@@ -431,20 +403,9 @@ MonoBehaviour:
   - {r: 0.64779866, g: 0.9690947, b: 1, a: 0}
   - {r: 1, g: 0.39308167, b: 0.39308167, a: 0}
   - {r: 1, g: 1, b: 1, a: 0}
-  floatOceanColours: []
-  floatGroundColours: []
-  floatMountainColours: []
-  floatMountainTopColours: []
-  chunkSize: 180
-  renderDistance: 360
-  lodSwitchDist: 2
-  shader: {fileID: 4800000, guid: 835bc27e2d551654bb8316fa6be3115b, type: 3}
-  material: {fileID: 2100000, guid: 0fa427c7bd01dda459ffbc1f45c0f469, type: 2}
-  material2: {fileID: 2100000, guid: 42b2cd426dd15234893f3817a6f26c34, type: 2}
-  material3: {fileID: 2100000, guid: af0cd03d29b5fda4186a027bdfee5b0e, type: 2}
-  material4: {fileID: 2100000, guid: c75b576fde5e93f4484e5db17901b84c, type: 2}
-  material5: {fileID: 2100000, guid: 4f18f82579858574f933651c432df049, type: 2}
-  skyboxMat: {fileID: 2100000, guid: 638719ebb7e98a244a99f3b562a58a38, type: 2}
+  lowLODSolarSystemMaterial: {fileID: 2100000, guid: af0cd03d29b5fda4186a027bdfee5b0e, type: 2}
+  lowLODGalaxyMaterial: {fileID: 2100000, guid: c75b576fde5e93f4484e5db17901b84c, type: 2}
+  galacticClusterMaterial: {fileID: 2100000, guid: 4f18f82579858574f933651c432df049, type: 2}
 --- !u!4 &1960476557
 Transform:
   m_ObjectHideFlags: 0
@@ -458,7 +419,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1964290581
 PrefabInstance:
@@ -469,7 +430,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5487334652439518707, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_RootOrder
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5487334652439518707, guid: 8bfe8be6aee894645bdc90fde025192b, type: 3}
       propertyPath: m_LocalPosition.x
