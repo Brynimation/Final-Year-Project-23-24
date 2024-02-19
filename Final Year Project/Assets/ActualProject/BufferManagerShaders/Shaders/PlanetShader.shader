@@ -251,11 +251,11 @@ struct PlanetTerrainProperties
                 //Basic Blinn-Phong lighting, where the star the planet is orbitting is treated as a uniformly coloured point light
                 float3 hitToLight = i.lightPosWS - i.positionWS;
                 float3 lightDir = normalize(hitToLight);
-                float3 viewDirection = normalize(i.lightPosWS - GetCameraPositionWS());
+                float3 viewDirection = normalize(i.positionWS - GetCameraPositionWS());
                 float diffuseTerm = max(0.0, dot(lightDir, i.normWS));
                 float3 reflectedDir = reflect(viewDirection, i.normWS);
-                float specularTerm = pow(max(0.0, dot(lightDir, reflectedDir)), 0.5);
-                float4 light = i.colour * _AmbientLight + 0.25 * i.lightColour * diffuseTerm * i.colour;
+                float specularTerm = pow(max(0.0, dot(lightDir, reflectedDir)), 2.0);
+                float4 light = i.colour * _AmbientLight + 0.25 * i.lightColour * (diffuseTerm * i.colour + specularTerm * float4(0.25, 0.25, 0.25, 1.0));
                 float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 return light;
                 //return light * baseTex;

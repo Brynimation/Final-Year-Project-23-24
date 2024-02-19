@@ -66,6 +66,9 @@ Shader "Custom/UniverseShaderStarField"
                     float2 uv : TEXCOORD0;
                     float radius : TEXCOORD2;
                     uint id : TEXCOORD3;
+                    float3 forward: TEXCOORD4;
+                    float3 right : TEXCOORD5;
+                    float3 up : TEXCOORD6;
                 };
 
                  struct Interpolators
@@ -141,8 +144,10 @@ Shader "Custom/UniverseShaderStarField"
                     int seed = GenerateRandom(o.positionWS.xy);
                     o.colour = mp.colour;
                     o.radius = mp.scale;
-                    //o.colour += _EmissionColour;
-                    //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
+                    o.forward = normalize(GetCameraPositionWS() - o.positionWS);
+                    float3 worldUp = float3(0.0f, 1.0f, 0.0f);
+                    o.right = normalize(cross(o.forward, worldUp));
+                    o.up = normalize(cross(o.forward, o.right));
                     return o;
                 }
 
@@ -152,13 +157,9 @@ Shader "Custom/UniverseShaderStarField"
 
                     GeomData centre = inputs[0];
                     //if(_PositionsLOD1[centre.id].culled == 0) return;
-                    float3 forward = centre.positionWS - GetCameraPositionWS();
-                    //forward.y ;
-                    forward = normalize(forward);
-
-                    float3 worldUp = float3(0.0f, 1.0f, 0.0f);
-                    float3 right = normalize(cross(forward, worldUp));
-                    float3 up = normalize(cross(forward, right));
+                    float3 forward = centre.forward;
+                    float3 right = centre.right;
+                    float3 up = centre.up;
 
                     float3 WSPositions[4];
                     float2 uvs[4];
