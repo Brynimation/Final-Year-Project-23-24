@@ -84,10 +84,17 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
 
-    int chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType);
-    float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
-    if(distance(triggerPos, actualPosition) <= dontSpawnRadius) return; //We don't want the player to spawn inside any bodies when they enter a new level'
-    
+    int chunkIndex = ChunkTypeToIndex(3);
+    TriggerChunkIdentifier tid = _TriggerBuffer[chunkIndex];
+    float3 triggerPos = tid.cid.pos;
+    float3 dir = normalize(triggerPos - actualPosition);
+    if (distance(triggerPos, actualPosition) <= dontSpawnRadius && tid.entered == 1u)return; //We don't want the player to spawn inside any bodies when they enter a new level'
+
+    //don't spawn galaxies behind the player if we just entered the intergalactic player from the galactic cluster scale'
+    if (tid.entered == 1u && dot(tid.cameraForward, dir) > 0.0)
+    {
+        return;
+    }
         
     
     float dist = length(actualPosition - playerPosition);
@@ -115,24 +122,10 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float4 centreColour = centreColours[randomToIndex1];
     float4 outerColour = outerColours[randomToIndex2];
     //We want to check if a given position is behind the trigger position
-    int index = ChunkTypeToIndex(3);
-    float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
+
     //If we just moved down from the galactic cluster scale, then we only spawn points (galaxies) in front of the player
     
-    float3 triggerPos = _TriggerBuffer[index].cid.pos;
-   /* if (distance(triggerPos, actualPosition) <= dontSpawnRadius)
-        return; //We don't want the player to spawn inside any bodies when they enter a new level'
-        */
-    if (_TriggerBuffer[index].entered == 1u && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
-    {
-        return;
-    }
 
-    /*
-    Because the radius output from the CDF function is normalized by maxRadius, the only thing currently affecting the outer radius of the galaxies is the central intensity.
-    Not ideal.
-    
-    */
 
 
     GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y, galaxyDensity, centreColour, outerColour);

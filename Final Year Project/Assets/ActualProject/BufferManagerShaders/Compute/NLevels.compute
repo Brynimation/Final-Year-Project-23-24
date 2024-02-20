@@ -359,8 +359,9 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     that chunk is the one currently in the trigger buffer*/
     
     float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
+    bool chunkIsTrigger = (cid.pos.x == triggerPos.x && cid.pos.y == triggerPos.y && cid.pos.z == triggerPos.z);
 
-    if (dist < lodSwitchDist && !(triggerPos.x == cid.pos.x && triggerPos.y == cid.pos.y && triggerPos.z == cid.pos.z))
+    if (dist < lodSwitchDist && !chunkIsTrigger)
     {
         
         //If the chunk currently in the buffer equals the currently viewed chunk, do nothing
