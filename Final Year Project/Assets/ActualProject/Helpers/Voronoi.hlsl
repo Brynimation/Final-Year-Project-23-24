@@ -4,7 +4,7 @@ https://www.ronja-tutorials.com/post/024-white-noise/
 https://www.ronja-tutorials.com/post/028-voronoi-noise/
 Voronoi noise is a method of partitioning space into a number of distinct regions. A voronoi noise diagram is constructed by starting from a set of points over some 
 surface, known as seeds. For each point in space (or every pixel on our suface), the voronoi diagram identifies which seed it is closest to.
-This process divides the surface into voronoi cells, where every location/pixel within a cell is closest to the seed that "owns" that cell than any other.
+This process divides the surface into voronoi cells, where every location/pixel within a cell is closer to the seed that "owns" that cell than any other.
 The borders of cells are equidistant between the two nearest seeds. The width of these borders can be controlled.
 Voronoi noise is often used to create organic and natural textures, and I felt it could be leveraged to generate the patterns viewed across the surface of a star.
 */

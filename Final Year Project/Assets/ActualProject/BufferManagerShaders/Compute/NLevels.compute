@@ -285,7 +285,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
                 _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1)
                 _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1)
     
-    //logic for going down to a lower scale
+
     
      float dist = length(currentChunkPosition - playerPosition)
      if (dist < decreaseScaleDist):
@@ -319,6 +319,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
         
     
     */
+   //Logic for going back up to a higher scale
    if(_ChunksBuffer[0].chunkType < 4)
    {
      float3 playerToTrigger = (chunkIndex == -1) ? playerPosition : _TriggerBuffer[chunkIndex].cid.pos - playerPosition;
@@ -352,17 +353,22 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
      }
    }
 
-   //4 = 1.5, 3 = 1.2, 2 = 0.5
+    //logic for going down to a lower scale
+    
+    /*Idea: We don't want to a spawn any bodies on the trigger position, so we don't want the player to be able to drop down a level if they get close enough to a chunk IF
+    that chunk is the one currently in the trigger buffer*/
+    
+    float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
 
-    if (dist < lodSwitchDist)
+    if (dist < lodSwitchDist && !(triggerPos.x == cid.pos.x && triggerPos.y == cid.pos.y && triggerPos.z == cid.pos.z))
     {
-
+        
         //If the chunk currently in the buffer equals the currently viewed chunk, do nothing
         if (prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z)
         {
             //_Properties.Append(GenerateMeshProperties(actualPosition, 1, 0));
         }
-        else if (_ChunksBuffer[0].chunkType > 2)
+        else if (_ChunksBuffer[0].chunkType)
         {
             //Otherwise, we have moved close enough to a new chunk to trigger a level of detail change, so increase the number of threads spawned to accommodate 
             //for the reduced chunk size and increased number of chunks in view.
