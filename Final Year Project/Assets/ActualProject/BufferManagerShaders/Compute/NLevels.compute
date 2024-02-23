@@ -19,6 +19,7 @@ RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
 RWStructuredBuffer<float3> _ChunkOffset;
+RWStructuredBuffer<float3> _ActualPosition;
 float renderDistance;
 float lodSwitchDist;
 float galaxyFadeDist;
@@ -357,8 +358,13 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
     /*Idea: We don't want to a spawn any bodies on the trigger position, so we don't want the player to be able to drop down a level if they get close enough to a chunk IF
     that chunk is the one currently in the trigger buffer*/
     
-    float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
-    bool chunkIsTrigger = (cid.pos.x == triggerPos.x && cid.pos.y == triggerPos.y && cid.pos.z == triggerPos.z);
+    bool chunkIsTrigger = false;
+     if (chunkIndex != -1)
+    {
+        float3 triggerPos = _TriggerBuffer[chunkIndex].cid.pos;
+        chunkIsTrigger = (cid.pos.x == triggerPos.x && cid.pos.y == triggerPos.y && cid.pos.z == triggerPos.z);
+    }
+
 
     if (dist < lodSwitchDist && !chunkIsTrigger)
     {

@@ -250,12 +250,16 @@ public class BufferManager : MonoBehaviour
 
     Bounds bounds;
 
+    ComputeBuffer debugBuffer;
+
     private float[] ColourToFloatArray(Color[] colours) 
     {
         return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
     }
         void Start()
     {
+        debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
+        debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
         triggerRays = new Ray[2];
         floatColours = ColourToFloatArray(colours);  //needed to pass to shader
 
@@ -271,7 +275,7 @@ public class BufferManager : MonoBehaviour
         planetSphereGenerator = Instantiate(sphereGeneratorPrefab);
 
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
-        chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -1) };
+        chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -0.1f) };
         mainKernelIndex = chunkManager.FindKernel("CSMainNew");
         galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
         solarSystemCreatorIndex = solarSystemCreator.FindKernel("CSMain");
@@ -392,6 +396,8 @@ public class BufferManager : MonoBehaviour
         chunkManager.SetBuffer(mainKernelIndex, "_ViewFrustumPlanesAtTrigger", viewFrustumPlanesBufferAtTrigger);
         chunkManager.SetBuffer(mainKernelIndex, "_DispatchBuffer", dispatchBuffer);
 
+        chunkManager.SetBuffer(mainKernelIndex, "_ActualPosition", debugBuffer);
+
         chunkManager.SetInt("chunkSize", chunkSize);
         chunkManager.SetFloat("dontSpawnRadius", dontSpawnRadius);
         chunkManager.SetInt("renderDistance", renderDistance);
@@ -420,6 +426,7 @@ public class BufferManager : MonoBehaviour
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_MainProperties", bigGalaxyProperties);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Properties4", lowLODGalaxyPositions);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_Radii", radii);
+
         galaxyPositioner.SetTexture(galaxyPositionerIndex, "_RadiusLookupTexture", _RadiusLookupTexture);
         galaxyPositioner.SetFloat("lodSwitchDist", galaxyLodSwitchDist);
         galaxyPositioner.SetFloat("dontSpawnRadius", dontSpawnRadius);
@@ -577,10 +584,11 @@ public class BufferManager : MonoBehaviour
         int[] lowGalaxyArgs = new int[4];
         int[] lowSolarArgs = new int[4];
         int[] bigGalaxyArgs = new int[1];
-
+        Vector3[] actualPositions = new Vector3[1];
         //verify that gpu view frustum culling works
         if (Input.GetKeyDown(KeyCode.K)) 
         {
+            debugBuffer.GetData(actualPositions);
             planetsArgsBuffer.GetData(planetArgs);
             solarSystemArgsBuffer.GetData(solarSystemArgs);
             galacticClusterArgsBuffer.GetData(clusterArgs);
@@ -588,6 +596,7 @@ public class BufferManager : MonoBehaviour
             lowLODSolarSystemArgsBuffer.GetData(lowSolarArgs);
             bigGalaxyPropertiesCount.GetData(bigGalaxyArgs);
 
+            Debug.Log($"Actual position: {actualPositions[0]}");
             Debug.Log($"planets: {planetArgs[1]}, low lod solars {lowSolarArgs[1]}, high lod solars {solarSystemArgs[1]}, low lod galaxies {lowGalaxyArgs[1]}, high lod galaxies {bigGalaxyArgs[0]}, clusters {clusterArgs[1]}");
         }
 

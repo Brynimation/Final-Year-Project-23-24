@@ -1,0 +1,20 @@
+
+Run 0: Average fps: 65.28361, minFps : 3, maxFps : 379.9537
+Run 1: Average fps: 64.63641, minFps : 3, maxFps : 301.459
+Run 2: Average fps: 64.8965, minFps : 3, maxFps : 220.4148
+Run 3: Average fps: 68.28978, minFps : 3, maxFps : 353.4568
+Run 4: Average fps: 80.62192, minFps : 3, maxFps : 412.5753
+Run 5: Average fps: 83.11883, minFps : 3, maxFps : 487.3057
+Run 6: Average fps: 83.00872, minFps : 3, maxFps : 494.0468
+Run 7: Average fps: 81.1019, minFps : 3, maxFps : 430.5149
+Run 8: Average fps: 82.75334, minFps : 3, maxFps : 446.8076
+Run 9: Average fps: 67.76917, minFps : 3, maxFps : 286.8535
+Run 10: Average fps: 62.67821, minFps : 3, maxFps : 295.5694
+Run 11: Average fps: 61.15722, minFps : 3, maxFps : 280.5443
+Run 12: Average fps: 62.4666, minFps : 3, maxFps : 340.6807
+Run 13: Average fps: 64.93226, minFps : 3, maxFps : 351.4074
+Run 14: Average fps: 63.58995, minFps : 3, maxFps : 470.2342
+Run 15: Average fps: 67.27225, minFps : 3, maxFps : 388.0481
+Run 16: Average fps: 63.40826, minFps : 3, maxFps : 336.9726
+Run 17: Average fps: 62.74748, minFps : 3, maxFps : 387.9127
+Run 18: Average fps: 65.6338, minFps : 3, maxFps : 414.0615
