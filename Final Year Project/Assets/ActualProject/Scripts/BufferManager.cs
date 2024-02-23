@@ -571,6 +571,26 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
+        int[] planetArgs = new int[5];
+        int[] solarSystemArgs = new int[5];
+        int[] clusterArgs = new int[4];
+        int[] lowGalaxyArgs = new int[4];
+        int[] lowSolarArgs = new int[4];
+        int[] bigGalaxyArgs = new int[1];
+
+        //verify that gpu view frustum culling works
+        if (Input.GetKeyDown(KeyCode.K)) 
+        {
+            planetsArgsBuffer.GetData(planetArgs);
+            solarSystemArgsBuffer.GetData(solarSystemArgs);
+            galacticClusterArgsBuffer.GetData(clusterArgs);
+            lowLODGalaxyArgsBuffer.GetData(lowGalaxyArgs);
+            lowLODSolarSystemArgsBuffer.GetData(lowSolarArgs);
+            bigGalaxyPropertiesCount.GetData(bigGalaxyArgs);
+
+            Debug.Log($"planets: {planetArgs[1]}, low lod solars {lowSolarArgs[1]}, high lod solars {solarSystemArgs[1]}, low lod galaxies {lowGalaxyArgs[1]}, high lod galaxies {bigGalaxyArgs[0]}, clusters {clusterArgs[1]}");
+        }
+
         Vector3[] offset = new Vector3[1];
         if (Input.GetKeyDown(KeyCode.C)) 
         {

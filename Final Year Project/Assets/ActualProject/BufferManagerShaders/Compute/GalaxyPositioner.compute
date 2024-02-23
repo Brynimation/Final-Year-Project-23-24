@@ -37,6 +37,21 @@ RWStructuredBuffer<float> _Radii;
 uniform Texture2D<float> _RadiusLookupTexture;
 uniform SamplerState sampler_RadiusLookupTexture;
 
+uint ShouldCullSphere(float3 centre, float radius)
+{
+
+    for (uint i = 0; i < 6; i++)
+    {
+        Plane plane = _ViewFrustumPlanes[i];
+        float normalDotCentre = dot(plane.normal, centre);
+        float cullDist = plane.distance;
+        if (normalDotCentre + cullDist + radius <= 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 uint IntersectSphereAtTrigger(float3 centre, float radius)
 {
@@ -88,6 +103,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     TriggerChunkIdentifier tid = _TriggerBuffer[chunkIndex];
     float3 triggerPos = tid.cid.pos;
     float3 dir = normalize(triggerPos - actualPosition);
+
     if (distance(triggerPos, actualPosition) <= dontSpawnRadius && tid.entered == 1u)return; //We don't want the player to spawn inside any bodies when they enter a new level'
 
     //don't spawn galaxies behind the player if we just entered the intergalactic player from the galactic cluster scale'
@@ -102,6 +118,10 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     float random = Hash31(actualPosition);
     float scale = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
+    
+    if (ShouldCullSphere(actualPosition, scale) == 0u)
+        return; // view frustum culling
+    
     float lodDist = lodSwitchDist * max(1.0, scale) + galaxyFadeDist;
     float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, galaxyFadeDist);
     float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);

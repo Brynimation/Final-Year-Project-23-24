@@ -62,10 +62,9 @@ RWStructuredBuffer<Plane> _ViewFrustumPlanes;
 RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
 bool switched;
 
-uint IntersectSphere(float3 centre, float radius)
+uint ShouldCullSphere(float3 centre, float radius)
 {
-    if (!switched)
-        return 1;
+
     for (uint i = 0; i < 6; i++)
     {
         Plane plane = _ViewFrustumPlanes[i];
@@ -410,6 +409,8 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
         }
         float random = Hash31(actualPosition);
         float scale = lerp(4.0, 20.0, random);
+        if (ShouldCullSphere(actualPosition, scale) == 0u)
+            return; // view frustum culling
         float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
         float3 rotation = Hash33(actualPosition) * 2.0 * PI;
         AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0, random);

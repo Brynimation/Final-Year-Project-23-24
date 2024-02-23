@@ -52,6 +52,22 @@ here: https://github.com/beltoforion/Galaxy-Renderer/blob/master/GalaxyWnd.cpp
         GLfloat fy = (GLfloat)(y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta));
 */
 
+uint ShouldCullSphere(float3 centre, float radius)
+{
+
+    for (uint i = 0; i < 6; i++)
+    {
+        Plane plane = _ViewFrustumPlanes[i];
+        float normalDotCentre = dot(plane.normal, centre);
+        float cullDist = plane.distance;
+        if (normalDotCentre + cullDist + radius <= 0)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
 {
     float cosTheta = cos(theta);
@@ -211,53 +227,6 @@ float3 GetPointOnEllipse(uint id)
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
 
-uint IntersectSphere(float3 centre, float radius)
-{
-
-    for (uint i = 0; i < 6; i++)
-    {
-        Plane plane = _ViewFrustumPlanes[i];
-        float normalDotCentre = dot(plane.normal, centre);
-        float cullDist = plane.distance;
-        if (normalDotCentre + cullDist + radius <= 0)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-/*[numthreads(256,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
-    if(id.x >= _NumParticles) return;
-    /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
-    positions that don't fall inside the view frustum to a position outside the bounds of the object'
-    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    InstanceData data;
-    data.id = id.x;
-    data.radius = GenerateRandom(id.x);
-    data.colour = (id.x % 100) == 0 ? float4(1,0,0,1) : float4(0,1,0,1);
-    data.position = float3(0, 0, - _GalacticHaloRadius * 2);
-
-    //_PositionsLOD0[id.x] = data;
-    //_PositionsLOD1[id.x] = data;
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-
-    float dist = length(posObjectSpace - _PlayerPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return;
-    if(dist < _LODSwitchDist)
-    {
-         data.position = posObjectSpace;
-         InterlockedAdd(_PositionsLOD0, data);
-    }else{
-         data.position = posObjectSpace;
-         InterlockedAdd(_PositionsLOD1, data);
-    }
-}
-*/
-
 float4 GetColour(uint id)
 {
     float random = Hash21(float2(id, id * 123.42));
@@ -265,13 +234,6 @@ float4 GetColour(uint id)
     return colour;
 }
 
-/*
-_MainPropertiesBuffer - stores properties of the galaxies
-_PositionsLODAppend0 - star spheres
-_PositionsLODAppend1 - star billboards
-_PositionsLODAppend2 - dust clouds 
-
-*/
 [numthreads(1024, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
@@ -284,8 +246,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
     }
 
-    //Grab all galaxy properties from the buffer - assign to uniform variables so they can be used anywhere
-    float multiplier = _GalacticProperties.mp.scale;//_ThresholdDist < curDist ? 0.35 : exp((float) _ThresholdDist / curDist) - 1.0;
+    //Grab all galaxy properties from the buffer - assign to uniform variables so they can be used globally
+    float multiplier = _GalacticProperties.mp.scale;
     _GalacticBulgeRadius = _GalacticProperties.galacticBulgeRadius;
     _GalacticDiskRadius = _GalacticProperties.galacticDiskRadius;
     _GalacticHaloRadius = _GalacticProperties.galacticHaloRadius;
@@ -310,105 +272,23 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     //View frustum culling
     float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
-    uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
+    uint inViewFrustum = ShouldCullSphere(posObjectSpace, data.radius);
     if (inViewFrustum == 0)
         return;
+    //high lod
     if (dist < _LODSwitchDist)
     {
         _PositionsLODAppend0.Append(data);
     }
+    //low lod
     else
     {
         _PositionsLODAppend1.Append(data);
     }
-    //dust 
+    //dust clouds
     if (id.x % 100 != 0)
     {
         _PositionsLODAppend2.Append(data);
     }
 
-}
-
-[numthreads(256, 1, 1)]
-void NOTCSMain(uint3 id : SV_DispatchThreadID)
-{
-    if (id.x >= _NumParticles)
-        return;
-    /*Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
-    positions that don't fall inside the view frustum to a position outside the bounds of the object*/
-    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    InstanceData data;
-    data.radius = (id.x % 100) == 0 ? 100 : 50;
-    data.colour = (id.x % 100) == 0 ? _H2RegionColour : _StandardColour;
-    data.position = float3(0, 0, -_GalacticHaloRadius * 2);
-
-
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-
-    //In our world, the sun would be roughly 26080 unity units from the galactic centre. We're highlighting sun like stars'
-    float semiMajorAxis = GetSemiMajorAxis(id.x);
-    if (abs(semiMajorAxis - 26080) < 10)
-    {
-        data.radius = 1000;
-        data.colour = float4(1.0, 0.0, 1.0, 1.0);
-    }
-    float dist = length(posObjectSpace - _PlayerPosition) - data.radius;
-    uint inViewFrustum = IntersectSphere(posObjectSpace, data.radius);
-    data.culled = inViewFrustum;
-    _PositionsLOD0[id.x] = data;
-    _PositionsLOD1[id.x] = data;
-    if (inViewFrustum == 0)
-        return;
-    if (dist < _LODSwitchDist)
-    {
-        _PositionsLOD0[id.x].position = posObjectSpace;
-    }
-    else
-    {
-        _PositionsLOD1[id.x].position = posObjectSpace;
-    }
-}
-/*
-[numthreads(256,1,1)]
-void CSMain3 (uint3 id : SV_DispatchThreadID)
-{
-    if(id.x >= _NumParticles) return;
-    Unity cameras perform frustum culling automatically when objects are not within the bounds of the instances we want to render. So, to perform frustum culling, we just move any
-    positions that don't fall inside the view frustum to a position outside the bounds of the object'
-    //_PositionsLOD0[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    //_PositionsLOD1[id.x] = float3(0, 0, -_GalacticHaloRadius * 2);
-    _PositionsLOD0[id.x] = float3(0, 0, -15000);
-    _PositionsLOD1[id.x] = float3(0, 0, -15000);
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-    float dist = length(posObjectSpace - _PlayerPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if(inViewFrustum == 0) return;
-    if(dist < _LODSwitchDist)
-    {
-        _PositionsLOD0[id.x] = posObjectSpace;
-    }else{
-        _PositionsLOD1[id.x] = posObjectSpace;
-    }
-}*/
-[numthreads(256, 1, 1)]
-void CSMain2(uint3 id : SV_DispatchThreadID)
-{
-    if (id.x >= _NumParticles)
-        return;
-    //_PositionsLOD0[id.x] = float3(0, 0, -10000);
-    //_PositionsLOD1[id.x] = float3(0, 0, -10000);
-    float3 posObjectSpace = GetPointOnEllipse(id.x);
-    float dist = length(posObjectSpace - _PlayerPosition);
-    uint inViewFrustum = IntersectSphere(posObjectSpace, 10);
-    if (inViewFrustum == 0)
-        return;
-    if (dist < _LODSwitchDist)
-    {
-        //_PositionsLODAppend0.Append(posObjectSpace);
-    }
-    else
-    {
-        //_PositionsLODAppend1.Append(posObjectSpace);
-    }
 }
