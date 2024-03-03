@@ -111,6 +111,7 @@ public class SpiralGalaxyGenerator : MonoBehaviour
     void Start()
     {
         numInstances = bufferManager.minMaxNumParticles[1];
+        Debug.Log($"Num instances from spiral galaxy: {numInstances}");
         //---Debugging---
         radii = new ComputeBuffer(numInstances, 2 * sizeof(float), ComputeBufferType.Append);
         ids = new ComputeBuffer(numInstances, sizeof(uint), ComputeBufferType.Structured);

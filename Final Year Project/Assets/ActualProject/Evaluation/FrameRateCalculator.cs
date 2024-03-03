@@ -1,11 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class FrameRateCalculator : MonoBehaviour
 {
-    float prevTime;
+    BufferManager bufferManager;
+    List<float> fpsValues;
+
+    int currentChunkDistance;
+    int currentRenderDistance;
+    int currentMaxNoStars;
+    int currentPlanetResolution;
+    int currentStarResolution;
+
+    bool isOdd;
+    float fps1Low;
+    float fps01Low;
+    bool calculated = true;
     float maxFrameRate;
     float minFrameRate;
     float currentAverageFrameRate;
@@ -14,22 +28,34 @@ public class FrameRateCalculator : MonoBehaviour
     int framesElapsed;
     int runCounter = 0;
 
+    private void GetCurrentParams() 
+    {
+        if (bufferManager == null) return;
+        currentChunkDistance = bufferManager.chunkSize;
+        currentRenderDistance = bufferManager.renderDistance;
+        currentMaxNoStars = bufferManager.minMaxNumParticles[1];
+        currentPlanetResolution = bufferManager.planetResolution;
+        currentStarResolution = bufferManager.starResolution;
+    }
     private void ReadDataFromFile()
     {
+
         // Check if the file exists
         if (File.Exists(pathDir))
         {
             // Read data from file
+            isOdd = true; //only incnrease run counter for odd lines.
             using (StreamReader reader = new StreamReader(pathDir))
             {
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
                     // Check if the line is not null, empty, or consists only of white-space characters
-                    if (!string.IsNullOrWhiteSpace(line))
+                    if (!string.IsNullOrWhiteSpace(line) && isOdd)
                     {
                         runCounter++;
                     }
+                    isOdd = !isOdd;
                 }
             }
         }
@@ -54,11 +80,12 @@ public class FrameRateCalculator : MonoBehaviour
     private void Awake()
     {
         pathDir = Path.Join(Application.dataPath, fileName);
+        bufferManager = FindObjectOfType<BufferManager>();
+        fpsValues = new List<float>();
         ReadDataFromFile();
     }
     void Start()
     {
-        prevTime = Time.realtimeSinceStartup;
 
     }
 
@@ -66,17 +93,29 @@ public class FrameRateCalculator : MonoBehaviour
     void Update()
     {
         framesElapsed++;
-        float timeNow = Time.realtimeSinceStartup;
-        float timeSinceLastUpdate = timeNow - prevTime;
         float curFps = 1.0f / Time.deltaTime;
+        fpsValues.Add(curFps);
+
+        //Debug.Log($"current fps {curFps}, average fps {currentAverageFrameRate}");
         currentAverageFrameRate += (curFps - currentAverageFrameRate) / framesElapsed;
         maxFrameRate = Mathf.Max(maxFrameRate, curFps);
-        minFrameRate = (minFrameRate == 0.0) ? curFps :  Mathf.Min(minFrameRate, curFps);
-        prevTime = timeNow;
-    }
+        minFrameRate = (minFrameRate == 0.0) ? curFps : Mathf.Min(minFrameRate, curFps);
 
-    private void OnDestroy()
+        fpsValues.Add(1.0f / Time.deltaTime);
+
+    }
+    
+
+    void OnDestroy()
     {
-        WriteDataToFile($"Run {runCounter}: Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}");
+        GetCurrentParams();
+        //calculate 1% low fps and 0.1% low fps
+        int low1Count = Mathf.CeilToInt(fpsValues.Count * (0.01f));
+        int low01Count = Mathf.CeilToInt(fpsValues.Count * (0.001f));
+        List<float> sortedFPS = fpsValues.OrderBy(fps => fps).ToList();
+        fps1Low = sortedFPS.Take(low1Count).Average();
+        fps01Low = sortedFPS.Take(low01Count).Average();
+        WriteDataToFile($"Run {runCounter}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}"); 
+        WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
     }
 }

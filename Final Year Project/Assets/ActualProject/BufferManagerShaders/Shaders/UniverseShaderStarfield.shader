@@ -39,12 +39,6 @@ Shader "Custom/UniverseShaderStarField"
                     UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
                 UNITY_INSTANCING_BUFFER_END(MyProps)
 
-                //https://forum.unity.com/threads/generate-random-float-between-0-and-1-in-shader.610810/
-                float GenerateRandom(float2 xy)
-                {
-                    return round(frac(sin(dot(xy, float2(12.9898, 78.233))) * 43758.5453) * 1000) ;
-                }
-
                 TEXTURE2D(_MainTex);
                 SAMPLER(sampler_MainTex);
                 TEXTURE2D(_EmissionMap);
@@ -60,7 +54,6 @@ Shader "Custom/UniverseShaderStarField"
 
                 struct GeomData
                 {
-                    //float size : PSIZE;
                     float4 positionWS : POSITION;
                     float4 colour : COLOR;
                     float2 uv : TEXCOORD0;
@@ -81,67 +74,15 @@ Shader "Custom/UniverseShaderStarField"
                     float4 centreHCS : TEXCOORD2;
                 };
 
-                float4 colourFromLodLevel(int lodLevel)
-                {
-                    switch(lodLevel)
-                    {
-                        case 0:
-                            return float4(1,1,1,1);
-                            break;
-                        case 1:
-                            return float4(1,1,0,1);
-                            break;
-                        case 2:
-                            return float4(0,1,0,1);
-                            break;
-                        case 3:
-                            return float4(1,0,1,1);
-                            break;
-                        case 4:
-                            return float4(1,0,0,1);
-                            break;
-                        default:
-                            return float4(0.5,0.5,1,1);
-                        
-                    }
-                }
-                float radiusFromLodLevel(int lodLevel)
-                {
-                    switch(lodLevel)
-                    {
-                        case 0:
-                            return 0.05;
-                            break;
-                        case 1:
-                            return 0.1;
-                            break;
-                        case 2:
-                            return 0.2;
-                            break;
-                        case 3:
-                            return 0.35;
-                            break;
-                        case 4:
-                            return 0.5;
-                            break;
-                        default:
-                            return 0.75;
-                            break;
-                        
-                    }
-                }
                 
                 GeomData vert(uint id : SV_INSTANCEID)
                 {
                     GeomData o;
                     o.id = id;
-                    //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
-                    //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
                     MeshProperties mp = _Properties[id];
                     float4 posOS = mul(mp.mat, float4(0.0, 0.0, 0.0, 1.0));
                     //can't use id to determine properties - let's use position
                     o.positionWS = mul(unity_ObjectToWorld, posOS);
-                    int seed = GenerateRandom(o.positionWS.xy);
                     o.colour = mp.colour;
                     o.radius = mp.scale;
                     o.forward = normalize(GetCameraPositionWS() - o.positionWS);
@@ -193,6 +134,8 @@ Shader "Custom/UniverseShaderStarField"
                         outputStream.Append(o);
                     }
                 }
+
+                //Fragment shader and associated functions based off of this tutorial: https://www.youtube.com/watch?v=rvDo9LvfoVE
                  float2x2 Rotate(float angle)
                 {
                     float s = sin(angle);

@@ -1,20 +1,36 @@
-
-Run 0: Average fps: 65.28361, minFps : 3, maxFps : 379.9537
-Run 1: Average fps: 64.63641, minFps : 3, maxFps : 301.459
-Run 2: Average fps: 64.8965, minFps : 3, maxFps : 220.4148
-Run 3: Average fps: 68.28978, minFps : 3, maxFps : 353.4568
-Run 4: Average fps: 80.62192, minFps : 3, maxFps : 412.5753
-Run 5: Average fps: 83.11883, minFps : 3, maxFps : 487.3057
-Run 6: Average fps: 83.00872, minFps : 3, maxFps : 494.0468
-Run 7: Average fps: 81.1019, minFps : 3, maxFps : 430.5149
-Run 8: Average fps: 82.75334, minFps : 3, maxFps : 446.8076
-Run 9: Average fps: 67.76917, minFps : 3, maxFps : 286.8535
-Run 10: Average fps: 62.67821, minFps : 3, maxFps : 295.5694
-Run 11: Average fps: 61.15722, minFps : 3, maxFps : 280.5443
-Run 12: Average fps: 62.4666, minFps : 3, maxFps : 340.6807
-Run 13: Average fps: 64.93226, minFps : 3, maxFps : 351.4074
-Run 14: Average fps: 63.58995, minFps : 3, maxFps : 470.2342
-Run 15: Average fps: 67.27225, minFps : 3, maxFps : 388.0481
-Run 16: Average fps: 63.40826, minFps : 3, maxFps : 336.9726
-Run 17: Average fps: 62.74748, minFps : 3, maxFps : 387.9127
-Run 18: Average fps: 65.6338, minFps : 3, maxFps : 414.0615
+Run 0. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Average fps: 70.31321, minFps : 3, maxFps : 268.7883, 1% low: 20.47473, 0.1% low: 23.25219
+Run 1. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Average fps: 72.35585, minFps : 3, maxFps : 249.9938, 1% low: 0.001306909, 0.1% low: 9.295272E-05
+Run 2. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Average fps: 73.14199, minFps : 3, maxFps : 268.1324, 1% low: 7.187582, 0.1% low: 26.58904
+Run 3. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Average fps: 64.02385, minFps : 3, maxFps : 253.1453, 1% low: 24.82077, 0.1% low: 4.104118
+Run 4. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Average fps: 63.79023, minFps : 3, maxFps : 246.5179, 1% low: 27.10093, 0.1% low: 10.18338
+Run 5. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 9441, Average fps: 60.21297, minFps : 3, maxFps : 206.8723, 1% low: 46.15822, 0.1% low: 20.06319
+Run 6. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 462, Average fps: 62.30732, minFps : 3, maxFps : 230.7337, 1% low: 16.89409, 0.1% low: 3
+Run 7. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 146, Average fps: 65.59097, minFps : 3, maxFps : 255.3561, 1% low: 12.28956, 0.1% low: 3
+Run 8. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 2626, Average fps: 64.81418, minFps : 3, maxFps : 242.2129, 1% low: 25.5403, 0.1% low: 5.197099
+Run 9. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 128, Average fps: 61.26261, minFps : 3, maxFps : 185.8563, 1% low: 3, 0.1% low: 3
+Run 10. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 124, Average fps: 40.01515, minFps : 3, maxFps : 115.9501, 1% low: 3, 0.1% low: 3
+Run 11. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 13693, Average fps: 60.8283, minFps : 3, maxFps : 249.4574, 1% low: 37.21588, 0.1% low: 20.94054
+Run 12. chunk size: 180, rendDist : 180, maxStars : 20700, starRes : 8, planetRes: 8
+Frames Recorded: 1419, Average fps: 64.38395, minFps : 9.836836, maxFps : 249.8813, 1% low: 27.85228, 0.1% low: 11.46283
+Run 13. chunk size: 180, rendDist : 360, maxStars : 21400, starRes : 24, planetRes: 24
+Frames Recorded: 1289, Average fps: 61.20862, minFps : 3, maxFps : 224.5526, 1% low: 19.29263, 0.1% low: 3
+Run 14. chunk size: 180, rendDist : 360, maxStars : 100000, starRes : 24, planetRes: 24
+Frames Recorded: 1121, Average fps: 63.0219, minFps : 3, maxFps : 247.5493, 1% low: 13.74707, 0.1% low: 3
+Run 15. chunk size: 0, rendDist : 0, maxStars : 0, starRes : 0, planetRes: 0
+Frames Recorded: 1320, Average fps: 61.69639, minFps : 3, maxFps : 242.3009, 1% low: 17.651, 0.1% low: 3
+Run 16. chunk size: 180, rendDist : 360, maxStars : 100000, starRes : 24, planetRes: 24
+Frames Recorded: 864, Average fps: 61.67498, minFps : 3, maxFps : 239.12, 1% low: 13.13471, 0.1% low: 3
+Run 17. chunk size: 180, rendDist : 360, maxStars : 26100, starRes : 8, planetRes: 8
+Frames Recorded: 3950, Average fps: 63.64158, minFps : 3.503314, maxFps : 274.5744, 1% low: 23.9495, 0.1% low: 5.134948

@@ -45,7 +45,7 @@ uniform float _time;
 
 
 /*
-This function calculates the current position of a star in its orbit. This requires the star's current position in its orbit (theta),
+This function calculates the current position of a star in its orbit. This requires the star's current angle in its orbit (theta),
 the angle of inclination of its orbit (angleOffset), the semi-major (a) and semi-minor (b) axes of the ellipse. Obtained from line 425 from
 here: https://github.com/beltoforion/Galaxy-Renderer/blob/master/GalaxyWnd.cpp
         GLfloat fx = (GLfloat)(x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta));
@@ -77,6 +77,9 @@ float3 calculatePosition(float theta, float angleOffset, float a, float b, int i
 
     float xPos = a * cosTheta * cosOffset - b * sinTheta * sinOffset;
     float yPos = a * cosTheta * sinOffset + b * sinTheta * cosOffset;
+    //offset = 0: sinoffset = 0, cosoffset = 1 
+    // xPos = aCosTheta - bSintheta
+    // yPos = 
     float zPos = 0.0;
     float3 scale = _MainPropertiesBuffer[0].mp.scale;
     float4x4 matNoScale = _MainPropertiesBuffer[0].mp.mat;

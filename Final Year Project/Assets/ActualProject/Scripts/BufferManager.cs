@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Linq;
 using System.Linq.Expressions;
-
+using UnityEngine.SceneManagement;
 
 public struct Star 
 {
@@ -256,8 +256,14 @@ public class BufferManager : MonoBehaviour
     {
         return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
     }
+
+    void Awake() 
+    {
+        ApplyUserSettings();
+    }
         void Start()
     {
+        ApplyUserSettings();
         debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
         triggerRays = new Ray[2];
@@ -349,7 +355,8 @@ public class BufferManager : MonoBehaviour
         chunksBufferPrevFrame.SetData(chunksVisible);
         debugPosBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3Int)), ComputeBufferType.Append);
         dispatchBuffer = new ComputeBuffer(3, sizeof(uint), ComputeBufferType.IndirectArguments);
-        dispatchBuffer.SetData(new uint[3] { 1u, 1u, 1u });
+
+        dispatchBuffer.SetData(new uint[3] { (uint) chunksVisibleInViewDist, (uint)chunksVisibleInViewDist, (uint)chunksVisibleInViewDist });
 
         //Setting up the inverse cdf lookup table
         float maxHaloRadius = minMaxHaloRadius.y;
@@ -476,8 +483,18 @@ public class BufferManager : MonoBehaviour
         triggerMaterial.SetBuffer("_ChunksBuffer", chunksBuffer);
         triggerMaterial.SetBuffer("_TriggerBuffer", triggerBuffer);
 
+        Debug.Log($"chunkSize: {chunkSize}, max stars: {minMaxNumParticles[1]}, planet res: {planetResolution}, star Res: {starResolution}");
 
-
+    }
+    void ApplyUserSettings() 
+    {
+        if (UIMenu.useChosenSettings) 
+        {
+            renderDistance = UIMenu.renderDistance;
+            minMaxNumParticles[1] = UIMenu.starCount;
+            planetResolution = UIMenu.planetRes;
+            starResolution = UIMenu.starRes;
+        }
     }
 
     // Update is called once per frame
@@ -486,6 +503,10 @@ public class BufferManager : MonoBehaviour
         //positionsBuffer.SetCounterValue(0);
         //positionsBuffer2.SetCounterValue(0);
 
+        if (Input.GetKeyDown(KeyCode.F1)) 
+        {
+            SceneManager.LoadScene(0);
+        }
         if (Input.GetKeyDown(KeyCode.V)) 
         {
             float[] rads = new float[1];

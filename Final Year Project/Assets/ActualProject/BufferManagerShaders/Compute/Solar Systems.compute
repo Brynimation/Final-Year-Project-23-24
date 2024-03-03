@@ -157,31 +157,30 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             float planetRandom = Hash1(float(i)/float(system.planetCount) * length(actualPosition));
             
             Planet planet = (Planet)0;
-            float distFromStar = system.star.starRadius + planetMaxDist * planetRandom;
-            float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
-            float angle = initialAngle + CalculatePlanetAngularVelocity(distFromStar, system.star.starMass, 1.0) * time * timeStep;
-            float x = distFromStar * cos(angle);
-            float z = distFromStar * sin(angle);
-            planet.position = actualPosition + float3(x, 0, z);
-            planet.radius = lerp(0.1, 0.4, planetRandom);
+
+            //Give the planet an elliptical orbit
+            float semiMajorAxis = system.star.starRadius + planetMaxDist * planetRandom;
+            float eccentricity = Hash1(planetRandom); //in range (0, 1)
+            float semiMinorAxis = semiMajorAxis * sqrt(1 - pow(eccentricity, 2.0));
             
-            uint renderPlanet = ShouldCullSphere(planet.position, planet.radius);
+            //calculate angular velocity and current position
+            float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
+            float angle = initialAngle + CalculatePlanetAngularVelocity(semiMajorAxis, system.star.starMass, 1.0) * time * timeStep;
+            float x = semiMajorAxis * cos(angle);
+            float z = semiMinorAxis * sin(angle);
+            planet.position = actualPosition + float3(x, 0, z);
+
+            // view frustum culling
+            planet.radius = lerp(0.1, 0.4, planetRandom);
+            uint renderPlanet = ShouldCullSphere(planet.position, planet.radius); 
             if (renderPlanet == 0u) continue;
+
+            //assign properties
             planet.mass = calculateSphereMass(planet.radius, 1.0);
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
             planet.rotationSpeed = 10.0 * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
             planet.primaryBody = system.star;
-            /*struct PlanetTerrainProperties
-            {
-                float roughness;
-                float baseRoughness;
-                float persistence;
-                float minVal;
-                float noiseStrength;
-                float3 noiseCentre;
-                int octaves;
-            };*/
             PlanetTerrainProperties planetProperties = (PlanetTerrainProperties) 0;
             planetProperties.baseRoughness = lerp(2.0, 6.0, planetRandom);
             planetProperties.roughness = lerp(1.0, 3.0, planetRandom);
