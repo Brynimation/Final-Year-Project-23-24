@@ -257,13 +257,13 @@ public class BufferManager : MonoBehaviour
         return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
     }
 
-    void Awake() 
+    private void Awake()
     {
         ApplyUserSettings();
     }
-        void Start()
+    void Start()
     {
-        ApplyUserSettings();
+        Debug.Log("start!");
         debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
         triggerRays = new Ray[2];
@@ -281,6 +281,7 @@ public class BufferManager : MonoBehaviour
         planetSphereGenerator = Instantiate(sphereGeneratorPrefab);
 
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
+        Debug.Log(chunksVisibleInViewDist);
         chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -0.1f) };
         mainKernelIndex = chunkManager.FindKernel("CSMainNew");
         galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
@@ -288,7 +289,7 @@ public class BufferManager : MonoBehaviour
         starSphereGeneratorIndex = starSphereGenerator.FindKernel("CSMain");
         planetSphereGeneratorIndex = planetSphereGenerator.FindKernel("CSMain");
 
-        int maxInstanceCount = (int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3);
+        int maxInstanceCount = (int)Mathf.Pow(2 * chunksVisibleInViewDist  + 1, 3);
 
         int numVertsPerStar = starResolution * starResolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerStar = 6 * 6 * starResolution * starResolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
@@ -491,9 +492,11 @@ public class BufferManager : MonoBehaviour
         if (UIMenu.useChosenSettings) 
         {
             renderDistance = UIMenu.renderDistance;
+            minMaxNumParticles[0] = UIMenu.starCount/2;
             minMaxNumParticles[1] = UIMenu.starCount;
             planetResolution = UIMenu.planetRes;
             starResolution = UIMenu.starRes;
+            Debug.Log($"Render distance WITHIN: {renderDistance}");
         }
     }
 

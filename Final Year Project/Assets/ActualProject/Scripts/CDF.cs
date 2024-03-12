@@ -164,7 +164,6 @@ public class CDF
         float[] probabilities = Enumerable.Range(0, tableSize).Select(i => 0.0f + i * (1.0f - 0.0f) / (tableSize - 1)).ToArray();
         float[] lookupTable = probabilities.Select(p => InvertCdf(p, 0.0f, 40f, 0.01f, 1000, 1.0f, kappa, 0.002f, 0.5f)).ToArray();
         lookupTable = probabilities.Select(p => InvertCdf(p, minRadius, maxRadius, differenceThreshold, numIntervals)).ToArray();
-        Debug.Log($"Testy thing: {InvertCdf(0.99f, 0.0f, 40f, 0.01f, 1000, 1.0f, kappa, 0.002f, 0.5f)}");
         //Debug.Log($"Final prob: {probabilities[probabilities.Length - 1]}");
         foreach (var rad in lookupTable) Debug.Log(rad);
         return lookupTable;

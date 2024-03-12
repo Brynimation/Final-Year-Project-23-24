@@ -27,12 +27,12 @@ public class FrameRateCalculator : MonoBehaviour
     string pathDir;
     int framesElapsed;
     int runCounter = 0;
-
-    private void GetCurrentParams() 
+    private void GetCurrentParams()
     {
         if (bufferManager == null) return;
         currentChunkDistance = bufferManager.chunkSize;
         currentRenderDistance = bufferManager.renderDistance;
+        Debug.Log($"current render distance: {currentRenderDistance}");
         currentMaxNoStars = bufferManager.minMaxNumParticles[1];
         currentPlanetResolution = bufferManager.planetResolution;
         currentStarResolution = bufferManager.starResolution;
@@ -77,6 +77,16 @@ public class FrameRateCalculator : MonoBehaviour
 
     }
 
+    private void TakeScreenCapture() 
+    {
+        string directory = Path.GetDirectoryName(pathDir);
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        string screenshotName = System.DateTime.Now.ToString("dd-MM-yyyy-HH-mm-ss") + currentPlanetResolution+ ".png";
+        ScreenCapture.CaptureScreenshot(Path.Combine(directory, screenshotName), 2);
+    }
     private void Awake()
     {
         pathDir = Path.Join(Application.dataPath, fileName);
@@ -86,7 +96,7 @@ public class FrameRateCalculator : MonoBehaviour
     }
     void Start()
     {
-
+        GetCurrentParams();
     }
 
     // Update is called once per frame
@@ -102,20 +112,23 @@ public class FrameRateCalculator : MonoBehaviour
         minFrameRate = (minFrameRate == 0.0) ? curFps : Mathf.Min(minFrameRate, curFps);
 
         fpsValues.Add(1.0f / Time.deltaTime);
+        if (Input.GetKeyDown(KeyCode.F2)) 
+        {
+            TakeScreenCapture();
+        }
 
     }
     
 
     void OnDestroy()
     {
-        GetCurrentParams();
         //calculate 1% low fps and 0.1% low fps
         int low1Count = Mathf.CeilToInt(fpsValues.Count * (0.01f));
         int low01Count = Mathf.CeilToInt(fpsValues.Count * (0.001f));
         List<float> sortedFPS = fpsValues.OrderBy(fps => fps).ToList();
         fps1Low = sortedFPS.Take(low1Count).Average();
         fps01Low = sortedFPS.Take(low01Count).Average();
-        WriteDataToFile($"Run {runCounter}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}"); 
+        WriteDataToFile($"Run {runCounter}, Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}"); 
         WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
     }
 }

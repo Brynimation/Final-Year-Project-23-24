@@ -20,7 +20,7 @@ public class UIMenu : MonoBehaviour
     public static int starCount;
     public static int planetRes;
     public static int starRes;
-    public static bool useChosenSettings = false;
+    public static bool useChosenSettings = true;
 
     [SerializeField] Button ExploreButton;
     void SetVariableAndText(ref int variable, ref TMP_Text text, int value) 
@@ -33,12 +33,13 @@ public class UIMenu : MonoBehaviour
         useChosenSettings = true;
         renderDistanceSlider.wholeNumbers = true;
         renderDistanceSlider.minValue = 1;
-        renderDistanceSlider.maxValue = 4;
+        renderDistanceSlider.maxValue = 7;
         renderDistanceSlider.value = 2;
         SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(renderDistanceSlider.value * 180));
         renderDistanceSlider.onValueChanged.AddListener((value) =>
         {
             SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(value * 180));
+            Debug.Log(renderDistance);
         });
         starCountSlider.wholeNumbers = true;
         starCountSlider.minValue = 10;

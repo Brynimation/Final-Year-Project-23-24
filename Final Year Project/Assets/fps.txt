@@ -1,36 +1,58 @@
 Run 0. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Average fps: 70.31321, minFps : 3, maxFps : 268.7883, 1% low: 20.47473, 0.1% low: 23.25219
+Frames Recorded: 423, Average fps: 62.26316, minFps : 5.849873, maxFps : 224.5072, 1% low: 13.87751, 0.1% low: 5.849873
 Run 1. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Average fps: 72.35585, minFps : 3, maxFps : 249.9938, 1% low: 0.001306909, 0.1% low: 9.295272E-05
+Frames Recorded: 2929, Average fps: 63.27248, minFps : 9.427345, maxFps : 259.1076, 1% low: 29.88513, 0.1% low: 16.65838
 Run 2. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Average fps: 73.14199, minFps : 3, maxFps : 268.1324, 1% low: 7.187582, 0.1% low: 26.58904
+Frames Recorded: 7995, Average fps: 64.03736, minFps : 9.481738, maxFps : 232.3204, 1% low: 17.1534, 0.1% low: 11.79904
 Run 3. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Average fps: 64.02385, minFps : 3, maxFps : 253.1453, 1% low: 24.82077, 0.1% low: 4.104118
+Frames Recorded: 3515, Average fps: 62.23599, minFps : 9.598743, maxFps : 238.5041, 1% low: 30.93926, 0.1% low: 20.02998
 Run 4. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Average fps: 63.79023, minFps : 3, maxFps : 246.5179, 1% low: 27.10093, 0.1% low: 10.18338
+Frames Recorded: 2570, Average fps: 64.89181, minFps : 3, maxFps : 224.165, 1% low: 16.7443, 0.1% low: 10.56534
 Run 5. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 9441, Average fps: 60.21297, minFps : 3, maxFps : 206.8723, 1% low: 46.15822, 0.1% low: 20.06319
+Frames Recorded: 487, Average fps: 62.87605, minFps : 6.905457, maxFps : 213.6113, 1% low: 24.39583, 0.1% low: 6.905457
 Run 6. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 462, Average fps: 62.30732, minFps : 3, maxFps : 230.7337, 1% low: 16.89409, 0.1% low: 3
+Frames Recorded: 708, Average fps: 62.95611, minFps : 3, maxFps : 220.3323, 1% low: 14.53486, 0.1% low: 3
 Run 7. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 146, Average fps: 65.59097, minFps : 3, maxFps : 255.3561, 1% low: 12.28956, 0.1% low: 3
+Frames Recorded: 2793, Average fps: 63.85514, minFps : 3, maxFps : 241.7386, 1% low: 13.39297, 0.1% low: 3
 Run 8. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 2626, Average fps: 64.81418, minFps : 3, maxFps : 242.2129, 1% low: 25.5403, 0.1% low: 5.197099
+Frames Recorded: 345, Average fps: 57.45288, minFps : 8.461124, maxFps : 233.1383, 1% low: 15.41315, 0.1% low: 8.461124
 Run 9. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 128, Average fps: 61.26261, minFps : 3, maxFps : 185.8563, 1% low: 3, 0.1% low: 3
-Run 10. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 124, Average fps: 40.01515, minFps : 3, maxFps : 115.9501, 1% low: 3, 0.1% low: 3
-Run 11. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
-Frames Recorded: 13693, Average fps: 60.8283, minFps : 3, maxFps : 249.4574, 1% low: 37.21588, 0.1% low: 20.94054
-Run 12. chunk size: 180, rendDist : 180, maxStars : 20700, starRes : 8, planetRes: 8
-Frames Recorded: 1419, Average fps: 64.38395, minFps : 9.836836, maxFps : 249.8813, 1% low: 27.85228, 0.1% low: 11.46283
-Run 13. chunk size: 180, rendDist : 360, maxStars : 21400, starRes : 24, planetRes: 24
-Frames Recorded: 1289, Average fps: 61.20862, minFps : 3, maxFps : 224.5526, 1% low: 19.29263, 0.1% low: 3
-Run 14. chunk size: 180, rendDist : 360, maxStars : 100000, starRes : 24, planetRes: 24
-Frames Recorded: 1121, Average fps: 63.0219, minFps : 3, maxFps : 247.5493, 1% low: 13.74707, 0.1% low: 3
-Run 15. chunk size: 0, rendDist : 0, maxStars : 0, starRes : 0, planetRes: 0
-Frames Recorded: 1320, Average fps: 61.69639, minFps : 3, maxFps : 242.3009, 1% low: 17.651, 0.1% low: 3
-Run 16. chunk size: 180, rendDist : 360, maxStars : 100000, starRes : 24, planetRes: 24
-Frames Recorded: 864, Average fps: 61.67498, minFps : 3, maxFps : 239.12, 1% low: 13.13471, 0.1% low: 3
-Run 17. chunk size: 180, rendDist : 360, maxStars : 26100, starRes : 8, planetRes: 8
-Frames Recorded: 3950, Average fps: 63.64158, minFps : 3.503314, maxFps : 274.5744, 1% low: 23.9495, 0.1% low: 5.134948
+Frames Recorded: 1393, Average fps: 60.72274, minFps : 8.061025, maxFps : 252.1941, 1% low: 23.754, 0.1% low: 10.98835
+Run 10. chunk size: 180, rendDist : 360, maxStars : 10000, starRes : 24, planetRes: 24
+Frames Recorded: 486, Average fps: 62.66053, minFps : 3, maxFps : 257.8051, 1% low: 12.77141, 0.1% low: 3
+Run 11, Time: 12/03/2024 18:39:07. chunk size: 180, rendDist : 360, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 254, Average fps: 63.90325, minFps : 3.159935, maxFps : 201.191, 1% low: 15.47864, 0.1% low: 3.159935
+Run 12, Time: 12/03/2024 18:57:45. chunk size: 180, rendDist : 180, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 3701, Average fps: 61.73176, minFps : 3, maxFps : 256.8647, 1% low: 29.30972, 0.1% low: 11.2938
+Run 13, Time: 12/03/2024 19:14:35. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1977, Average fps: 74.82581, minFps : 3, maxFps : 181.0676, 1% low: 3.845345, 0.1% low: 3
+Run 14, Time: 12/03/2024 19:31:09. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1992, Average fps: 73.37262, minFps : 3, maxFps : 181.9936, 1% low: 3.955567, 0.1% low: 3.33001
+Run 15, Time: 12/03/2024 19:33:58. chunk size: 180, rendDist : 360, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 2083, Average fps: 63.1949, minFps : 7.99521, maxFps : 227.0096, 1% low: 28.66777, 0.1% low: 10.41401
+Run 16, Time: 12/03/2024 19:34:31. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 24, planetRes: 24
+Frames Recorded: 124, Average fps: 40.63257, minFps : 3, maxFps : 106.913, 1% low: 3, 0.1% low: 3
+Run 17, Time: 12/03/2024 19:35:44. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 2591, Average fps: 71.88162, minFps : 3.468892, maxFps : 175.5495, 1% low: 3.96873, 0.1% low: 3.671539
+Run 18, Time: 12/03/2024 19:43:43. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 2163, Average fps: 72.63769, minFps : 3, maxFps : 184.2639, 1% low: 4.098081, 0.1% low: 3.395994
+Run 19, Time: 12/03/2024 19:45:17. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1223, Average fps: 71.43076, minFps : 3.591001, maxFps : 177.0037, 1% low: 4.400446, 0.1% low: 3.645825
+Run 20, Time: 12/03/2024 19:46:57. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 2168, Average fps: 72.63741, minFps : 3, maxFps : 182.4218, 1% low: 4.099627, 0.1% low: 3.275186
+Run 21, Time: 12/03/2024 19:48:50. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1633, Average fps: 73.56288, minFps : 3.630358, maxFps : 180.8645, 1% low: 3.978128, 0.1% low: 3.676193
+Run 22, Time: 12/03/2024 19:50:33. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1448, Average fps: 73.10963, minFps : 3.596603, maxFps : 183.3181, 1% low: 4.036291, 0.1% low: 3.599359
+Run 23, Time: 12/03/2024 19:54:32. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 24, planetRes: 24
+Frames Recorded: 170, Average fps: 48.53655, minFps : 3, maxFps : 155.3253, 1% low: 3, 0.1% low: 3
+Run 24, Time: 12/03/2024 19:55:28. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1493, Average fps: 69.30355, minFps : 3.630377, maxFps : 173.9221, 1% low: 3.808872, 0.1% low: 3.650939
+Run 25, Time: 12/03/2024 19:57:17. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 1931, Average fps: 74.31969, minFps : 3.344406, maxFps : 180.7077, 1% low: 4.146374, 0.1% low: 3.523115
+Run 26, Time: 12/03/2024 20:00:19. chunk size: 180, rendDist : 1260, maxStars : 10000, starRes : 8, planetRes: 8
+Frames Recorded: 3208, Average fps: 73.3691, minFps : 3.128017, maxFps : 180.0601, 1% low: 4.077475, 0.1% low: 3.492167
+Run 27, Time: 12/03/2024 21:06:39. chunk size: 180, rendDist : 360, maxStars : 4000, starRes : 24, planetRes: 24
+Frames Recorded: 1445, Average fps: 60.9067, minFps : 15.77506, maxFps : 224.165, 1% low: 25.90889, 0.1% low: 16.17916
+Run 28, Time: 12/03/2024 21:08:29. chunk size: 180, rendDist : 360, maxStars : 4000, starRes : 24, planetRes: 24
+Frames Recorded: 3406, Average fps: 62.54105, minFps : 15.96733, maxFps : 249.2336, 1% low: 27.21901, 0.1% low: 16.97711

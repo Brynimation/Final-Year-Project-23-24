@@ -106,7 +106,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
     if (distance(triggerPos, actualPosition) <= dontSpawnRadius && tid.entered == 1u)return; //We don't want the player to spawn inside any bodies when they enter a new level'
 
-    //don't spawn galaxies behind the player if we just entered the intergalactic player from the galactic cluster scale'
+    //don't spawn galaxies behind the player if we just entered the intergalactic layer from the galactic cluster scale'
     if (tid.entered == 1u && dot(tid.cameraForward, dir) > 0.0)
     {
         return;
@@ -119,8 +119,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float random = Hash31(actualPosition);
     float scale = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
     
-    if (ShouldCullSphere(actualPosition, scale) == 0u)
-        return; // view frustum culling
+    //if (ShouldCullSphere(actualPosition, scale) == 0u)
+        //return; // view frustum culling
     
     float lodDist = lodSwitchDist * max(1.0, scale) + galaxyFadeDist;
     float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, galaxyFadeDist);
