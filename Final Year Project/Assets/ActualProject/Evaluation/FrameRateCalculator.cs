@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class FrameRateCalculator : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class FrameRateCalculator : MonoBehaviour
     int currentStarResolution;
 
     bool isOdd;
+    public bool testing = false;
     float fps1Low;
     float fps01Low;
     bool calculated = true;
@@ -27,6 +29,7 @@ public class FrameRateCalculator : MonoBehaviour
     string pathDir;
     int framesElapsed;
     int runCounter = 0;
+    bool startRecording = false;
     private void GetCurrentParams()
     {
         if (bufferManager == null) return;
@@ -89,8 +92,10 @@ public class FrameRateCalculator : MonoBehaviour
     }
     private void Awake()
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 61;
         pathDir = Path.Join(Application.dataPath, fileName);
-        bufferManager = FindObjectOfType<BufferManager>();
+        if(!testing)bufferManager = FindObjectOfType<BufferManager>();
         fpsValues = new List<float>();
         ReadDataFromFile();
     }
@@ -102,10 +107,22 @@ public class FrameRateCalculator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            SceneManager.LoadScene(0);
+        }
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            startRecording = true;
+        }
+        if (!startRecording) return;
         framesElapsed++;
         float curFps = 1.0f / Time.deltaTime;
+        /*if (curFps < 30.0f) 
+        {
+            Debug.Log($"Cur fps is: {curFps}");
+        }*/
         fpsValues.Add(curFps);
-
         //Debug.Log($"current fps {curFps}, average fps {currentAverageFrameRate}");
         currentAverageFrameRate += (curFps - currentAverageFrameRate) / framesElapsed;
         maxFrameRate = Mathf.Max(maxFrameRate, curFps);
@@ -125,10 +142,33 @@ public class FrameRateCalculator : MonoBehaviour
         //calculate 1% low fps and 0.1% low fps
         int low1Count = Mathf.CeilToInt(fpsValues.Count * (0.01f));
         int low01Count = Mathf.CeilToInt(fpsValues.Count * (0.001f));
+        Debug.Log($"low count 1: {low1Count}, low count 01: {low01Count}");
         List<float> sortedFPS = fpsValues.OrderBy(fps => fps).ToList();
+        List<float> fps1LowData = sortedFPS.Take(low1Count).ToList();
+        List<float> fps01LowData = sortedFPS.Take(low01Count).ToList();
         fps1Low = sortedFPS.Take(low1Count).Average();
         fps01Low = sortedFPS.Take(low01Count).Average();
+        if (testing) 
+        {
+            WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
+            string fpsLow1Stringa = "";
+            fps1LowData.ForEach(fps => { fpsLow1Stringa += $"{fps}, "; });
+            string fpsLow01Stringa = "";
+            fps01LowData.ForEach(fps => { fpsLow01Stringa += $"{fps}, "; });
+            WriteDataToFile($"FPS1 low data: {fpsLow1Stringa}");
+            WriteDataToFile($"FPS01 low data: {fpsLow01Stringa}");
+            return;
+        }
+
+
         WriteDataToFile($"Run {runCounter}, Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}"); 
         WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
+        /*string fpsLow1String = "";
+        fps1LowData.ForEach(fps => { fpsLow1String += $"{fps}, "; });
+        string fpsLow01String = "";
+        fps01LowData.ForEach(fps => { fpsLow01String += $"{fps}, "; });
+        WriteDataToFile($"FPS1 low data: {fpsLow1String}");
+        WriteDataToFile($"FPS01 low data: {fpsLow01String}");
+        */
     }
 }

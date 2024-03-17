@@ -117,10 +117,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
 
 
     float random = Hash31(actualPosition);
+    float random2 = Hash1(random);
+    float random3 = Hash1(random2 * 123.12 + random * 654.21);
     float scale = lerp(minMaxHaloRadius.x, minMaxHaloRadius.y, random);
     
-    //if (ShouldCullSphere(actualPosition, scale) == 0u)
-        //return; // view frustum culling
+    if (ShouldCullSphere(actualPosition, scale) == 0u)
+        return; // view frustum culling
     
     float lodDist = lodSwitchDist * max(1.0, scale) + galaxyFadeDist;
     float fade = CrossFade(playerPosition, actualPosition, 10000.0, lodDist, galaxyFadeDist);
@@ -131,14 +133,14 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float minEccentricity = lerp(minMaxMinimumEccentricity.x, minMaxMinimumEccentricity.y, random);
     float maxEccentricity = lerp(minMaxMaximumEccentricity.x, minMaxMaximumEccentricity.y, random);
     float haloRadius = scale;
-    float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random);
-    float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random);
-    int angularOffsetMultiplier = round(lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random));
-    int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random);
+    float bulgeRadius = lerp(minMaxBulgeRadius.x, minMaxBulgeRadius.y, random2);
+    float diskRadius = lerp(minMaxDiskRadius.x, minMaxDiskRadius.y, random2);
+    int angularOffsetMultiplier = round(lerp(minMaxAngularOffsetMultiplier.x, minMaxAngularOffsetMultiplier.y, random3));
+    int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random2);
     float galaxyDensity = lerp(minMaxDensity.x, minMaxDensity.y, random);
 
-    int randomToIndex1 = floor(Hash1(random) * 4);
-    int randomToIndex2 = floor(Hash1((random * 123.45)) * 4.0);
+    int randomToIndex1 = floor(random2 * 4);
+    int randomToIndex2 = floor(random3 * 4.0);
     float4 centreColour = centreColours[randomToIndex1];
     float4 outerColour = outerColours[randomToIndex2];
     //We want to check if a given position is behind the trigger position

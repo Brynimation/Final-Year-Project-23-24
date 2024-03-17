@@ -54,7 +54,9 @@ Shader "Custom/StarShader"
                 float3 positionWS : TEXCOORD1;
                 float3 normWS : TEXCOORD2;
                 float4 mainColour : COLOR0;
+                float4 borderColour : COLOR1;
                 float fade : TEXCOORD3;
+                float borderWidth : TEXCOORD4;
             };
 
             
@@ -85,7 +87,9 @@ Shader "Custom/StarShader"
                 o.positionWS = positionData.positionWS.xyz;
                 o.positionHCS = positionData.positionCS;
                 o.mainColour = systemData.star.starColour;
-                o.mainColour += o.mainColour * sqrt(systemData.star.starRadius);
+                o.borderColour = systemData.star.borderColour;
+                o.borderWidth = systemData.star.borderWidthMultiplier;
+                o.mainColour += systemData.star.emissiveColour * sqrt(systemData.star.starRadius);//o.mainColour * 3.0 * sqrt(systemData.star.starRadius);
                 return o;
 
             }
@@ -113,12 +117,12 @@ Shader "Custom/StarShader"
 
 
                 //value.y += _Time.y;
-                float3 voronoiVal = voronoiNoise3D(value, _BorderWidth);
+                float3 voronoiVal = voronoiNoise3D(value, _BorderWidth * i.borderWidth);
 
                 //fwidth(value) is the absolute value of the partial derivative of value; it measures how much value changes across the pixel's surface
 	            float valueChange = length(fwidth(value)) * 0.5;
 	            float isBorder = 1 - smoothstep(0.05 - valueChange, 0.05 + valueChange, voronoiVal.z); //smoothly interpolate between 0 and 1 as the distance to the border varies around 0.05
-                return lerp(i.mainColour, _BorderColour, isBorder); //linearly interpolate between the border and cell colour based on the value of the parameter above.
+                return lerp(i.mainColour, i.borderColour, isBorder); //linearly interpolate between the border and cell colour based on the value of the parameter above.
             }
             ENDHLSL
         }

@@ -10,8 +10,9 @@ RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
 RWStructuredBuffer<Plane> _ViewFrustumPlanes;
 RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
 AppendStructuredBuffer<SolarSystem> _SolarSystems; 
-AppendStructuredBuffer<MeshProperties> _Properties3;
+AppendStructuredBuffer<SolarSystem> _LowLODSolarSystems;
 AppendStructuredBuffer<Planet> _Planets;
+AppendStructuredBuffer<float> _RandomValuesBuffer;
 float time;
 float fadeDist;
 float timeStep;
@@ -26,6 +27,9 @@ float minWavelength;
 float maxWavelength;
 
 float4 colours[6];
+float4 emissiveColours[6];
+float4 borderColours[6];
+float4 probabilities[6];
 
 float4 oceanColours[4];
 float4 groundColours[4];
@@ -115,37 +119,53 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
     float dist = length(actualPosition - playerPosition);
     float lodDist = solarSystemSwitchDist + fadeDist;
+
+
     float random = Hash31(actualPosition);
+    float random2 = Hash31(random);
+    float random3 = Hash31(random * 456.98 + random2 * 123.12);
+
+    for(int i = 0; i < 6; i++)
+    {
+        _RandomValuesBuffer.Append(probabilities[i]);
+    }
+
     float scale =  lerp(minRadius, maxRadius, random);
-    float planetMaxDist = 10.0;
+    float planetMaxDist = scale * 1.5;
     
     
     //We may want to render planets orbitting a star even if we can't see the star, so do not return immediately.
     uint renderStar = ShouldCullSphere(actualPosition, scale + 1.0);
     
+    float smoothRand = pNoise(actualPosition);
     float starLuminosity = weightedRandomSample(random);
-    float4 colour = ColourFromLuminosity(starLuminosity, scale, colours[0], colours[1], colours[2], colours[3], colours[4], colours[5]);
+    float4 colour = GenerateRandomColour(random2, colours, probabilities);//ColourFromLuminosity(starLuminosity, scale, colours); //GenerateRandomColour(random, colours, probabilities); GenerateRandomColour(smoothRand, colours, probabilities);
+    float4 emissiveColour = GenerateRandomColour(random2, emissiveColours, probabilities);//ColourFromLuminosity(starLuminosity, scale, emissiveColours);
+    float4 borderColour = GenerateRandomBorderColour(random2, borderColours, probabilities, random2);
+    float borderWidthMultiplier = lerp(0.5, 2.0, random3);
     float3 rotation = Hash33(actualPosition) * 2.0 * PI;
     float fade = CrossFade(playerPosition, actualPosition, -1.0, lodDist, fadeDist);
-    MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, colour, fade);
 
 
+    //only spawn stars in front of the player if they've entered this scale, so that it is clear how to return to a higher scale.
     float3 dir = normalize(_TriggerBuffer[index].cid.pos - actualPosition);
     if (_TriggerBuffer[index].entered == 1u && dot(_TriggerBuffer[index].cameraForward, dir) > 0.0)
     {
         return;
     }
+    SolarSystem system = (SolarSystem)0;
+    system.star.starPosition = actualPosition;
+    system.star.borderColour = borderColour;
+    system.star.borderWidthMultiplier = borderWidthMultiplier;
+    system.star.starRadius = scale;
+    system.star.starLuminosity = starLuminosity;
+    system.star.starMass = calculateSphereMass(system.star.starRadius, 1.0);
+    system.star.starColour = colour;
+    system.star.emissiveColour = emissiveColour;
+    system.fade = fade;
+    system.planetCount = ceil(10 * random);
     if (dist < lodDist)
     {
-        float random = Hash31(actualPosition);
-        SolarSystem system = (SolarSystem)0;
-        system.star.starPosition = actualPosition;
-        system.star.starRadius = scale;
-        system.star.starLuminosity = starLuminosity;
-        system.star.starMass = calculateSphereMass(system.star.starRadius, 1.0);
-        system.star.starColour = colour;
-        system.fade = fade;
-        system.planetCount = ceil(10 * random);
         if (renderStar == 1u)
         {
             _SolarSystems.Append(system);
@@ -154,12 +174,17 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
         for(int i = 0; i < system.planetCount; i++)
         {
-            float planetRandom = Hash1(float(i)/float(system.planetCount) * length(actualPosition));
+            float3 planetId = (float3) viewedChunkCoord;
+            planetId.x += i;
+            float planetRandom = Hash31(planetId);
+            float planetRandom2 = Hash1(planetRandom);
+            float planetRandom3 = Hash1(planetRandom * 123.43 + planetRandom2 * 897.12);
             
             Planet planet = (Planet)0;
 
             //Give the planet an elliptical orbit
-            float semiMajorAxis = system.star.starRadius + planetMaxDist * planetRandom;
+            planet.radius = lerp(0.1, 0.4, planetRandom);
+            float semiMajorAxis = (system.star.starRadius + planet.radius) + planetMaxDist * planetRandom;
             float eccentricity = Hash1(planetRandom); //in range (0, 1)
             float semiMinorAxis = semiMajorAxis * sqrt(1 - pow(eccentricity, 2.0));
             
@@ -171,7 +196,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.position = actualPosition + float3(x, 0, z);
 
             // view frustum culling
-            planet.radius = lerp(0.1, 0.4, planetRandom);
+
             uint renderPlanet = ShouldCullSphere(planet.position, planet.radius); 
             if (renderPlanet == 0u) continue;
 
@@ -183,14 +208,14 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             planet.primaryBody = system.star;
             PlanetTerrainProperties planetProperties = (PlanetTerrainProperties) 0;
             planetProperties.baseRoughness = lerp(2.0, 6.0, planetRandom);
-            planetProperties.roughness = lerp(1.0, 3.0, planetRandom);
-            planetProperties.persistence = lerp(0.25, 0.75, planetRandom);
-            planetProperties.octaves = lerp(1, 4, planetRandom);
+            planetProperties.roughness = lerp(1.0, 3.0, planetRandom2);
+            planetProperties.persistence = lerp(0.25, 0.75, planetRandom3);
+            planetProperties.octaves = ceil(lerp(1, 4, planetRandom2));
             planetProperties.minVal = lerp(0.75, 1.25, planetRandom);
-            planetProperties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(32.0, 11.5, 17.2), planetRandom);
-            planetProperties.noiseStrength = lerp(0.25, 0.75, planetRandom);
+            planetProperties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(32.0, 11.5, 17.2), planetRandom3);
+            planetProperties.noiseStrength = lerp(0.5, 1.5, planetRandom);
             
-            int randomToIndex = floor(Hash1(planetRandom) * 4);
+            int randomToIndex = floor(Hash1(planetRandom3) * 4);
             PlanetTerrainColours colours = (PlanetTerrainColours) 0;
             colours.colours[0] = oceanColours[randomToIndex];
             colours.colours[1] = groundColours[randomToIndex];
@@ -206,6 +231,6 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     if (dist > solarSystemSwitchDist && renderStar == 1u)
     {
     
-        _Properties3.Append(mp);
+        _LowLODSolarSystems.Append(system);
     }
 }

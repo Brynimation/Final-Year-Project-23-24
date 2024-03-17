@@ -16,6 +16,17 @@ struct MeshProperties
     int lodLevel;
 };
 
+struct GalacticCluster
+{
+    MeshProperties mp;
+    float maxStarSize;
+    int numStarLayers;
+    float4 starColour1;
+    float4 starColour2;
+    float starSpeedMultiplier;
+    int gridSize;
+};
+
 struct Star
 {
     float3 starPosition;
@@ -23,6 +34,9 @@ struct Star
     float starMass;
     float starLuminosity;
     float4 starColour;
+    float4 borderColour;
+    float borderWidthMultiplier;
+    float4 emissiveColour;
 };
 
 struct SolarSystem
@@ -218,27 +232,50 @@ float4 ColourFromLuminosity(float luminosity, float radius, float minWavelength,
     return ColourFromWavelength(wavelength, minWavelength, maxWavelength);
 }
 
+float4 GenerateRandomColour(float random, float4 colours[6], float4 probabilities[6])
+{
+    for(int i = 0; i < 6; i++)
+    {
+        if(random < probabilities[i].x)
+        {
+            return colours[i];
+        }
+    }
+    return colours[5];
+}
 
-float4 ColourFromLuminosity(float luminosity, float radius, float4 blue, float4 blueishWhite, float4 white, float4 yellowWhite, float4 yellowOrange, float4 orangeRed)
+float4 GenerateRandomBorderColour(float random, float4 colours[6], float4 probabilities[6], float random2)
+{
+    for(int i = 0; i < 6; i++)
+    {
+        if(random < probabilities[i].x)
+        {
+            return lerp(float4(1.0, 1.0, 1.0, 1.0), colours[i], random2);
+        }
+    }
+    return colours[5];
+}
+
+float4 ColourFromLuminosity(float luminosity, float radius, float4 colours[6])
 {
     float temp = CalculateStarSurfaceTemperature(luminosity, radius);
     if(temp > 7.01)// Type O
     {
-        return blue;
+        return colours[0];//blue;
     }else if(temp > 1.5 && temp <= 7.01) //type B and A
     {
-        return blueishWhite;
+        return colours[1];//blueishWhite;
     }else if(temp > 1.14 && temp <= 1.5) //Type F
     {
-        return white;
+        return colours[2];//white;
     }else if(temp > 1.00 && temp <= 1.14) //Type G
     {
-        return yellowWhite;
+        return colours[3];//yellowWhite;
     }else if(temp > 0.56 && temp <= 1.00) //Type K
     {
-        return yellowOrange;
+        return colours[4];//yellowOrange;
     }else{ //tyoe M
-        return orangeRed;
+        return colours[5];//orangeRed;
     }
    /* float wavelength = CalculatePeakWavelength(temp);
     return ColourFromWavelength(wavelength, blue, blueishWhite, white, yellowWhite, yellowOrange, orangeRed);

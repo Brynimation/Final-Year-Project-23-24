@@ -15,6 +15,9 @@ public struct Star
     public float starMass;
     public float starLuminosity;
     public Color starColour;
+    public Color emissiveColour;
+    public Color borderColour;
+    public float borderWidthMultiplier;
 }
 public struct SolarSystem
 {
@@ -37,6 +40,17 @@ public struct GalaxyProperties
     public float galaxyDensity;
     public Color centreColour;
     public Color outerColour;
+}
+
+public struct GalacticCluster 
+{
+    public MeshProperties mp;
+    public float maxStarSize;
+    public int numStarLayers;
+    public Color starColour1;
+    public Color starColour2;
+    public float starSpeedMultiplier;
+    public int gridSize;
 }
 public struct MeshProperties
 {
@@ -125,6 +139,15 @@ public class BufferManager : MonoBehaviour
     ComputeBuffer triggerArgsBuffer;
     ComputeBuffer chunkOffsetBuffer;
 
+    [Header("Galactic Clusters")]
+    public Vector2 galacticClusterMinMaxRadius;
+    public Vector2 galacticClusterMinMaxStarSize;
+    public Vector2 minMaxStarSpeedMultiplier;
+    public Vector2 minMaxNumStarLayers;
+    public Vector2 minMaxGridSize;
+
+    public Color[] clusterColours;
+    float[] floatClusterColours;
 
     Ray[] triggerRays;
     bool drawRays;
@@ -167,6 +190,7 @@ public class BufferManager : MonoBehaviour
     public ComputeShader starSphereGenerator;
     public ComputeShader solarSystemCreator;
     public ComputeBuffer solarSystemBuffer;
+    public ComputeBuffer randomValuesBuffer;
     public ComputeBuffer solarSystemArgsBuffer;
     public ComputeBuffer solarSystemBufferCount;
     public ComputeBuffer solarSystemBufferCountAgain;
@@ -185,8 +209,18 @@ public class BufferManager : MonoBehaviour
     public float maxWavelength;
     public float minRadius;
     public float maxRadius;
-    public Color[] colours;
-    public float[] floatColours;
+
+    //Star colours
+    public Color[] starColours;
+    public Color[] starEmissiveColours;
+    public Color[] starBorderColours;
+    public float[] starColourProbabilities;
+
+    float[] shaderProbabilities;
+    float[] floatStarBorderColours;
+    float[] floatStarColours;
+    float[] floatStarEmissiveColours;
+
     private ComputeBuffer starVertexBuffer;
     private ComputeBuffer starNormalBuffer;
     private ComputeBuffer starUVBuffer;
@@ -248,6 +282,8 @@ public class BufferManager : MonoBehaviour
     int starSphereGeneratorIndex;
     int planetSphereGeneratorIndex;
 
+    int maxInstanceCount;
+
     Bounds bounds;
 
     ComputeBuffer debugBuffer;
@@ -255,6 +291,10 @@ public class BufferManager : MonoBehaviour
     private float[] ColourToFloatArray(Color[] colours) 
     {
         return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
+    }
+    private float[] ProbabilityToFloatArray(float[] probs)
+    {
+        return probs.SelectMany(p => new float[] { p, 0.0f, 0.0f, 0.0f }).ToArray();
     }
 
     private void Awake()
@@ -267,7 +307,11 @@ public class BufferManager : MonoBehaviour
         debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
         triggerRays = new Ray[2];
-        floatColours = ColourToFloatArray(colours);  //needed to pass to shader
+        floatStarColours = ColourToFloatArray(starColours);  //needed to pass to shader
+        floatStarEmissiveColours = ColourToFloatArray(starEmissiveColours);
+        floatStarBorderColours = ColourToFloatArray(starBorderColours);
+        floatClusterColours = ColourToFloatArray(clusterColours);
+        shaderProbabilities = ProbabilityToFloatArray(starColourProbabilities);
 
         floatOceanColours = ColourToFloatArray(oceanColours);
         floatGroundColours = ColourToFloatArray(groundColours);
@@ -283,13 +327,13 @@ public class BufferManager : MonoBehaviour
         chunksVisibleInViewDist = Mathf.RoundToInt(renderDistance / chunkSize);
         Debug.Log(chunksVisibleInViewDist);
         chunksVisible = new ChunkIdentifier[1] { new ChunkIdentifier(chunksVisibleInViewDist, chunkSize, 4, Vector3.one * -0.1f) };
-        mainKernelIndex = chunkManager.FindKernel("CSMainNew");
+        mainKernelIndex = chunkManager.FindKernel("CSMain");
         galaxyPositionerIndex = galaxyPositioner.FindKernel("CSMain");
         solarSystemCreatorIndex = solarSystemCreator.FindKernel("CSMain");
         starSphereGeneratorIndex = starSphereGenerator.FindKernel("CSMain");
         planetSphereGeneratorIndex = planetSphereGenerator.FindKernel("CSMain");
 
-        int maxInstanceCount = (int)Mathf.Pow(2 * chunksVisibleInViewDist  + 1, 3);
+        maxInstanceCount = (int)Mathf.Pow(2 * chunksVisibleInViewDist  + 1, 3);
 
         int numVertsPerStar = starResolution * starResolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerStar = 6 * 6 * starResolution * starResolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
@@ -300,12 +344,13 @@ public class BufferManager : MonoBehaviour
         radii = new ComputeBuffer(1, sizeof(float), ComputeBufferType.Structured); //debugging
 
         //Low LOD solar system buffer - only needs to store the properties of the stars as planets cannot be viewed from this distance
-        lowLODSolarSystemPositions = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        lowLODSolarSystemPositions = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(SolarSystem)), ComputeBufferType.Append);
         lowLODSolarSystemArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         lowLODSolarSystemArgsBuffer.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
 
         //High LOD solar system buffer
         solarSystemBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(SolarSystem)), ComputeBufferType.Append);
+        randomValuesBuffer = new ComputeBuffer(maxInstanceCount, sizeof(float), ComputeBufferType.Append);
         solarSystemBufferCount = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Structured);
         solarSystemBufferCountAgain = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Structured);
         solarSystemArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
@@ -338,7 +383,7 @@ public class BufferManager : MonoBehaviour
         bigGalaxyProperties = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalaxyProperties)), ComputeBufferType.Append);
         bigGalaxyPropertiesCount = new ComputeBuffer(1, sizeof(uint));
 
-        galacticClusterPositionsBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(MeshProperties)), ComputeBufferType.Append);
+        galacticClusterPositionsBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(GalacticCluster)), ComputeBufferType.Append);
         galacticClusterArgsBuffer = new ComputeBuffer(1, sizeof(uint) * 4, ComputeBufferType.IndirectArguments);
         galacticClusterArgsBuffer.SetData(new uint[] { (uint)1, (uint)maxInstanceCount, 0u, 0u });
 
@@ -394,7 +439,7 @@ public class BufferManager : MonoBehaviour
         planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_UVBuffer", planetUVBuffer);
         planetSphereGenerator.SetBuffer(planetSphereGeneratorIndex, "_IndexBuffer", planetIndexBuffer);
 
-        chunkManager.SetBuffer(mainKernelIndex, "_Properties5", galacticClusterPositionsBuffer);
+        chunkManager.SetBuffer(mainKernelIndex, "_GalacticClusterBuffer", galacticClusterPositionsBuffer);
         chunkManager.SetBuffer(mainKernelIndex, "_ChunkOffset", chunkOffsetBuffer);
 
         chunkManager.SetBuffer(mainKernelIndex, "_ChunksBuffer", chunksBuffer);
@@ -418,7 +463,7 @@ public class BufferManager : MonoBehaviour
         chunkManager.SetVector("playerUp", playerPosition.up);
         chunkManager.SetVector("playerForward", playerPosition.forward);
         chunkManager.SetFloat("galaxyFadeDist", galaxyFadeDist);
-        chunkManager.SetFloats("colours", floatColours);
+        chunkManager.SetFloats("colours", floatStarColours);
         chunkManager.SetVector("minMaxMinimumEccentricity", minMaxMinimumEccentricity);
         chunkManager.SetVector("minMaxMaximumEccentricity", minMaxMaximumEccentricity);
         chunkManager.SetVector("minMaxAngularOffsetMultiplier", minMaxAngularOffsetMultiplier);
@@ -426,6 +471,13 @@ public class BufferManager : MonoBehaviour
         chunkManager.SetVector("minMaxBulgeRadius", minMaxBulgeRadius);
         chunkManager.SetVector("minMaxDiskRadius", minMaxDiskRadius);
         chunkManager.SetInts("minMaxNumParticles", minMaxNumParticles);
+
+        chunkManager.SetVector("galacticClusterMinMaxRadius", galacticClusterMinMaxRadius);
+        chunkManager.SetVector("galacticClusterMinMaxStarSize", galacticClusterMinMaxStarSize);
+        chunkManager.SetVector("minMaxStarSpeedMultiplier", minMaxStarSpeedMultiplier);
+        chunkManager.SetVector("minMaxNumStarLayers", minMaxNumStarLayers);
+        chunkManager.SetVector("minMaxGridSize", minMaxGridSize);
+        chunkManager.SetFloats("clusterColours", floatClusterColours);
 
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_ChunksBuffer", chunksBuffer);
         galaxyPositioner.SetBuffer(galaxyPositionerIndex, "_TriggerBuffer", triggerBuffer);
@@ -456,13 +508,22 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetVector("playerPosition", playerPosition.position);
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
-        solarSystemCreator.SetFloats("colours", floatColours);
+        solarSystemCreator.SetFloats("colours", floatStarColours);
+        solarSystemCreator.SetFloats("emissiveColours", floatStarEmissiveColours);
+        solarSystemCreator.SetFloats("borderColours", floatStarBorderColours);
+
+        foreach (var prob in starColourProbabilities) 
+        {
+            Debug.Log($"prob {prob}");
+        }
+        solarSystemCreator.SetFloats("probabilities", shaderProbabilities);
         solarSystemCreator.SetFloats("oceanColours", floatOceanColours);
         solarSystemCreator.SetFloats("groundColours", floatGroundColours);
         solarSystemCreator.SetFloats("mountainColours", floatMountainColours);
         solarSystemCreator.SetFloats("mountainTopColours", floatMountainTopColours);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_ChunksBuffer", chunksBuffer);
-        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Properties3", lowLODSolarSystemPositions);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_RandomValuesBuffer", randomValuesBuffer);
+        solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_LowLODSolarSystems", lowLODSolarSystemPositions);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystemCount", solarSystemBufferCount);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_SolarSystems", solarSystemBuffer);
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_Planets", planetsBuffer);
@@ -471,9 +532,9 @@ public class BufferManager : MonoBehaviour
         solarSystemCreator.SetBuffer(solarSystemCreatorIndex, "_TriggerBuffer", triggerBuffer);
         solarSystemCreator.SetFloat("dontSpawnRadius", dontSpawnRadius);
 
-        lowLODSolarSystemMaterial.SetBuffer("_Properties", lowLODSolarSystemPositions);
+        lowLODSolarSystemMaterial.SetBuffer("_LowLODSolarSystems", lowLODSolarSystemPositions);
         lowLODGalaxyMaterial.SetBuffer("_Properties", lowLODGalaxyPositions);
-        galacticClusterMaterial.SetBuffer("_Properties", galacticClusterPositionsBuffer);
+        galacticClusterMaterial.SetBuffer("_GalacticClusterBuffer", galacticClusterPositionsBuffer);
 
         bounds = new Bounds(Vector3.zero, new Vector3(1000000, 1000000, 1000000));
         lowLODSolarSystemMaterial.SetFloat("_CellSize", cellSize);
@@ -484,7 +545,6 @@ public class BufferManager : MonoBehaviour
         triggerMaterial.SetBuffer("_ChunksBuffer", chunksBuffer);
         triggerMaterial.SetBuffer("_TriggerBuffer", triggerBuffer);
 
-        Debug.Log($"chunkSize: {chunkSize}, max stars: {minMaxNumParticles[1]}, planet res: {planetResolution}, star Res: {starResolution}");
 
     }
     void ApplyUserSettings() 
@@ -504,13 +564,24 @@ public class BufferManager : MonoBehaviour
     void Update()
     {
         //positionsBuffer.SetCounterValue(0);
-        //positionsBuffer2.SetCounterValue(0);
-
-        if (Input.GetKeyDown(KeyCode.F1)) 
+        //positionsBuffer2.SetCounterValue(0)
+        floatStarColours = ColourToFloatArray(starColours);
+        solarSystemCreator.SetFloats("colours", floatStarColours);
+        shaderProbabilities = ProbabilityToFloatArray(starColourProbabilities);
+        solarSystemCreator.SetFloats("probabilities", shaderProbabilities);
+        floatStarBorderColours = ColourToFloatArray(starBorderColours);
+        solarSystemCreator.SetFloats("borderColours", floatStarBorderColours);
+        if (Input.GetKeyDown(KeyCode.V))
         {
-            SceneManager.LoadScene(0);
+            float[] randoms = new float[maxInstanceCount];
+            randomValuesBuffer.GetData(randoms);
+            foreach (float rand in randoms)
+            {
+                Debug.Log($"random: {rand}");
+            }
         }
-        if (Input.GetKeyDown(KeyCode.V)) 
+
+        /*if (Input.GetKeyDown(KeyCode.V)) 
         {
             float[] rads = new float[1];
             radii.GetData(rads);
@@ -518,7 +589,8 @@ public class BufferManager : MonoBehaviour
             {
                 Debug.Log($"radius: {rad}");
             }
-        }
+        }*/
+        randomValuesBuffer.SetCounterValue(0);
         lowLODSolarSystemPositions.SetCounterValue(0);
         lowLODGalaxyPositions.SetCounterValue(0);
         galacticClusterPositionsBuffer.SetCounterValue(0);
@@ -602,6 +674,7 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
+        /*
         int[] planetArgs = new int[5];
         int[] solarSystemArgs = new int[5];
         int[] clusterArgs = new int[4];
@@ -693,7 +766,7 @@ public class BufferManager : MonoBehaviour
                 drawRays = true;
             }
         }
-
+        */
     }
 
     private void OnDrawGizmos()

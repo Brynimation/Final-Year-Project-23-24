@@ -47,10 +47,22 @@ Shader "Custom/UniverseShaderStarField"
                 float4 _EmissionColour;
                 float _Emission;
                 float3 _CameraPosition;
-                float _MaxStarSize;
                 uniform float _NumStarLayers;
                 uniform float _GridSize;
-                RWStructuredBuffer<MeshProperties> _Properties;
+                RWStructuredBuffer<GalacticCluster> _GalacticClusterBuffer;
+
+                /*
+                struct GalacticCluster
+{
+                MeshProperties mp;
+                float maxStarSize;
+                int numStarLayers;
+                float4 starColour1;
+                float4 starColour2;
+                float starSpeedMultiplier;
+                float gridSize;
+            };
+                */
 
                 struct GeomData
                 {
@@ -62,6 +74,12 @@ Shader "Custom/UniverseShaderStarField"
                     float3 forward: TEXCOORD4;
                     float3 right : TEXCOORD5;
                     float3 up : TEXCOORD6;
+                    int numStarLayers : TEXCOORD7;
+                    float starSpeedMultiplier : TEXCOORD8;
+                    int gridSize : TEXCOORD9;
+                    float maxStarSize : TEXCOORD10;
+                    float4 starColour1 : COLOR2;
+                    float4 starColour2 : COLOR3;
                 };
 
                  struct Interpolators
@@ -72,6 +90,12 @@ Shader "Custom/UniverseShaderStarField"
                     float2 uv : TEXCOORD0;
                     float3 positionWS : TEXCOORD1;
                     float4 centreHCS : TEXCOORD2;
+                    int numStarLayers : TEXCOORD3;
+                    float starSpeedMultiplier : TEXCOORD4;
+                    int gridSize : TEXCOORD5;
+                    float maxStarSize : TEXCOORD6;
+                    float4 starColour1 : COLOR2;
+                    float4 starColour2 : COLOR3;
                 };
 
                 
@@ -79,16 +103,21 @@ Shader "Custom/UniverseShaderStarField"
                 {
                     GeomData o;
                     o.id = id;
-                    MeshProperties mp = _Properties[id];
-                    float4 posOS = mul(mp.mat, float4(0.0, 0.0, 0.0, 1.0));
-                    //can't use id to determine properties - let's use position
+                    GalacticCluster gc = _GalacticClusterBuffer[id];
+                    float4 posOS = mul(gc.mp.mat, float4(0.0, 0.0, 0.0, 1.0));
                     o.positionWS = mul(unity_ObjectToWorld, posOS);
-                    o.colour = mp.colour;
-                    o.radius = mp.scale;
+                    o.colour = gc.mp.colour;
+                    o.radius = gc.mp.scale;
                     o.forward = normalize(GetCameraPositionWS() - o.positionWS);
                     float3 worldUp = float3(0.0f, 1.0f, 0.0f);
                     o.right = normalize(cross(o.forward, worldUp));
                     o.up = normalize(cross(o.forward, o.right));
+                    o.numStarLayers = gc.numStarLayers;
+                    o.starSpeedMultiplier = gc.starSpeedMultiplier;
+                    o.gridSize = gc.gridSize;
+                    o.maxStarSize = gc.maxStarSize;
+                    o.starColour1 = gc.starColour1;
+                    o.starColour2 = gc.starColour2;
                     return o;
                 }
 
@@ -131,6 +160,13 @@ Shader "Custom/UniverseShaderStarField"
                         o.positionWS = float4(WSPositions[i], 1.0f);
                         o.uv = uvs[i];
                         o.colour = centre.colour;
+
+                        o.numStarLayers = centre.numStarLayers;
+                        o.starSpeedMultiplier = centre.starSpeedMultiplier;
+                        o.gridSize = centre.gridSize;
+                        o.starColour1 = centre.starColour1;
+                        o.starColour2 = centre.starColour2;
+                        o.maxStarSize = centre.maxStarSize;
                         outputStream.Append(o);
                     }
                 }
@@ -147,14 +183,14 @@ Shader "Custom/UniverseShaderStarField"
                     return  sin(PI * x);
                 }
 
-                float DrawStar(float2 uv, float flare)
+                float DrawStar(float2 uv, float flare, float starSize)
                 {
                     float4 col = float4(0.0, 0.0, 0.0, 0.0);
                     float2 p = uv; 
 
                     //Create a "light" at the centre of the texture
                     float d = length(p);
-                    float m = 0.01/d;
+                    float m = starSize/d;
                     col += m;
 
                     //create horizontal and vertical lens flare
@@ -170,7 +206,7 @@ Shader "Custom/UniverseShaderStarField"
                     return col;
                 }
 
-                float4 DrawStarLayer(float2 p, int gridSize)
+                float4 DrawStarLayer(float2 p, int gridSize, float4 colour1, float4 colour2, float maxStarSize, float speedMultiplier)
                 {
                     float4 col = float4(0.0, 0.0, 0.0, 1.0);
                     p *= gridSize;
@@ -187,16 +223,16 @@ Shader "Custom/UniverseShaderStarField"
                             float random = Hash21(id + offs);
                             float size = frac(random * 126.34);
                             float flare = smoothstep(0.5, 1.0, size) * 0.5;
-                            float star = DrawStar(gv - offs -  float2(random, frac(random * 34.0)) + 0.5, flare);
-                            float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);//float4(tanh(float3(0.2, 0.0, 0.95) * frac(random * 2353.34) * 2 * PI), 1.0);
-                            col += star * size * colour * (sin(_Time.y * 0.3 * random * 2.0 * PI) *0.5 + 1.0);
+                            float star = DrawStar((gv - offs -  float2(random, frac(random * 34.0))) + 0.5, flare, maxStarSize);
+                            float4 colour = lerp(colour1, colour2, random);//float4(tanh(float3(0.2, 0.0, 0.95) * frac(random * 2353.34) * 2 * PI), 1.0);
+                            col += star * size * colour * (sin(_Time.y * speedMultiplier * 0.3 * random * 2.0 * PI) *0.5 + 1.0);
                         }
                     }
                     //col += Hash21(id);
                     return col;
                 }
 
-                float4 frag (Interpolators i) : SV_Target
+                /*float4 frag (Interpolators i) : SV_Target
                 {
                     // sample the texture
                     float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
@@ -206,12 +242,32 @@ Shader "Custom/UniverseShaderStarField"
                     float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
                     p = mul(Rotate(t), p);
 
-                    for(float i = 0; i < 1.0; i += 1.0/float(_NumStarLayers))
+                    for(float j = 0; j < 1.0; j += 1.0/float(_NumStarLayers))
                     {
-                        float depth = frac(i + t);
+                        float depth = frac(j + t);
                         float scale = lerp(2.0, 0.5, depth);
                         float fade = bellShapeSineFunction(depth);
-                        col += DrawStarLayer(p * scale + i * 453.2, _GridSize) * fade;
+                        col += DrawStarLayer(p * scale + j * 453.2,  i.gridSize, i.starColour1, i.starColour2, i.maxStarSize, i.starSpeedMultiplier) * fade;
+                    }
+
+                    return col;
+                }*/
+                 float4 frag (Interpolators i) : SV_Target
+                {
+                    // sample the texture
+                    float4 baseTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                    if(baseTex.a == 0) discard;
+                    float4 col = (0.0, 0.0, 0.0, 0.0);
+                    float t = _Time.y * 0.1;
+                    float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
+                    p = mul(Rotate(t), p);
+
+                    for(float j = 0; j < 1.0; j += 1.0/float(_NumStarLayers))
+                    {
+                        float depth = frac(j + t);
+                        float scale = lerp(2.0, 0.5, depth);
+                        float fade = bellShapeSineFunction(depth);
+                        col += DrawStarLayer(p * scale + j * 453.2, _GridSize, i.starColour1, i.starColour2, i.maxStarSize, i.starSpeedMultiplier) * fade;
                     }
 
                     return col;

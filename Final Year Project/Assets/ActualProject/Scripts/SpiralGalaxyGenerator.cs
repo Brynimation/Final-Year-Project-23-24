@@ -104,14 +104,12 @@ public class SpiralGalaxyGenerator : MonoBehaviour
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPropertiesBuffer", _MainPositionBuffer);
         positionCalculator.SetBuffer(positionCalculatorHandle, "_MainPositionBufferCount", _MainPositionBufferCount);
         positionCalculator.SetTexture(positionCalculatorHandle, "_RadiusLookupTexture", _RadiusLookupTexture);
-        Debug.Log("Set!");
         buffersSet = true;
     }
 
     void Start()
     {
         numInstances = bufferManager.minMaxNumParticles[1];
-        Debug.Log($"Num instances from spiral galaxy: {numInstances}");
         //---Debugging---
         radii = new ComputeBuffer(numInstances, 2 * sizeof(float), ComputeBufferType.Append);
         ids = new ComputeBuffer(numInstances, sizeof(uint), ComputeBufferType.Structured);
@@ -202,7 +200,7 @@ public class SpiralGalaxyGenerator : MonoBehaviour
     private void Update()
     {
 
-        if (Input.GetKeyDown(KeyCode.I)) 
+        /*if (Input.GetKeyDown(KeyCode.I)) 
         {
             Vector2[] rads = new Vector2[numInstances];
             radii.GetData(rads);
@@ -268,7 +266,7 @@ public class SpiralGalaxyGenerator : MonoBehaviour
                 maxId = Mathf.Max(maxId, x);
             }
             Debug.Log($"minId: {minId}, maxId: {maxId}, numInstances: {numInstances}");
-        }
+        }*/
         radii.SetCounterValue(0);
 
         _PositionsBufferLODAppend0.SetCounterValue(0);

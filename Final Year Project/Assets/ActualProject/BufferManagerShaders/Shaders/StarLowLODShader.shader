@@ -66,7 +66,7 @@ Shader "Custom/StarLowLODShader"
             float4 _EmissionColour;
             float _Emission;
             float3 _CameraPosition;
-            RWStructuredBuffer<MeshProperties> _Properties;
+            RWStructuredBuffer<SolarSystem> _LowLODSolarSystems;
 
             struct GeomData
             {
@@ -77,6 +77,8 @@ Shader "Custom/StarLowLODShader"
                 float fade : TEXCOORD1;
                 float radius : TEXCOORD2;
                 uint id : TEXCOORD3;
+                float4 borderColour : COLOR2;
+                float borderWidth : TEXCOORD4;
             };
 
             struct Interpolators
@@ -87,57 +89,45 @@ Shader "Custom/StarLowLODShader"
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float4 centreHCS : TEXCOORD2;
+                float4 borderColour : COLOR2;
+                float borderWidth : TEXCOORD3;
             };
 
-            float4 colourFromLodLevel(int lodLevel)
+
+            /*
+                        Interpolators vert (Attributes i)
             {
-                switch(lodLevel)
-                {
-                    case 0:
-                        return float4(1,1,1,1);
-                        break;
-                    case 1:
-                        return float4(1,1,0,1);
-                        break;
-                    case 2:
-                        return float4(0,1,0,1);
-                        break;
-                    case 3:
-                        return float4(1,0,1,1);
-                        break;
-                    case 4:
-                        return float4(1,0,0,1);
-                        break;
-                    default:
-                        return float4(0.5,0.5,1,1);
-                        
-                }
+                Interpolators o;
+                SolarSystem systemData = _SolarSystems[i.instanceId];
+                float4x4 modelMatrix = GenerateTRSMatrix(systemData.star.starPosition, systemData.star.starRadius); //Create TRS matrix
+
+                float4 vertexPosOS = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
+
+                //wobble
+                float noiseValue = pNoise(vertexPosOS.xyz);
+                float dist = distance(systemData.star.starPosition, playerPosition);
+                float maxWobbleMagnitude = _WobbleMagnitude * systemData.star.starRadius / 2.0; //modulate wobble amount by star radius
+                float wobbleMagnitude = lerp(0.0, maxWobbleMagnitude, systemData.fade);
+                vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue); 
+
+
+                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
+                VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
+                o.positionHCS = positionData.positionCS;
+
+                float2 uv = _UVBuffer[i.vertexId];
+                o.uv = uv;
+                o.fade = systemData.fade;
+                o.normWS = normalData.normalWS;
+                o.positionWS = positionData.positionWS.xyz;
+                o.positionHCS = positionData.positionCS;
+                o.mainColour = systemData.star.starColour;
+                o.mainColour += o.mainColour * 100.0 * sqrt(systemData.star.starRadius);
+                return o;
+
             }
-            float radiusFromLodLevel(int lodLevel)
-            {
-                switch(lodLevel)
-                {
-                    case 0:
-                        return 0.05;
-                        break;
-                    case 1:
-                        return 0.1;
-                        break;
-                    case 2:
-                        return 0.2;
-                        break;
-                    case 3:
-                        return 0.35;
-                        break;
-                    case 4:
-                        return 0.5;
-                        break;
-                    default:
-                        return 0.75;
-                        break;
-                        
-                }
-            }
+            
+            */
                 
             GeomData vert(uint id : SV_INSTANCEID)
             {
@@ -145,15 +135,17 @@ Shader "Custom/StarLowLODShader"
                 o.id = id;
                 //_Matrix = CreateMatrix(_PositionsLOD1[id], float3(1.0,1.0,1.0), float3(0.0, 1.0, 0.0), id);
                 //float4 posOS = mul(_Matrix, _PositionsLOD1[id]);
-                MeshProperties mp = _Properties[id];
-                float4 posOS = mul(mp.mat, float4(0.0, 0.0, 0.0, 1.0));
+                SolarSystem systemData = _LowLODSolarSystems[id];
+                float4x4 modelMatrix = GenerateTRSMatrix(systemData.star.starPosition, systemData.star.starRadius); //Create TRS matrix
+                float4 posOS = float4(systemData.star.starPosition, 1.0);
                 //can't use id to determine properties - let's use position
                 o.positionWS = mul(unity_ObjectToWorld, posOS);
-                int seed = GenerateRandom(o.positionWS.xy);
-                o.colour = mp.colour;
-                o.radius = mp.scale;
-                o.fade = mp.fade;
-                o.colour += o.colour * sqrt(o.radius);
+                o.colour = systemData.star.starColour;
+                o.radius = systemData.star.starRadius;
+                o.fade = systemData.fade;
+                o.colour += systemData.star.emissiveColour * sqrt(systemData.star.starRadius);
+                o.borderColour = systemData.star.borderColour;
+                o.borderWidth = systemData.star.borderWidthMultiplier;
                 //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
                 return o;
             }
@@ -201,6 +193,8 @@ Shader "Custom/StarLowLODShader"
                     o.positionWS = WSPositions[i];
                     o.uv = uvs[i];
                     o.colour = centre.colour;
+                    o.borderColour = centre.borderColour;
+                    o.borderWidth = centre.borderWidth;
                     outputStream.Append(o);
                 }
             }
@@ -220,12 +214,12 @@ Shader "Custom/StarLowLODShader"
 
 
                 //value.y += _Time.y;
-                float3 voronoiVal = voronoiNoise3D(value, _BorderWidth);
+                float3 voronoiVal = voronoiNoise3D(value, _BorderWidth * i.borderWidth);
 
                 //fwidth(value) is the absolute value of the partial derivative of value; it measures how much value changes across the pixel's surface
 	            float valueChange = length(fwidth(value)) * 0.5;
 	            float isBorder = 1 - smoothstep(0.05 - valueChange, 0.05 + valueChange, voronoiVal.z); //smoothly interpolate between 0 and 1 as the distance to the border varies around 0.05
-                return lerp(i.colour, _BorderColour, isBorder); //linearly interpolate between the border and cell colour based on the value of the parameter above.
+                return lerp(i.colour, i.borderColour, isBorder); //linearly interpolate between the border and cell colour based on the value of the parameter above.
             }
             ENDHLSL
         }

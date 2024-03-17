@@ -160,12 +160,9 @@ public class CDF
 
     public float[] GenerateInverseCDFLookUpArray() 
     {
-        //generate numValues of evenly spaced probabilities and store in an array.
         float[] probabilities = Enumerable.Range(0, tableSize).Select(i => 0.0f + i * (1.0f - 0.0f) / (tableSize - 1)).ToArray();
         float[] lookupTable = probabilities.Select(p => InvertCdf(p, 0.0f, 40f, 0.01f, 1000, 1.0f, kappa, 0.002f, 0.5f)).ToArray();
         lookupTable = probabilities.Select(p => InvertCdf(p, minRadius, maxRadius, differenceThreshold, numIntervals)).ToArray();
-        //Debug.Log($"Final prob: {probabilities[probabilities.Length - 1]}");
-        foreach (var rad in lookupTable) Debug.Log(rad);
         return lookupTable;
     }
 }

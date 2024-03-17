@@ -285,7 +285,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1298347911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -298,6 +298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 651ddceaa95500d409176c70b2942251, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  testing: 0
 --- !u!4 &1298347912
 Transform:
   m_ObjectHideFlags: 0
@@ -369,6 +370,18 @@ MonoBehaviour:
   chunkSize: 180
   renderDistance: 180
   lodSwitchDist: 2
+  galacticClusterMinMaxRadius: {x: 4, y: 20}
+  galacticClusterMinMaxStarSize: {x: 0.01, y: 0.05}
+  minMaxStarSpeedMultiplier: {x: 0.5, y: 3}
+  minMaxNumStarLayers: {x: 1, y: 1}
+  minMaxGridSize: {x: 1, y: 5}
+  clusterColours:
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0.092921734, b: 1, a: 0}
+  - {r: 0.22285557, g: 0, b: 1, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 0.5, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0.8089638, b: 1, a: 0}
   galaxyPositioner: {fileID: 7200000, guid: dfc3cc466ad085a49b27df663fe848fb, type: 3}
   galaxyLodSwitchDist: 2
   galaxyFadeDist: 5
@@ -414,14 +427,34 @@ MonoBehaviour:
   maxWavelength: 700
   minRadius: 0.2
   maxRadius: 10
-  colours:
-  - {r: 0, g: 0.62456584, b: 1, a: 0}
-  - {r: 0, g: 0.7666669, b: 1, a: 0}
+  starColours:
   - {r: 1, g: 1, b: 1, a: 0}
-  - {r: 1, g: 0.8365737, b: 0, a: 0}
-  - {r: 1, g: 0.42769682, b: 0, a: 0}
-  - {r: 0.972549, g: 0.14481398, b: 0, a: 0}
-  floatColours: []
+  - {r: 0, g: 0.7320416, b: 1, a: 0}
+  - {r: 1, g: 0.8988099, b: 0, a: 0}
+  - {r: 1, g: 0.22822624, b: 0, a: 0}
+  - {r: 1, g: 0.3921569, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0, a: 0}
+  starEmissiveColours:
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 0, g: 0.82805127, b: 0.990566, a: 0}
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0, a: 0}
+  starBorderColours:
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  - {r: 0.9245283, g: 0.23892304, b: 0, a: 0}
+  - {r: 1, g: 0.04673481, b: 0, a: 0}
+  - {r: 0.6226415, g: 0, b: 0.046177827, a: 0}
+  - {r: 1, g: 1, b: 1, a: 0}
+  starColourProbabilities:
+  - 0
+  - 0.02
+  - 0.4
+  - 0.55
+  - 0.85
+  - 0.95
   planetSphereGenerator: {fileID: 0}
   playerPosition: {fileID: 1538453083}
   planetMaterial: {fileID: 2100000, guid: ebc7ea8061e4f304a82733b1862fd134, type: 2}

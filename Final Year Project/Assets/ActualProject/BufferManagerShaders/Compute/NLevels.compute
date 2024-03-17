@@ -1,18 +1,10 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#pragma kernel CSMainNew
 #include "Assets/ActualProject/Helpers/Utility.hlsl"
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
 
 
-
-/*AppendStructuredBuffer<MeshProperties> _Properties;
-AppendStructuredBuffer<MeshProperties> _Properties2;*/
-//AppendStructuredBuffer<MeshProperties> _Properties3;
-//AppendStructuredBuffer<GalaxyProperties> _Properties4;
-AppendStructuredBuffer<MeshProperties> _Properties5;
+AppendStructuredBuffer<GalacticCluster> _GalacticClusterBuffer;
 
 RWStructuredBuffer<uint> _DispatchBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
@@ -63,6 +55,15 @@ RWStructuredBuffer<Plane> _ViewFrustumPlanes;
 RWStructuredBuffer<Plane> _ViewFrustumPlanesAtTrigger;
 bool switched;
 
+//Galactic cluster properties 
+float2 galacticClusterMinMaxRadius;
+float2 galacticClusterMinMaxStarSize;
+float2 minMaxStarSpeedMultiplier;
+float2 minMaxNumStarLayers;
+float2 minMaxGridSize;
+
+float4 clusterColours[6];
+
 uint ShouldCullSphere(float3 centre, float radius)
 {
 
@@ -94,120 +95,8 @@ uint IntersectSphereAtTrigger(float3 centre, float radius)
     return 1;
 }
 
-//actualPosition, 1, _ChunksBuffer[0].chunkType)
-void AppendToAppropriateBuffer(float3 actualPosition, float3 rotation, float scale, int chunkType, float dist, float4 colour, float fade, float random)
-{
-    
-    /*if (_TriggerBuffer[0].chunkType > chunkType)
-    {
-        //only append positions if they're in front of the player
-        if (IntersectSphereAtTrigger(actualPosition, _TriggerBuffer[0].chunkSize) == 0 && 1 < 0)
-        {
-            return;
-        }
-        
-    }*/
-    MeshProperties mp = GenerateMeshProperties(actualPosition, rotation, scale, chunkType, colour, fade);
-
-    switch(chunkType)
-    {
-        /*case 0:
-            _Properties.Append(mp);
-            break;
-        case 1:
-            _Properties2.Append(mp);
-            break;*/
-        case 2:
-            //If closer, it's appended to the solarSystems buffer by the solarSystems compute shader, so we don't want to add it again here.
-            break;
-        case 3:
-            break;
-        case 4:
-            _Properties5.Append(mp);
-            break;
-    }
-}
-[numthreads(8,8,8)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
-    if(id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist) return;
-    int currentChunkCoordX = round(playerPosition.x / float(_ChunksBuffer[0].chunkSize));
-    int currentChunkCoordY = round(playerPosition.y / float(_ChunksBuffer[0].chunkSize));
-    int currentChunkCoordZ = round(playerPosition.z / float(_ChunksBuffer[0].chunkSize));
-
-    int curXOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordX + id.x; 
-    int curYOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordY + id.y; 
-    int curZOffset = -round(_ChunksBuffer[0].chunksInViewDist/2) + currentChunkCoordZ + id.z; 
-
-    int3 viewedChunkCoord = int3(curXOffset, curYOffset, curZOffset);
-    uint width;
-    uint height;
-
-    float3 actualPosition = viewedChunkCoord * _ChunksBuffer[0].chunkSize;
-    float dist = length(actualPosition - playerPosition);
-    ChunkIdentifier cid;
-    cid.pos = actualPosition;
-    cid.chunksInViewDist = chunksVisibleInViewDist;
-    
-    if (dist < lodSwitchDist)
-    {
-
-        //chunk currently in the chunk buffer 
-        ChunkIdentifier prevCid = _ChunksBuffer[0];
-        //If the chunk currently in the buffer equals the currently viewed chunk, do nothing
-        if(prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z)
-        {
-
-        }else{
-        //Otherwise, we have moved close enough to a new chunk to trigger a level of detail change, so increase the number of threads spawned to accommodate 
-            //for the reduced chunk size and increased number of chunks in view.
-             cid.chunksInViewDist = min(_ChunksBuffer[0].chunksInViewDist * 2, chunksVisibleInViewDist * 5);
-             cid.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, 1);
-             cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 0);
-            _ChunksBuffer[0] = cid;
-            _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 8);
-            _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 8);
-            _DispatchBuffer[2] = min(2 * _DispatchBuffer[2], 8);
-            
-        }
-
-    }else{
-        //If we're not close enough to add another chunk to the buffer, then grab whatever is currently in the buffer'
-        ChunkIdentifier prevCid = _ChunksBuffer[0];
-        if(prevCid.pos.x == -0.1 && prevCid.pos.y == -0.1 && prevCid.pos.z == -0.1 || prevCid.pos.x == cid.pos.x && prevCid.pos.y == cid.pos.y && prevCid.pos.z == cid.pos.z ) //if there is currently nothing in the buffer OR we've just moved away from a chunk enough such that we want to drop its level of detail
-        {
-            //reduce the number of threads we wish to spawn, and add the current position to our properties list with an lod of 2
-            /* cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist/2, chunksVisibleInViewDist);// chunksVisibleInViewDist;
-             cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
-             cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 5);
-             _ChunksBuffer[0] = cid;
-            _DispatchBuffer[0] = max(_DispatchBuffer[0]/2, 1);
-            _DispatchBuffer[1] = max(_DispatchBuffer[1]/2, 1);
-            _DispatchBuffer[2] = max(_DispatchBuffer[2]/2, 1);*/
-
-
-            //if the chunk we added to the chunk list in our previous frame equals the one we're looking at currently, that means we need to remove it from the buffer as we're no longer close enough to view it at a higher lod'
-            if(_ChunksBufferPrevFrame[0].pos.x == cid.pos.x && _ChunksBufferPrevFrame[0].pos.y == cid.pos.y && _ChunksBufferPrevFrame[0].pos.z == cid.pos.z)
-            {
-                _ChunksBuffer[0].pos  = float3(-0.1, -0.1, -0.1);
-            }
-
-        }
-        float random = Hash31(actualPosition);
-        float scale = lerp(0.25, 2.0, random);
-        float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
-        float3 rotation = Hash33(actualPosition) * 2.0 * PI;
-        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0, random);
-        //_DispatchBuffer[0] = numThreadGroupsX;
-        //_DispatchBuffer[1] = numThreadGroupsY;
-        //_DispatchBuffer[2] = numThreadGroupsZ;
-    }
-    _ChunksBufferPrevFrame[0] = _ChunksBuffer[0];
-
-}
-
 [numthreads(8, 8, 8)]
-void CSMainNew(uint3 id : SV_DispatchThreadID)
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
     //chunksBuffer[0].chunkType stores the scale of the level currently being viewed
     if (id.x >= _ChunksBuffer[0].chunksInViewDist || id.y >= _ChunksBuffer[0].chunksInViewDist || id.z >= _ChunksBuffer[0].chunksInViewDist)
@@ -335,10 +224,8 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
             {
                 //chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType)
                 cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
-                //cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
-                //cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
-                cid.chunksInViewDist = _ChunksBuffer[0].chunksInViewDist / 2;
-                cid.chunkSize = _ChunksBuffer[0].chunkSize * 2;
+                cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
+                cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
                 cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 4);
                 _ChunksBuffer[0] = cid;
 
@@ -376,7 +263,7 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
         {
             //_Properties.Append(GenerateMeshProperties(actualPosition, 1, 0));
         }
-        else if (_ChunksBuffer[0].chunkType)
+        else if (_ChunksBuffer[0].chunkType && _ChunksBuffer[0].chunkType != 2)
         {
             //Otherwise, we have moved close enough to a new chunk to trigger a level of detail change, so increase the number of threads spawned to accommodate 
             //for the reduced chunk size and increased number of chunks in view.
@@ -416,13 +303,34 @@ void CSMainNew(uint3 id : SV_DispatchThreadID)
 
         }
         float random = Hash31(actualPosition);
-        float scale = lerp(4.0, 20.0, random);
-        if (ShouldCullSphere(actualPosition, scale) == 0u)
-            return; // view frustum culling
-        float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
-        float3 rotation = Hash33(actualPosition) * 2.0 * PI;
-        AppendToAppropriateBuffer(actualPosition, rotation, scale, _ChunksBuffer[0].chunkType, dist, colour, 1.0, random);
+
+
+        if(_ChunksBuffer[0].chunkType == 4)
+        {
+            GalacticCluster gc;
+            float random = Hash31(actualPosition);
+            float random2 = Hash31(random);
+
+
+            float scale = lerp(galacticClusterMinMaxRadius.x, galacticClusterMinMaxRadius.y, random);
+            if (ShouldCullSphere(actualPosition, scale) == 0u)
+                return; // view frustum culling
+            float4 colour = lerp(float4(1.0, 0.0, 0.0, 1.0), float4(0.0, 0.0, 1.0, 1.0), random);
+            float3 rotation = Hash33(actualPosition) * 2.0 * PI;
+            //MeshProperties GenerateMeshProperties(float3 position, float scale, int lodLevel, float4 colour, float fade)
+            MeshProperties mp = GenerateMeshProperties(actualPosition, scale, _ChunksBuffer[0].chunkType, colour, 1.0);
+            gc.mp = mp;
+            gc.maxStarSize = lerp(galacticClusterMinMaxStarSize.x, galacticClusterMinMaxStarSize.y, random);
+            gc.numStarLayers = lerp(minMaxNumStarLayers.x, minMaxNumStarLayers.y, random);
+            gc.starSpeedMultiplier = lerp(minMaxStarSpeedMultiplier.x, minMaxStarSpeedMultiplier, random);
+            gc.gridSize = int(round(lerp(minMaxGridSize.x, minMaxGridSize.y, random)));
+            int randomToIndex = floor(random * 6);
+            int randomToIndex2 = floor(random2 * 6);
+            gc.starColour1 = clusterColours[randomToIndex];
+            gc.starColour2 = clusterColours[randomToIndex2];
+            _GalacticClusterBuffer.Append(gc);
+        }
+
     }
 
 }
-
