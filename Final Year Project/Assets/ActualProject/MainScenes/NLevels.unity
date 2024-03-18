@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414727, b: 0.12107857, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -362,7 +362,7 @@ MonoBehaviour:
   _EmissionColour: {r: 1, g: 1, b: 1, a: 0}
   _EmissionColour2: {r: 0.0048109293, g: 1, b: 0, a: 0}
   chunkManager: {fileID: 7200000, guid: b9b618aadf82af244aa6138013b0a99d, type: 3}
-  timeStep: 0.1
+  timeStep: 1
   lodSwitchBackDist: 20
   dontSpawnRadius: 5
   triggerMaterial: {fileID: 2100000, guid: 2ff037a1ff470d343ab3e829ed51a667, type: 2}
@@ -372,8 +372,8 @@ MonoBehaviour:
   lodSwitchDist: 2
   galacticClusterMinMaxRadius: {x: 4, y: 20}
   galacticClusterMinMaxStarSize: {x: 0.01, y: 0.05}
-  minMaxStarSpeedMultiplier: {x: 0.5, y: 3}
-  minMaxNumStarLayers: {x: 1, y: 1}
+  minMaxStarSpeedMultiplier: {x: 15, y: 30}
+  minMaxNumStarLayers: {x: 3, y: 5}
   minMaxGridSize: {x: 1, y: 5}
   clusterColours:
   - {r: 1, g: 0, b: 0, a: 0}
@@ -388,9 +388,9 @@ MonoBehaviour:
   minMaxMinimumEccentricity: {x: 0.4, y: 0.7}
   minMaxMaximumEccentricity: {x: 0.7, y: 1}
   minMaxAngularOffsetMultiplier: {x: 0, y: 8}
-  minMaxHaloRadius: {x: 1, y: 4}
-  minMaxBulgeRadius: {x: 0.02, y: 0.5}
-  minMaxDiskRadius: {x: 0.05, y: 1}
+  minMaxHaloRadius: {x: 1, y: 8}
+  minMaxBulgeRadius: {x: 0.02, y: 1}
+  minMaxDiskRadius: {x: 0.05, y: 2}
   minMaxGalaxyDensity: {x: 0.5, y: 2}
   galaxyCentreColours:
   - {r: 1, g: 0, b: 0, a: 0}
@@ -404,7 +404,7 @@ MonoBehaviour:
   - {r: 0, g: 0.14176854, b: 0.5471698, a: 0}
   minMaxNumParticles: 1027000010270000
   cdfBulgeRadius: 0
-  centralIntensity: 0.4
+  centralIntensity: 0.2
   differenceThreshold: 0.01
   kappa: 0.01
   cdfScaleLength: 0
@@ -425,8 +425,9 @@ MonoBehaviour:
   maxLuminosity: 100000
   minWavelength: 350
   maxWavelength: 700
-  minRadius: 0.2
+  minRadius: 1
   maxRadius: 10
+  minMaxRotationSpeed: {x: 0.2, y: 1}
   starColours:
   - {r: 1, g: 1, b: 1, a: 0}
   - {r: 0, g: 0.7320416, b: 1, a: 0}

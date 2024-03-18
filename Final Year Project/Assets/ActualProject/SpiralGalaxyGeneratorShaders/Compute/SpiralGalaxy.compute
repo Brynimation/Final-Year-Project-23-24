@@ -226,7 +226,7 @@ float3 GetPointOnEllipse(uint id)
     float angularVelocity = GetExpectedAngularVelocity(id, semiMajorAxis);
     float semiMinorAxis = semiMajorAxis * sqrt(1.0 - pow(eccentricity, 2));//eccentricity * semiMajorAxis;
     float currentAngularOffset = GetAngularOffset(id);
-    float theta = GetRandomAngle(id) + angularVelocity * _time * _TimeStep;
+    float theta = GetRandomAngle(id) + angularVelocity * _time * _TimeStep * 5.0;
     return calculatePosition(theta, currentAngularOffset, semiMajorAxis, semiMinorAxis, id);
 }
 

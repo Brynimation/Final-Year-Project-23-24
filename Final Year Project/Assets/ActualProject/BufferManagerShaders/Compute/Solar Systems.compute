@@ -26,6 +26,8 @@ float maxRadius;
 float minWavelength;
 float maxWavelength;
 
+float2 minMaxRotationSpeed;
+
 float4 colours[6];
 float4 emissiveColours[6];
 float4 borderColours[6];
@@ -190,7 +192,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             
             //calculate angular velocity and current position
             float initialAngle = (float(i)/float(system.planetCount)) * 2.0 * PI;
-            float angle = initialAngle + CalculatePlanetAngularVelocity(semiMajorAxis, system.star.starMass, 1.0) * time * timeStep;
+            float angle = initialAngle + CalculatePlanetAngularVelocity(semiMajorAxis, system.star.starMass, 1.0) * time * timeStep * 0.25;
             float x = semiMajorAxis * cos(angle);
             float z = semiMinorAxis * sin(angle);
             planet.position = actualPosition + float3(x, 0, z);
@@ -203,23 +205,26 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
             //assign properties
             planet.mass = calculateSphereMass(planet.radius, 1.0);
             planet.colour = float4(0.8, 0.1, 0.4, 1.0);
-            planet.rotationSpeed = 10.0 * time * timeStep;
+            planet.rotationSpeed = lerp(minMaxRotationSpeed.x, minMaxRotationSpeed.y, planetRandom3) * time * timeStep;
             planet.rotationAxis = float3(0.0, 1.0, 0.0);
             planet.primaryBody = system.star;
             PlanetTerrainProperties planetProperties = (PlanetTerrainProperties) 0;
             planetProperties.baseRoughness = lerp(2.0, 6.0, planetRandom);
             planetProperties.roughness = lerp(1.0, 3.0, planetRandom2);
             planetProperties.persistence = lerp(0.25, 0.75, planetRandom3);
-            planetProperties.octaves = ceil(lerp(1, 4, planetRandom2));
-            planetProperties.minVal = lerp(0.75, 1.25, planetRandom);
+            planetProperties.octaves = ceil(lerp(1, 8, planetRandom2));
+            planetProperties.minVal = lerp(0.0, 0.5, planetRandom);
             planetProperties.noiseCentre = lerp(float3(0.0, 0.0, 0.0), float3(32.0, 11.5, 17.2), planetRandom3);
             planetProperties.noiseStrength = lerp(0.5, 1.5, planetRandom);
             
-            int randomToIndex = floor(Hash1(planetRandom3) * 4);
+            int randomToIndex = floor(Hash1(planetRandom) * 4);
+            int randomToIndex2 = floor(Hash1(planetRandom2) * 4);
+            int randomToIndex3 = floor(Hash1(planetRandom3) * 4);
             PlanetTerrainColours colours = (PlanetTerrainColours) 0;
+            
             colours.colours[0] = oceanColours[randomToIndex];
-            colours.colours[1] = groundColours[randomToIndex];
-            colours.colours[2] = mountainColours[randomToIndex];
+            colours.colours[1] = groundColours[randomToIndex2];
+            colours.colours[2] = mountainColours[randomToIndex3];
             colours.colours[3] = mountainTopColours[randomToIndex];
             
             planetProperties.colours = colours;

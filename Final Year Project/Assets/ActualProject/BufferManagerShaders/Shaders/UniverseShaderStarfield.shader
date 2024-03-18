@@ -70,14 +70,13 @@ Shader "Custom/UniverseShaderStarField"
                     float4 colour : COLOR;
                     float2 uv : TEXCOORD0;
                     float radius : TEXCOORD2;
-                    uint id : TEXCOORD3;
-                    float3 forward: TEXCOORD4;
-                    float3 right : TEXCOORD5;
-                    float3 up : TEXCOORD6;
-                    int numStarLayers : TEXCOORD7;
-                    float starSpeedMultiplier : TEXCOORD8;
-                    int gridSize : TEXCOORD9;
-                    float maxStarSize : TEXCOORD10;
+                    float3 forward: TEXCOORD3;
+                    float3 right : TEXCOORD4;
+                    float3 up : TEXCOORD5;
+                    float numStarLayers : TEXCOORD6;
+                    float starSpeedMultiplier : TEXCOORD7;
+                    float gridSize : TEXCOORD8;
+                    float maxStarSize : TEXCOORD9;
                     float4 starColour1 : COLOR2;
                     float4 starColour2 : COLOR3;
                 };
@@ -90,10 +89,10 @@ Shader "Custom/UniverseShaderStarField"
                     float2 uv : TEXCOORD0;
                     float3 positionWS : TEXCOORD1;
                     float4 centreHCS : TEXCOORD2;
-                    int numStarLayers : TEXCOORD3;
-                    float starSpeedMultiplier : TEXCOORD4;
-                    int gridSize : TEXCOORD5;
-                    float maxStarSize : TEXCOORD6;
+                    int numStarLayers : TEXCOORD6;
+                    float starSpeedMultiplier : TEXCOORD7;
+                    int gridSize : TEXCOORD8;
+                    float maxStarSize : TEXCOORD9;
                     float4 starColour1 : COLOR2;
                     float4 starColour2 : COLOR3;
                 };
@@ -102,7 +101,6 @@ Shader "Custom/UniverseShaderStarField"
                 GeomData vert(uint id : SV_INSTANCEID)
                 {
                     GeomData o;
-                    o.id = id;
                     GalacticCluster gc = _GalacticClusterBuffer[id];
                     float4 posOS = mul(gc.mp.mat, float4(0.0, 0.0, 0.0, 1.0));
                     o.positionWS = mul(unity_ObjectToWorld, posOS);
@@ -112,9 +110,9 @@ Shader "Custom/UniverseShaderStarField"
                     float3 worldUp = float3(0.0f, 1.0f, 0.0f);
                     o.right = normalize(cross(o.forward, worldUp));
                     o.up = normalize(cross(o.forward, o.right));
-                    o.numStarLayers = gc.numStarLayers;
+                    o.numStarLayers = (float) gc.numStarLayers;
                     o.starSpeedMultiplier = gc.starSpeedMultiplier;
-                    o.gridSize = gc.gridSize;
+                    o.gridSize = (float) gc.gridSize;
                     o.maxStarSize = gc.maxStarSize;
                     o.starColour1 = gc.starColour1;
                     o.starColour2 = gc.starColour2;
@@ -160,10 +158,9 @@ Shader "Custom/UniverseShaderStarField"
                         o.positionWS = float4(WSPositions[i], 1.0f);
                         o.uv = uvs[i];
                         o.colour = centre.colour;
-
-                        o.numStarLayers = centre.numStarLayers;
+                        o.numStarLayers = (int) centre.numStarLayers;
                         o.starSpeedMultiplier = centre.starSpeedMultiplier;
-                        o.gridSize = centre.gridSize;
+                        o.gridSize = (int) centre.gridSize;
                         o.starColour1 = centre.starColour1;
                         o.starColour2 = centre.starColour2;
                         o.maxStarSize = centre.maxStarSize;
@@ -262,12 +259,12 @@ Shader "Custom/UniverseShaderStarField"
                     float2 p = i.uv * 2.0 - 1.0;//Convert range of uv coordinates to (-1, 1)
                     p = mul(Rotate(t), p);
 
-                    for(float j = 0; j < 1.0; j += 1.0/float(_NumStarLayers))
+                    for(float j = 0; j < 1.0; j += 1.0/(float)i.numStarLayers)
                     {
                         float depth = frac(j + t);
                         float scale = lerp(2.0, 0.5, depth);
                         float fade = bellShapeSineFunction(depth);
-                        col += DrawStarLayer(p * scale + j * 453.2, _GridSize, i.starColour1, i.starColour2, i.maxStarSize, i.starSpeedMultiplier) * fade;
+                        col += DrawStarLayer(p * scale + j * 453.2, i.gridSize, i.starColour1, i.starColour2, i.maxStarSize, i.starSpeedMultiplier) * fade;
                     }
 
                     return col;

@@ -64,7 +64,7 @@ Shader "Custom/GalaxyStarSphere"
                 o.positionHCS = positionData.positionCS;
 
                 float2 uv = _UVBuffer[i.vertexId];
-                o.colour = star.colour + star.colour * _Emission;
+                o.colour = star.colour + star.colour * _Emission * 3.0;
                 o.uv = uv;
                 return o;
             }

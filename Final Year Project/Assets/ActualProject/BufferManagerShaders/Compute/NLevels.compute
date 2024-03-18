@@ -321,11 +321,15 @@ void CSMain(uint3 id : SV_DispatchThreadID)
             MeshProperties mp = GenerateMeshProperties(actualPosition, scale, _ChunksBuffer[0].chunkType, colour, 1.0);
             gc.mp = mp;
             gc.maxStarSize = lerp(galacticClusterMinMaxStarSize.x, galacticClusterMinMaxStarSize.y, random);
-            gc.numStarLayers = lerp(minMaxNumStarLayers.x, minMaxNumStarLayers.y, random);
+            gc.numStarLayers = (int)  round(lerp(minMaxNumStarLayers.x, minMaxNumStarLayers.y, random));
             gc.starSpeedMultiplier = lerp(minMaxStarSpeedMultiplier.x, minMaxStarSpeedMultiplier, random);
-            gc.gridSize = int(round(lerp(minMaxGridSize.x, minMaxGridSize.y, random)));
+            gc.gridSize = (int)  round(lerp(minMaxGridSize.x, minMaxGridSize.y, random));
             int randomToIndex = floor(random * 6);
             int randomToIndex2 = floor(random2 * 6);
+            if (randomToIndex == randomToIndex2)
+            {
+                randomToIndex = (randomToIndex + 1) % 6;
+            }
             gc.starColour1 = clusterColours[randomToIndex];
             gc.starColour2 = clusterColours[randomToIndex2];
             _GalacticClusterBuffer.Append(gc);

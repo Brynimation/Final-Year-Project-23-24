@@ -39,7 +39,6 @@ public class UIMenu : MonoBehaviour
         renderDistanceSlider.onValueChanged.AddListener((value) =>
         {
             SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(value * 180));
-            Debug.Log(renderDistance);
         });
         starCountSlider.wholeNumbers = true;
         starCountSlider.minValue = 10;
@@ -51,18 +50,18 @@ public class UIMenu : MonoBehaviour
             SetVariableAndText(ref starCount, ref starCountText, Mathf.RoundToInt(value * 100));
         });
         planetResSlider.wholeNumbers = true;
-        planetResSlider.value = 8;
         planetResSlider.minValue = 1;
         planetResSlider.maxValue = 24;
+        planetResSlider.value = 8;
         SetVariableAndText(ref planetRes, ref planetResText, Mathf.RoundToInt(planetResSlider.value));
         planetResSlider.onValueChanged.AddListener((value) =>
         {
             SetVariableAndText(ref planetRes, ref planetResText, Mathf.RoundToInt(value));
         });
         starResSlider.wholeNumbers = true;
-        starResSlider.value = 8;
         starResSlider.minValue = 1;
         starResSlider.maxValue = 24;
+        starResSlider.value = 8;
         SetVariableAndText(ref starRes, ref starResText, Mathf.RoundToInt(starResSlider.value));
         starResSlider.onValueChanged.AddListener((value) =>
         {

@@ -209,6 +209,7 @@ public class BufferManager : MonoBehaviour
     public float maxWavelength;
     public float minRadius;
     public float maxRadius;
+    public Vector2 minMaxRotationSpeed;
 
     //Star colours
     public Color[] starColours;
@@ -506,6 +507,7 @@ public class BufferManager : MonoBehaviour
 
         solarSystemCreator.SetFloat("solarSystemSwitchDist", solarSystemSwitchDist);
         solarSystemCreator.SetVector("playerPosition", playerPosition.position);
+        solarSystemCreator.SetVector("minMaxRotationSpeed", minMaxRotationSpeed);
         solarSystemCreator.SetFloat("time", Time.time);
         solarSystemCreator.SetFloat("timeStep", timeStep);
         solarSystemCreator.SetFloats("colours", floatStarColours);
