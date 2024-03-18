@@ -277,6 +277,8 @@ public class BufferManager : MonoBehaviour
     public ComputeBuffer bigGalaxyProperties;
     public ComputeBuffer bigGalaxyPropertiesCount;
 
+    [Header("UI")]
+    [SerializeField] GameObject ui;
     int mainKernelIndex;
     int galaxyPositionerIndex;
     int solarSystemCreatorIndex;
@@ -304,6 +306,7 @@ public class BufferManager : MonoBehaviour
     }
     void Start()
     {
+        Time.timeScale = 1.0f;
         Debug.Log("start!");
         debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
@@ -565,6 +568,10 @@ public class BufferManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Q)) 
+        {
+            ui.SetActive(true);
+        }
         //positionsBuffer.SetCounterValue(0);
         //positionsBuffer2.SetCounterValue(0)
         floatStarColours = ColourToFloatArray(starColours);

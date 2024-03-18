@@ -4,6 +4,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 public class UIMenu : MonoBehaviour
 {
+
+    [SerializeField] Material skyboxMat;
     [SerializeField] Slider renderDistanceSlider;
     [SerializeField] TMP_Text renderDistanceText;
 
@@ -15,12 +17,19 @@ public class UIMenu : MonoBehaviour
 
     [SerializeField] Slider starResSlider;
     [SerializeField] TMP_Text starResText;
+    [SerializeField] GameObject instructionsWindow;
+    [SerializeField] Button HowTo;
+    [SerializeField] Button Quit;
+    [SerializeField] Button closeWindow;
 
+    [Range(0, 0.5f)]
+    public float starSpeed;
     public static int renderDistance;
     public static int starCount;
     public static int planetRes;
     public static int starRes;
     public static bool useChosenSettings = true;
+
 
     [SerializeField] Button ExploreButton;
     void SetVariableAndText(ref int variable, ref TMP_Text text, int value) 
@@ -30,6 +39,23 @@ public class UIMenu : MonoBehaviour
     }
     void Start()
     {
+        Time.timeScale = 1.0f;
+        instructionsWindow.SetActive(false);
+
+        HowTo.onClick.AddListener(() =>
+        {
+            instructionsWindow.SetActive(true);
+        });
+        closeWindow.onClick.AddListener(() =>
+        {
+            instructionsWindow.SetActive(false);
+        });
+        Quit.onClick.AddListener(() =>
+        {
+            Application.Quit();
+        });
+        RenderSettings.skybox = skyboxMat;
+        skyboxMat.SetFloat("_StarSpeed", starSpeed);
         useChosenSettings = true;
         renderDistanceSlider.wholeNumbers = true;
         renderDistanceSlider.minValue = 1;
