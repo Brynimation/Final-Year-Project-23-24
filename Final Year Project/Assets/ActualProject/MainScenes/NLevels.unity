@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731707, g: 0.13414727, b: 0.12107857, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -762,10 +762,10 @@ RectTransform:
   m_Father: {fileID: 1841606414}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0.16784668, y: 0}
+  m_SizeDelta: {x: -2313.1, y: -980}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1171354794
 MonoBehaviour:
@@ -1384,7 +1384,7 @@ MonoBehaviour:
   lowLODSolarSystemMaterial: {fileID: 2100000, guid: af0cd03d29b5fda4186a027bdfee5b0e, type: 2}
   lowLODGalaxyMaterial: {fileID: 2100000, guid: c75b576fde5e93f4484e5db17901b84c, type: 2}
   galacticClusterMaterial: {fileID: 2100000, guid: 4f18f82579858574f933651c432df049, type: 2}
-  ui: {fileID: 1841606409}
+  overlayUI: {fileID: 1841606409}
 --- !u!4 &1960476557
 Transform:
   m_ObjectHideFlags: 0

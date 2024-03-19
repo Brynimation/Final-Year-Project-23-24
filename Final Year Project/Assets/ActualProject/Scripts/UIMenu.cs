@@ -37,6 +37,11 @@ public class UIMenu : MonoBehaviour
         variable = value;
         text.SetText(variable.ToString());
     }
+    void SetVariableAndText(ref int variable, ref TMP_Text text, int varVal, int textVal) 
+    {
+        variable = varVal;
+        text.SetText(textVal.ToString());
+    }
     void Start()
     {
         Time.timeScale = 1.0f;
@@ -61,10 +66,10 @@ public class UIMenu : MonoBehaviour
         renderDistanceSlider.minValue = 1;
         renderDistanceSlider.maxValue = 7;
         renderDistanceSlider.value = 2;
-        SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(renderDistanceSlider.value * 180));
+        SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(renderDistanceSlider.value * 180), (int) renderDistanceSlider.value);
         renderDistanceSlider.onValueChanged.AddListener((value) =>
         {
-            SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(value * 180));
+            SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(value * 180), (int)value);
         });
         starCountSlider.wholeNumbers = true;
         starCountSlider.minValue = 10;
@@ -104,5 +109,9 @@ public class UIMenu : MonoBehaviour
     void Update()
     {
         
+    }
+    private void OnDestroy()
+    {
+        skyboxMat.SetFloat("_StarSpeed", 0.0f);
     }
 }

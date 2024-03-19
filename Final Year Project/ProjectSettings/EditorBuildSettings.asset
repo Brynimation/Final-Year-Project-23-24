@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/ActualProject/MainScenes/NLevels.unity
     guid: d0d3f0d7968868846adef118c2c4bbac
-  - enabled: 1
-    path: Assets/ActualProject/MainScenes/TestFPS.unity
-    guid: 2d0d9a06eb9a497459336978907e36a0
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   m_configObjects: {}

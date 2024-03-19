@@ -277,8 +277,6 @@ public class BufferManager : MonoBehaviour
     public ComputeBuffer bigGalaxyProperties;
     public ComputeBuffer bigGalaxyPropertiesCount;
 
-    [Header("UI")]
-    [SerializeField] GameObject ui;
     int mainKernelIndex;
     int galaxyPositionerIndex;
     int solarSystemCreatorIndex;
@@ -291,6 +289,7 @@ public class BufferManager : MonoBehaviour
 
     ComputeBuffer debugBuffer;
 
+    [SerializeField] GameObject overlayUI;
     private float[] ColourToFloatArray(Color[] colours) 
     {
         return colours.SelectMany(c => new float[] { c.r, c.g, c.b, c.a }).ToArray();
@@ -306,7 +305,6 @@ public class BufferManager : MonoBehaviour
     }
     void Start()
     {
-        Time.timeScale = 1.0f;
         Debug.Log("start!");
         debugBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
         debugBuffer.SetData(new Vector3[] { Vector3.one * 2567.83f });
@@ -337,7 +335,13 @@ public class BufferManager : MonoBehaviour
         starSphereGeneratorIndex = starSphereGenerator.FindKernel("CSMain");
         planetSphereGeneratorIndex = planetSphereGenerator.FindKernel("CSMain");
 
-        maxInstanceCount = (int)Mathf.Pow(2 * chunksVisibleInViewDist  + 1, 3);
+        //The maximum chunksVisibleInViewDist value is the current value * 4. However, given the player's FOV, the maximum number of bodies they will be able to SEE, and hence will ever be added to the buffers
+        //at any one time, is AT MOST half of this (since we perform view frustum culling). Therefore, we initialise the buffers with the following size:
+            //(chunksVisibleInViewDist * 2) - maximum number of visible objects along a single axis
+            //premultiply by 2 - objects spawn in both the negative and positive directions along each axis.
+            //+ 1 - factor in the player's current chunk position
+            //^3 - consider all three axes by raising to the third power.
+        maxInstanceCount = (int)Mathf.Pow(2 * (chunksVisibleInViewDist * 2)  + 1, 3);
 
         int numVertsPerStar = starResolution * starResolution * 4 * 6; //Plane of verts made up of groups of quads. 1 plane for each of the 6 faces of a cube
         int numIndicesPerStar = 6 * 6 * starResolution * starResolution; //indicesPerTriangle * trianglesPerQuad * 6 faces of cube * resolution^2
@@ -401,12 +405,19 @@ public class BufferManager : MonoBehaviour
         viewFrustumPlanesBuffer = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
         viewFrustumPlanesBufferAtTrigger = new ComputeBuffer(6, sizeof(float) * 4, ComputeBufferType.Structured);
 
-        chunkOffsetBuffer = new ComputeBuffer(1, sizeof(float) * 3, ComputeBufferType.Structured);
+        chunkOffsetBuffer = new ComputeBuffer(maxInstanceCount, sizeof(float) * 3, ComputeBufferType.Append);
         chunksBufferPrevFrame.SetData(chunksVisible);
         debugPosBuffer = new ComputeBuffer(maxInstanceCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3Int)), ComputeBufferType.Append);
         dispatchBuffer = new ComputeBuffer(3, sizeof(uint), ComputeBufferType.IndirectArguments);
 
-        dispatchBuffer.SetData(new uint[3] { (uint) chunksVisibleInViewDist, (uint)chunksVisibleInViewDist, (uint)chunksVisibleInViewDist });
+        uint numThreadsX, numThreadsY, numThreadsZ;
+        chunkManager.GetKernelThreadGroupSizes(mainKernelIndex, out numThreadsX, out numThreadsY, out numThreadsZ);
+        int numThreadGroupsX = Mathf.CeilToInt((float) chunksVisibleInViewDist / (float) numThreadsX);
+        int numThreadGroupsY = Mathf.CeilToInt((float) chunksVisibleInViewDist / (float) numThreadsY);
+        int numThreadGroupsZ = Mathf.CeilToInt((float) chunksVisibleInViewDist / (float) numThreadsZ);
+        Debug.Log($"num threads: {numThreadGroupsX}");
+
+        dispatchBuffer.SetData(new uint[3] { (uint) numThreadGroupsX, (uint)numThreadGroupsY, (uint)numThreadGroupsZ});
 
         //Setting up the inverse cdf lookup table
         float maxHaloRadius = minMaxHaloRadius.y;
@@ -568,9 +579,10 @@ public class BufferManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         if (Input.GetKeyDown(KeyCode.Q)) 
         {
-            ui.SetActive(true);
+            overlayUI.SetActive(true);
         }
         //positionsBuffer.SetCounterValue(0);
         //positionsBuffer2.SetCounterValue(0)
@@ -683,6 +695,30 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
+        ChunkIdentifier[] chunk = new ChunkIdentifier[1];
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            chunksBuffer.GetData(chunk);
+            foreach (var c in chunk)
+            {
+                Debug.Log(c.pos);
+                Debug.Log(c.chunkType);
+                Debug.Log(c.chunkSize);
+                Debug.Log($"Chunks visible in view dist: {c.chunksInViewDist}");
+            }
+        }
+        Vector3[] offset = new Vector3[maxInstanceCount];
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            //Debug.Log(Camera.main.transform.forward);
+            chunkOffsetBuffer.GetData(offset);
+            foreach (var o in offset) 
+            {
+                if (o != Vector3.zero) Debug.Log($"{o} has entered the conditional!");
+            }
+        }
+        chunkOffsetBuffer.SetCounterValue(0);
+
         /*
         int[] planetArgs = new int[5];
         int[] solarSystemArgs = new int[5];
@@ -704,14 +740,6 @@ public class BufferManager : MonoBehaviour
 
             Debug.Log($"Actual position: {actualPositions[0]}");
             Debug.Log($"planets: {planetArgs[1]}, low lod solars {lowSolarArgs[1]}, high lod solars {solarSystemArgs[1]}, low lod galaxies {lowGalaxyArgs[1]}, high lod galaxies {bigGalaxyArgs[0]}, clusters {clusterArgs[1]}");
-        }
-
-        Vector3[] offset = new Vector3[1];
-        if (Input.GetKeyDown(KeyCode.C)) 
-        {
-            //Debug.Log(Camera.main.transform.forward);
-            chunkOffsetBuffer.GetData(offset);
-            Debug.Log(offset[0]);
         }
 
         MeshProperties[] mp = new MeshProperties[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
@@ -750,17 +778,6 @@ public class BufferManager : MonoBehaviour
                 Debug.Log(x);
             }
         }
-        ChunkIdentifier[] chunk = new ChunkIdentifier[1];
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            chunksBuffer.GetData(chunk);
-            foreach (var c in chunk)
-            {
-                Debug.Log(c.pos);
-                Debug.Log(c.chunkType);
-                Debug.Log(c.chunkSize);
-            }
-        }
         TriggerChunkIdentifier[]chunks = new TriggerChunkIdentifier[2];
         if (Input.GetKeyDown(KeyCode.B))
         {
@@ -776,6 +793,30 @@ public class BufferManager : MonoBehaviour
             }
         }
         */
+        int[] args = new int[3];
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            dispatchBuffer.GetData(args);
+            foreach (int x in args)
+            {
+                Debug.Log(x);
+            }
+        }
+        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[2];
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            triggerBuffer.GetData(chunks);
+            for (int i = 0; i < chunks.Length; i++)
+            {
+                TriggerChunkIdentifier t = chunks[i];
+                Debug.Log("type: " + t.cid.chunkType);
+                Debug.Log("pos: " + t.cid.pos);
+                Debug.Log("forward: " + t.cameraForward);
+                Debug.Log($"entered: {t.entered}");
+                triggerRays[i] = new Ray(t.cid.pos, t.cameraForward * 10000.0f);
+                drawRays = true;
+            }
+        }
     }
 
     private void OnDrawGizmos()

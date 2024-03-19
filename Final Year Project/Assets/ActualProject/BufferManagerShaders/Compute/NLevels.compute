@@ -10,7 +10,7 @@ RWStructuredBuffer<uint> _DispatchBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 RWStructuredBuffer<ChunkIdentifier> _ChunksBufferPrevFrame;
 RWStructuredBuffer<TriggerChunkIdentifier> _TriggerBuffer;
-RWStructuredBuffer<float3> _ChunkOffset;
+AppendStructuredBuffer<float3> _ChunkOffset;
 RWStructuredBuffer<float3> _ActualPosition;
 float renderDistance;
 float lodSwitchDist;
@@ -222,21 +222,31 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         {
             if (prevCid.chunkType < 4 && prevCid.chunkType > -1)
             {
-                //chunkIndex = ChunkTypeToIndex(_ChunksBuffer[0].chunkType)
+                    //If the chunk currently in the buffer equals the currently viewed chunk, do nothing
                 cid.pos = float3(currentChunkCoordX, currentChunkCoordY, currentChunkCoordZ) * _ChunksBuffer[0].chunkSize;
                 cid.chunksInViewDist = max(_ChunksBuffer[0].chunksInViewDist / 2, chunksVisibleInViewDist); // chunksVisibleInViewDist;
                 cid.chunkSize = min(_ChunksBuffer[0].chunkSize * 2, chunkSize);
                 cid.chunkType = min(_ChunksBuffer[0].chunkType + 1, 4);
+
+                    
                 _ChunksBuffer[0] = cid;
 
+                    //0 - galaxy
+                    //1 - solar 
+                    
+                 _ChunkOffset.Append(id);
+                   // We just left a solar system, so now we're in galaxy. So we want to check if chunkIndex + 1.entered (ie, the solar system) is true.
+                    //If it's not, which it won't be since we just left it, don't update anything
                 _TriggerBuffer[chunkIndex].cid = cid;
                 //_TriggerBuffer[chunkIndex].cid.chunkType -= 1; 
                 _TriggerBuffer[chunkIndex].cameraForward = -0.1; //invalid direction as the trigger no longer exists
                 _TriggerBuffer[chunkIndex].entered = 0u;
 
-                _DispatchBuffer[0] = max(ceil(_DispatchBuffer[0]/2), 1);
-                _DispatchBuffer[1] = max(ceil(_DispatchBuffer[1]/2), 1);
-                _DispatchBuffer[2] = max(ceil(_DispatchBuffer[2]/2), 1);
+                _DispatchBuffer[0] = max(ceil(_ChunksBuffer[0].chunksInViewDist / 8.0), 1);
+                _DispatchBuffer[1] = max(ceil(_ChunksBuffer[0].chunksInViewDist / 8.0), 1);
+
+                _DispatchBuffer[2] = max(ceil(_ChunksBuffer[0].chunksInViewDist / 8.0), 1);
+
             }
         }
      }
@@ -272,9 +282,9 @@ void CSMain(uint3 id : SV_DispatchThreadID)
             cid.chunkSize = max(_ChunksBuffer[0].chunkSize / 2, 1);
             cid.chunkType = max(_ChunksBuffer[0].chunkType - 1, 2);
             _ChunksBuffer[0] = cid;
-            _DispatchBuffer[0] = min(2 * _DispatchBuffer[0], 64);
-            _DispatchBuffer[1] = min(2 * _DispatchBuffer[1], 64);
-            _DispatchBuffer[2] = min(2 * _DispatchBuffer[2], 64);
+            _DispatchBuffer[0] = min(ceil(cid.chunksInViewDist / 8.0), 64);
+            _DispatchBuffer[1] = min(ceil(cid.chunksInViewDist / 8.0), 64);
+            _DispatchBuffer[2] = min(ceil(cid.chunksInViewDist / 8.0), 64);
             
             //Cache the location that the user entered the next level of detail
 
