@@ -73,8 +73,8 @@ public class UIMenu : MonoBehaviour
         });
         starCountSlider.wholeNumbers = true;
         starCountSlider.minValue = 10;
-        starCountSlider.value = 100;
-        starCountSlider.maxValue = 1000;
+        starCountSlider.value = 50;
+        starCountSlider.maxValue = 300;
         SetVariableAndText(ref starCount, ref starCountText, Mathf.RoundToInt(starCountSlider.value * 100));
         starCountSlider.onValueChanged.AddListener((value) =>
         {

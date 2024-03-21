@@ -107,6 +107,10 @@ public class FrameRateCalculator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            TakeScreenCapture();
+        }
         if (Input.GetKeyDown(KeyCode.F1))
         {
             SceneManager.LoadScene(0);
@@ -129,10 +133,7 @@ public class FrameRateCalculator : MonoBehaviour
         minFrameRate = (minFrameRate == 0.0) ? curFps : Mathf.Min(minFrameRate, curFps);
 
         fpsValues.Add(1.0f / Time.deltaTime);
-        if (Input.GetKeyDown(KeyCode.F2)) 
-        {
-            TakeScreenCapture();
-        }
+
 
     }
     
