@@ -1,0 +1,3 @@
+Time: 23/03/2024 14:18:30. chunk size: 180, rendDist : 360, maxStars : 5000, starRes : 8, planetRes: 8
+Frames Recorded: 824, Average frametime: 0.01737018, 99% high: 0.03632271, 99.9% high: 0.03632271
+Median: 0.0167506, median99: 0.0326772, median 999: 0.0306638, std: 0.003199829, std99: 0.009770523, std999: 0.009770523

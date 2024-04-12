@@ -47,11 +47,6 @@ Shader "Custom/StarLowLODShader"
                 UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColour)
             UNITY_INSTANCING_BUFFER_END(MyProps)
 
-            //https://forum.unity.com/threads/generate-random-float-between-0-and-1-in-shader.610810/
-            float GenerateRandom(float2 xy)
-            {
-                return round(frac(sin(dot(xy, float2(12.9898, 78.233))) * 43758.5453) * 1000) ;
-            }
 
 
             TEXTURE2D(_MainTex);
@@ -70,7 +65,6 @@ Shader "Custom/StarLowLODShader"
 
             struct GeomData
             {
-                //float size : PSIZE;
                 float4 positionWS : POSITION;
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
@@ -94,40 +88,7 @@ Shader "Custom/StarLowLODShader"
             };
 
 
-            /*
-                        Interpolators vert (Attributes i)
-            {
-                Interpolators o;
-                SolarSystem systemData = _SolarSystems[i.instanceId];
-                float4x4 modelMatrix = GenerateTRSMatrix(systemData.star.starPosition, systemData.star.starRadius); //Create TRS matrix
 
-                float4 vertexPosOS = mul(modelMatrix, float4(_VertexBuffer[i.vertexId], 1.0));
-
-                //wobble
-                float noiseValue = pNoise(vertexPosOS.xyz);
-                float dist = distance(systemData.star.starPosition, playerPosition);
-                float maxWobbleMagnitude = _WobbleMagnitude * systemData.star.starRadius / 2.0; //modulate wobble amount by star radius
-                float wobbleMagnitude = lerp(0.0, maxWobbleMagnitude, systemData.fade);
-                vertexPosOS.xyz +=_NormalBuffer[i.vertexId] * wobbleMagnitude * sin(_Time.w * noiseValue); 
-
-
-                VertexPositionInputs positionData = GetVertexPositionInputs(vertexPosOS); //compute world space and clip space position
-                VertexNormalInputs normalData = GetVertexNormalInputs(_NormalBuffer[i.vertexId]);
-                o.positionHCS = positionData.positionCS;
-
-                float2 uv = _UVBuffer[i.vertexId];
-                o.uv = uv;
-                o.fade = systemData.fade;
-                o.normWS = normalData.normalWS;
-                o.positionWS = positionData.positionWS.xyz;
-                o.positionHCS = positionData.positionCS;
-                o.mainColour = systemData.star.starColour;
-                o.mainColour += o.mainColour * 100.0 * sqrt(systemData.star.starRadius);
-                return o;
-
-            }
-            
-            */
                 
             GeomData vert(uint id : SV_INSTANCEID)
             {

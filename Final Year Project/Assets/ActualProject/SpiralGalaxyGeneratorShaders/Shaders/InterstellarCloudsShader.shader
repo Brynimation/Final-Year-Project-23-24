@@ -59,7 +59,6 @@ Shader "Custom/InterstellarCloudShader"
              struct Interpolators 
             {
                 float4 positionHCS : SV_POSITION; //SV_POSITION = semantic = System Value position - pixel position
-                //float size : PSIZE; //Size of each vertex.
                 float4 colour : COLOR;
                 float2 uv : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
@@ -71,10 +70,9 @@ Shader "Custom/InterstellarCloudShader"
                 GeomData o;
                 GalaxyStar star = _Positions[id];
                 o.positionWS = mul(unity_ObjectToWorld, float4(star.position, 1.0));
-                o.colour = star.colour;//(tid.id % 100 == 0) ? float4(1, 0, 0, 1) : float4(1, 1, 1, 1);
-                o.radius = star.radius * _CloudSize;//(tid.id % 100 == 0) ? 100 : 50;
-                o.colour += star.colour;//* _Emission;//_EmissionColour;
-                //o.radius = _PositionsLOD1[id].radius;//_PositionsLOD1[id].radius;
+                o.colour = star.colour;
+                o.radius = star.radius * _CloudSize;
+                o.colour += star.colour;
                 o.forward = normalize(GetCameraPositionWS() - o.positionWS);
                 float3 worldUp = float3(0.0f, 1.0f, 0.0f);
                 o.right = normalize(cross(o.forward, worldUp));
@@ -87,11 +85,9 @@ Shader "Custom/InterstellarCloudShader"
             {
 
                 GeomData centre = inputs[0];
-                //if(_PositionsLOD1[centre.id].culled == 0) return;
                 float3 forward = centre.forward;
                 float3 right = centre.right;
                 float3 up = centre.up;
-                //forward.y ;
 
                 float3 WSPositions[4];
                 float2 uvs[4];

@@ -10,6 +10,7 @@ public class FrameRateCalculator : MonoBehaviour
 {
     BufferManager bufferManager;
     List<float> fpsValues;
+    List<float> frameTimeValues;
 
     int currentChunkDistance;
     int currentRenderDistance;
@@ -26,6 +27,8 @@ public class FrameRateCalculator : MonoBehaviour
     float minFrameRate;
     float currentAverageFrameRate;
     string fileName = "fps.txt";
+    string summaryDataName = "fpsSummary.txt";
+    string summaryPathDir;
     string pathDir;
     int framesElapsed;
     int runCounter = 0;
@@ -63,7 +66,9 @@ public class FrameRateCalculator : MonoBehaviour
             }
         }
     }
-    private void WriteDataToFile(string data)
+
+    //File writiing code using tutorial: https://learn.microsoft.com/en-us/dotnet/standard/io/how-to-write-text-to-a-file
+    private void WriteDataToFile(string data, string pathDir)
     {
         // Ensure the directory exists
         string directory = Path.GetDirectoryName(pathDir);
@@ -80,6 +85,7 @@ public class FrameRateCalculator : MonoBehaviour
 
     }
 
+    //Capture screenshot code: https://docs.unity3d.com/ScriptReference/ScreenCapture.CaptureScreenshot.html
     private void TakeScreenCapture() 
     {
         string directory = Path.GetDirectoryName(pathDir);
@@ -95,8 +101,10 @@ public class FrameRateCalculator : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 61;
         pathDir = Path.Join(Application.dataPath, fileName);
+        summaryPathDir = Path.Join(Application.dataPath, summaryDataName);
         if(!testing)bufferManager = FindObjectOfType<BufferManager>();
         fpsValues = new List<float>();
+        frameTimeValues = new List<float>();
         ReadDataFromFile();
     }
     void Start()
@@ -122,25 +130,20 @@ public class FrameRateCalculator : MonoBehaviour
         if (!startRecording) return;
         framesElapsed++;
         float curFps = 1.0f / Time.deltaTime;
-        /*if (curFps < 30.0f) 
-        {
-            Debug.Log($"Cur fps is: {curFps}");
-        }*/
+
         fpsValues.Add(curFps);
-        //Debug.Log($"current fps {curFps}, average fps {currentAverageFrameRate}");
+
+        frameTimeValues.Add(Time.deltaTime);
         currentAverageFrameRate += (curFps - currentAverageFrameRate) / framesElapsed;
         maxFrameRate = Mathf.Max(maxFrameRate, curFps);
         minFrameRate = (minFrameRate == 0.0) ? curFps : Mathf.Min(minFrameRate, curFps);
 
-        fpsValues.Add(1.0f / Time.deltaTime);
 
 
     }
-    
 
-    void OnDestroy()
+    void WriteFpsData() 
     {
-        //calculate 1% low fps and 0.1% low fps
         int low1Count = Mathf.CeilToInt(fpsValues.Count * (0.01f));
         int low01Count = Mathf.CeilToInt(fpsValues.Count * (0.001f));
         Debug.Log($"low count 1: {low1Count}, low count 01: {low01Count}");
@@ -149,27 +152,77 @@ public class FrameRateCalculator : MonoBehaviour
         List<float> fps01LowData = sortedFPS.Take(low01Count).ToList();
         fps1Low = sortedFPS.Take(low1Count).Average();
         fps01Low = sortedFPS.Take(low01Count).Average();
-        if (testing) 
+        if (testing)
         {
-            WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
+            WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}", pathDir);
             string fpsLow1Stringa = "";
             fps1LowData.ForEach(fps => { fpsLow1Stringa += $"{fps}, "; });
             string fpsLow01Stringa = "";
             fps01LowData.ForEach(fps => { fpsLow01Stringa += $"{fps}, "; });
-            WriteDataToFile($"FPS1 low data: {fpsLow1Stringa}");
-            WriteDataToFile($"FPS01 low data: {fpsLow01Stringa}");
+            WriteDataToFile($"FPS1 low data: {fpsLow1Stringa}", pathDir);
+            WriteDataToFile($"FPS01 low data: {fpsLow01Stringa}", pathDir);
             return;
         }
 
 
-        WriteDataToFile($"Run {runCounter}, Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}"); 
-        WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}");
-        /*string fpsLow1String = "";
-        fps1LowData.ForEach(fps => { fpsLow1String += $"{fps}, "; });
-        string fpsLow01String = "";
-        fps01LowData.ForEach(fps => { fpsLow01String += $"{fps}, "; });
-        WriteDataToFile($"FPS1 low data: {fpsLow1String}");
-        WriteDataToFile($"FPS01 low data: {fpsLow01String}");
-        */
+        WriteDataToFile($"Run {runCounter}, Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}", pathDir);
+        WriteDataToFile($"Frames Recorded: {framesElapsed}, Average fps: {currentAverageFrameRate}, minFps : {minFrameRate}, maxFps : {maxFrameRate}, 1% low: {fps1Low}, 0.1% low: {fps01Low}", pathDir);
+    }
+
+    public float CalculateStandardDeviation(List<float> values)
+    {
+        if (values.Count < 2) return 0.0f;
+
+        // Calculate the average value
+        float avg = values.Average();
+
+        // Calculate the sum of the squared differences from the average
+        float sumOfSquares = values.Sum(value => (value - avg) * (value - avg));
+
+        // Calculate the standard deviation
+        return Mathf.Sqrt(sumOfSquares / (values.Count - 1));
+    }
+
+    void WriteFrameTimeData() 
+    {
+        frameTimeValues.RemoveAll(t => t == 0.0);
+        List<float> sortedTimes = frameTimeValues.OrderBy(t => t).ToList();
+        int p99Count = Mathf.CeilToInt(frameTimeValues.Count * (0.01f));
+        int p999Count = Mathf.CeilToInt(frameTimeValues.Count * (0.001f));
+        List<float> sortedTimes99 = sortedTimes.Skip(frameTimeValues.Count - p99Count).ToList(); ;
+        List<float> sortedTimes999 = sortedTimes.Skip(frameTimeValues.Count - p999Count).ToList(); ;
+        float average = sortedTimes.Average();
+        float average99 = sortedTimes99.Average();
+        float average999 = sortedTimes999.Average();
+
+        float median = sortedTimes[frameTimeValues.Count / 2];
+        float median99 = sortedTimes99[p99Count / 2];
+        float median999 = sortedTimes999[p999Count / 2];
+
+        float standardDeviation = CalculateStandardDeviation(sortedTimes);
+        float standardDeviation99 = CalculateStandardDeviation(sortedTimes99);
+        float standardDeviation999 = CalculateStandardDeviation(sortedTimes999);
+        WriteDataToFile($"Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}", pathDir);
+        WriteDataToFile($"Frames Recorded: {frameTimeValues.Count}, Average frametime: {average}, 99% high: {average99}, 99.9% high: {average999}", pathDir);
+        WriteDataToFile($"Median: {median}, median99: { median99}, median 999: {median999}, std: {standardDeviation}, std99: {standardDeviation99}, std999: {standardDeviation999}", pathDir);
+
+        WriteDataToFile($"Time: {System.DateTime.Now}. chunk size: {currentChunkDistance}, rendDist : {currentRenderDistance}, maxStars : {currentMaxNoStars}, starRes : {currentStarResolution}, planetRes: {currentPlanetResolution}", summaryPathDir);
+        WriteDataToFile($"Frames Recorded: {frameTimeValues.Count}, Average frametime: {average}, 99% high: {average99}, 99.9% high: {average999}", summaryPathDir);
+        WriteDataToFile($"Median: {median}, median99: {median99}, median 999: {median999}, std: {standardDeviation}, std99: {standardDeviation99}, std999: {standardDeviation999}", summaryPathDir);
+
+        string fts = "";
+        sortedTimes.ForEach(ft=> { fts += (ft > 0.0) ? $"{ft}, " : ""; });
+        string unsortedTimes = "";
+        frameTimeValues.ForEach(t => { unsortedTimes += (t > 0.0) ? $"{t}, " : ""; });
+        WriteDataToFile("SORTED", pathDir);
+        WriteDataToFile(fts, pathDir);
+        WriteDataToFile("UNSORTED", pathDir);
+        WriteDataToFile(unsortedTimes, pathDir);
+        WriteDataToFile(" ", pathDir);
+    }
+    void OnDestroy()
+    {
+        WriteFrameTimeData();
+
     }
 }

@@ -20,8 +20,8 @@ float2 minMaxDensity;
 
 int2 minMaxNumParticles;
 
-float4 centreColours[4];
-float4 outerColours[4];
+float4 centreColours[8];
+float4 outerColours[8];
 
 RWStructuredBuffer<ChunkIdentifier> _ChunksBuffer;
 AppendStructuredBuffer<GalaxyProperties> _MainProperties;
@@ -37,6 +37,7 @@ RWStructuredBuffer<float> _Radii;
 uniform Texture2D<float> _RadiusLookupTexture;
 uniform SamplerState sampler_RadiusLookupTexture;
 
+//View frustum culling of a sphere. Tutorial used: https://www.lighthouse3d.com/tutorials/view-frustum-culling/
 uint ShouldCullSphere(float3 centre, float radius)
 {
 
@@ -45,21 +46,6 @@ uint ShouldCullSphere(float3 centre, float radius)
         Plane plane = _ViewFrustumPlanes[i];
         float normalDotCentre = dot(plane.normal, centre);
         float cullDist = plane.distance;
-        if (normalDotCentre + cullDist + radius <= 0)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-uint IntersectSphereAtTrigger(float3 centre, float radius)
-{
-    for (uint i = 0; i < 6; i++)
-    {
-        Plane plane = _ViewFrustumPlanesAtTrigger[i];
-        float normalDotCentre = dot(plane.normal, centre);
-        float cullDist = plane.distance * 1;
         if (normalDotCentre + cullDist + radius <= 0)
         {
             return 0;
@@ -139,8 +125,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     int numParticles = lerp(minMaxNumParticles.x, minMaxNumParticles.y, random2);
     float galaxyDensity = lerp(minMaxDensity.x, minMaxDensity.y, random);
 
-    int randomToIndex1 = floor(random2 * 4);
-    int randomToIndex2 = floor(random3 * 4.0);
+    int randomToIndex1 = floor(random2 * 8.0);
+    int randomToIndex2 = floor(random3 * 8.0);
     float4 centreColour = centreColours[randomToIndex1];
     float4 outerColour = outerColours[randomToIndex2];
     //We want to check if a given position is behind the trigger position
@@ -159,7 +145,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float finalGalaxySwitchDist = lodSwitchDist * max(1.0, scale);
     if (dist > finalGalaxySwitchDist)
     {
-                //Start fading the sprites 
+        //Start fading the sprites 
         mp.fade = CrossFade(playerPosition, actualPosition, finalGalaxySwitchDist + galaxyFadeDist, 10000.0, galaxyFadeDist);
         haloRadius = (mp.scale/minMaxHaloRadius.y) *  GetFinalRadius();
         GalaxyProperties gp = GenerateGalaxyProperties(mp, minEccentricity, maxEccentricity, haloRadius, bulgeRadius, diskRadius, angularOffsetMultiplier, numParticles, minMaxHaloRadius.y, galaxyDensity, centreColour, outerColour);

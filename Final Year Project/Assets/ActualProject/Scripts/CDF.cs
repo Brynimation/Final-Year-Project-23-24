@@ -36,6 +36,7 @@ public class CDF
         this.scaleLength = scaleLength;
     }
 
+    //Surface brightness functions from: https://github.com/beltoforion/Galaxy-Renderer/tree/master
     float SurfaceBrightnessDistributionPDF(float radius, float centralIntensity, float kappa, float scaleLength, float bulgeRadius)
     {
         return (radius > bulgeRadius) ? SurfaceBrightnessDistributionDisk(radius - bulgeRadius, SurfaceBrightnessDistribtionBulge(bulgeRadius, centralIntensity, kappa), scaleLength) 
@@ -55,14 +56,18 @@ public class CDF
 
     float TrapezoidalRule(float minRadius, float maxRadius, int numIntervals, float centralIntensity, float kappa, float scaleLength, float bulgeRadius) 
     {
+        //Compute the height of each trapezium 
         float delta = (maxRadius - minRadius) / (float)numIntervals;
+        //The contribution to the total area from the first and last radius must be halved  
         float sum = 0.5f * (SurfaceBrightnessDistributionPDF(minRadius, centralIntensity, kappa, scaleLength, bulgeRadius) + 
             SurfaceBrightnessDistributionPDF(maxRadius, centralIntensity, kappa, scaleLength, bulgeRadius));
+        //Sum over all trapeziums 
         for (int i = 1; i < numIntervals; ++i)
         {
             float curRadius = minRadius + i * delta;
             sum += SurfaceBrightnessDistributionPDF(curRadius, centralIntensity, kappa, scaleLength, bulgeRadius);
         }
+        //multiply by delta to approximate the true area under the curve
         return sum * delta;
     }
     float TrapezoidalRule(float minRadius, float maxRadius, int numIntervals)
@@ -133,7 +138,7 @@ public class CDF
         if (prob == 0) return 0;
         while ((curMaxRadius - curMinRadius) > differenceThreshold || i < maxIterations)
         {
-            cdfRadFromProb = ComputeCDF(radFromProb, numIntervals, centralIntensity, kappa, scaleLength, bulgeRadius); // Assume getCDF is a function we've defined to compute the CDF
+            cdfRadFromProb = ComputeCDF(radFromProb, numIntervals, centralIntensity, kappa, scaleLength, bulgeRadius); 
 
             if (Mathf.Abs(cdfRadFromProb - prob) < differenceThreshold)
             {

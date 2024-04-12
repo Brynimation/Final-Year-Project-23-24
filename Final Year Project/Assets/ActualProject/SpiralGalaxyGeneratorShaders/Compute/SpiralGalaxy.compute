@@ -44,13 +44,6 @@ uniform float4 _OuterColour;
 uniform float _time;
 
 
-/*
-This function calculates the current position of a star in its orbit. This requires the star's current angle in its orbit (theta),
-the angle of inclination of its orbit (angleOffset), the semi-major (a) and semi-minor (b) axes of the ellipse. Obtained from line 425 from
-here: https://github.com/beltoforion/Galaxy-Renderer/blob/master/GalaxyWnd.cpp
-        GLfloat fx = (GLfloat)(x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta));
-        GLfloat fy = (GLfloat)(y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta));
-*/
 
 uint ShouldCullSphere(float3 centre, float radius)
 {
@@ -67,6 +60,13 @@ uint ShouldCullSphere(float3 centre, float radius)
     }
     return 1;
 }
+/*
+This function calculates the current position of a star in its orbit. This requires the star's current angle in its orbit (theta),
+the angle of inclination of its orbit (angleOffset), the semi-major (a) and semi-minor (b) axes of the ellipse. Obtained from line 425 from
+here: https://github.com/beltoforion/Galaxy-Renderer/blob/master/GalaxyWnd.cpp
+        GLfloat fx = (GLfloat)(x + (a * cosalpha * cosbeta - b * sinalpha * sinbeta));
+        GLfloat fy = (GLfloat)(y + (a * cosalpha * sinbeta + b * sinalpha * cosbeta));
+*/
 
 float3 calculatePosition(float theta, float angleOffset, float a, float b, int id)
 {
@@ -107,48 +107,9 @@ float GetAccurateSemiMajorAxis(uint id)
     _Radii.Append(float2(radius, p));
     return radius;
     
-    /*return InvertCdf(p, 0.0, _GalacticHaloRadius, 0.1);
-    float _FalloffCoefficient = 1.0;
-    // Calculate the corresponding radius
-    float radius = _GalacticHaloRadius * (exp(_Bias * (float) id / (float) _NumParticles) - 1.0);
-    return radius;
-    // Normalized progress variable (from 0 to 1 as id goes from 0 to _NumParticles)
-    float t = (float) id / (float) (_NumParticles - 1.0);
 
-    // Exponential falloff factor
-    float falloff = exp(-_FalloffCoefficient * (1.0 - t));
-
-    // Calculate the radius with an exponential falloff
-    float radius = _GalacticHaloRadius * (1.0 - falloff);
-
-    return lerp(0.0, _GalacticHaloRadius, t);
-    */
 }
-/*float GetAccurateSemiMajorAxis(uint id)
-{
-    int bulgeStarCount = int(_ProportionOfStarsInBulge * _NumParticles);
-    int diskStarCount = int(_ProportionOfStarsInDisk * _NumParticles);
-    //return _GalacticHaloRadius * (exp((float)id/(float)_NumParticles) - 1.0);
-    ;
-    float radiusInBulge = _GalacticBulgeRadius * (exp((float)id/(float)bulgeStarCount) - 1.0);
-    float radiusInDisk = -_GalacticBulgeRadius + _GalacticDiskRadius * (exp((float)(id - bulgeStarCount)/(float)(diskStarCount-bulgeStarCount)) - 1.0);
-    float radiusInHalo = -_GalacticDiskRadius +  _GalacticHaloRadius * exp((float)(id - diskStarCount)/(float)(_NumParticles - diskStarCount) - 1.0);
-    if(id < bulgeStarCount) return radiusInBulge;
-    else if(id >= bulgeStarCount && id < diskStarCount)return radiusInDisk;
-    else return radiusInHalo;
-    /*if(id < bulgeStarCount) //25% particles live within the bulge
-    {
-        float ln = log((float) (bulgeStarCount) / (float) (bulgeStarCount - id));
-        return pow(ln * _GalacticBulgeRadius, 4);
-    }
-    else if(id >= bulgeStarCount && id < diskStarCount)
-    {
-        return _GalacticDiskRadius * log( (float) (diskStarCount / (float) (diskStarCount - bulgeStarCount - id))); //beyond the bulge, in the disk
-    }else{
-        return _GalacticHaloRadius * log( (float) (_NumParticles) / (float) (_NumParticles - id)); //beyond the disk, in the halo
-    }
 
-}*/
 float GetSemiMajorAxis(float x)
 {
 
@@ -185,7 +146,6 @@ float GetRandomAngle(uint id)
 
 float GetExpectedAngularVelocity(uint i, float r)
 {
-    //return 5.0 * _time;
     //One simplifying assumption we make here is that, as the nuclear bulge of the galaxy is very densely packed with stars, we consider it to behave as a 
     //uniformly dense solid sphere.
     //Due to Newton's shell theorem: for a test particle contained within a sphere of constant density, gravitational force (and hence acceleration)

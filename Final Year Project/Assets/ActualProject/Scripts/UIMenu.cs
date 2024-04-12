@@ -64,7 +64,7 @@ public class UIMenu : MonoBehaviour
         useChosenSettings = true;
         renderDistanceSlider.wholeNumbers = true;
         renderDistanceSlider.minValue = 1;
-        renderDistanceSlider.maxValue = 7;
+        renderDistanceSlider.maxValue = 8;
         renderDistanceSlider.value = 2;
         SetVariableAndText(ref renderDistance, ref renderDistanceText, Mathf.RoundToInt(renderDistanceSlider.value * 180), (int) renderDistanceSlider.value);
         renderDistanceSlider.onValueChanged.AddListener((value) =>
@@ -73,8 +73,8 @@ public class UIMenu : MonoBehaviour
         });
         starCountSlider.wholeNumbers = true;
         starCountSlider.minValue = 10;
-        starCountSlider.value = 50;
-        starCountSlider.maxValue = 300;
+        starCountSlider.value = 100;
+        starCountSlider.maxValue = 1000;
         SetVariableAndText(ref starCount, ref starCountText, Mathf.RoundToInt(starCountSlider.value * 100));
         starCountSlider.onValueChanged.AddListener((value) =>
         {

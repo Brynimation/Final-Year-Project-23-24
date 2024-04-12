@@ -38,48 +38,9 @@ float4 groundColours[4];
 float4 mountainColours[4];
 float4 mountainTopColours[4];
 
-/*
-https://www.teachastronomy.com/textbook/Properties-of-Stars/Stefan-Boltzmann-Law/
-Stefan-Boltzmann law: Flux energy emitted from a surface (Wm-2) = sigma * T4 
-Total luminosity of a blackbody emitter (ie, a star): L=4πR2 sigma * T4
-1 =
-sigma - Stefan-Boltzmann constant - 5.67 * 10^-8 Wm^(-2)K^(-4)
-Tells us that radius of a star is proportional to the root of its luminosity and inversely proportional to the square of its temperature
 
-http://hyperphysics.phy-astr.gsu.edu/hbase/wien.html
-Wien's Displacement Law: Relates a star's surface temperature to its peak wavelength (the wavelength at which it emits the most energy - the colour 
-of radiation that it emits most strongly. Formally:
-lambdaPeak * T = 2.898 * 10 ^(-3) mk
+//View frustum culling of a sphere. Tutorial used: https://www.lighthouse3d.com/tutorials/view-frustum-culling/
 
-//Chapter 14, page 278 introductory-astronomy-and-astrophysics_compress.pdf
-//Population 1 stars are hot, young and blue. Inhabit the spiral arms.
-//Population 2 stars are cool, red and blue. They inhabit the galactic halo and galactic disc.
-
-Approach: initialise stars with a random luminosity and radius.
-Compute the star's surface temperature using Stefan-Boltzmann
-Compute lambdaPeak using Wien's Displacement Law
-Generate an appropriate colour based on wavelength
-
-//Chapter 13, page 258 introductory-astronomy-and-astrophysics_compress.pdf
-https://astrobackyard.com/types-of-stars/
-Main Sequence stars are classified into 1 of 7 groups using the Harvard Spectral classification.
-For our calculations, we will consider sol as having a temperature, radius and luminosity of 100
-Sol Temp, T = 5700k, Sol radius, R = 696,340 km, Sol luminosity, 100L = 3.846 * 10^26 W
-O - 7.0T, 10R, 10000000L 
-B -  3.5T, 5R, 100000L
-A - 1.5T, 1.7R, 2000L
-F - 1.14T, 1.3R, 400L
-G - 1T, 1R, 100L
-K - 0.79T, 0.7R, 20L
-M - 0.56T, 0.2R, L
-
-I want the peak wavelength to be returned in nanometres. This will make it easier to convert to colours as the visible range
-of colours is 380 - 700 nm
-
-
-
-
-*/
 uint ShouldCullSphere(float3 centre, float radius)
 {
 
@@ -133,7 +94,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     }
 
     float scale =  lerp(minRadius, maxRadius, random);
-    float planetMaxDist = scale * 1.5;
+    float planetMaxDist = scale * 2.0;
     
     
     //We may want to render planets orbitting a star even if we can't see the star, so do not return immediately.
@@ -141,8 +102,8 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
     
     float smoothRand = pNoise(actualPosition);
     float starLuminosity = weightedRandomSample(random);
-    float4 colour = GenerateRandomColour(random2, colours, probabilities);//ColourFromLuminosity(starLuminosity, scale, colours); //GenerateRandomColour(random, colours, probabilities); GenerateRandomColour(smoothRand, colours, probabilities);
-    float4 emissiveColour = GenerateRandomColour(random2, emissiveColours, probabilities);//ColourFromLuminosity(starLuminosity, scale, emissiveColours);
+    float4 colour = GenerateRandomColour(random2, colours, probabilities);
+    float4 emissiveColour = GenerateRandomColour(random2, emissiveColours, probabilities);
     float4 borderColour = GenerateRandomBorderColour(random2, borderColours, probabilities, random2);
     float borderWidthMultiplier = lerp(0.5, 2.0, random3);
     float3 rotation = Hash33(actualPosition) * 2.0 * PI;

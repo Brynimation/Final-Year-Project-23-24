@@ -8,7 +8,7 @@ using System.Linq;
 using UnityEngine.Rendering;
 using Unity.VisualScripting;
 
-//https://forum.unity.com/threads/how-do-i-add-emission-to-a-custom-fragment-shader.1313034/
+
 struct GalaxyStar
 {
     public Vector3 position;
@@ -82,7 +82,6 @@ public class SpiralGalaxyGenerator : MonoBehaviour
 
     private void SetPositionCalculatorData() 
     {
-        //_GalacticCentre = transform.position;
         positionCalculator.SetFloat("_SmallStarRadius", smallStarRadius);
         positionCalculator.SetFloat("_LargeStarRadius" ,largeStarRadius);
         positionCalculator.SetFloat("_time", Time.time);
@@ -200,73 +199,7 @@ public class SpiralGalaxyGenerator : MonoBehaviour
     private void Update()
     {
 
-        /*if (Input.GetKeyDown(KeyCode.I)) 
-        {
-            Vector2[] rads = new Vector2[numInstances];
-            radii.GetData(rads);
-            Vector2 minRad = new Vector2(float.MaxValue, 1.0f);
-            Vector2 maxRad = new Vector2(float.MinValue, 0.0f);
-
-            Vector2 minRadX = new Vector2(float.MaxValue, 0.0f);
-            Vector2 maxRadX = new Vector2(float.MinValue, 1.0f);
-            foreach (Vector2 rad in rads) 
-            {
-                Debug.Log(rad);
-                minRadX = Mathf.Min(rad.x, minRadX.x) == rad.x ? rad : minRadX;
-                maxRadX = Mathf.Max(rad.x, maxRadX.x) == rad.x ? rad : maxRadX;
-                if (minRad.y > rad.y) 
-                {
-                    minRad = rad;
-                }
-                else if (minRad.y == rad.y && minRad.x >= rad.x) 
-                {
-                    minRad = rad;
-                }
-                if (maxRad.y < rad.y)
-                {
-                    maxRad = rad;
-                }
-                else if (maxRad.y == rad.y && maxRad.x <= rad.x)
-                {
-                    maxRad = rad;
-                }
-                if (rad.y == 1.0) Debug.Log(rad);
-            }
-            Debug.Log($"minrad : {minRad}, maxRad: {maxRad}");
-            Debug.Log($"minradX : {minRadX}, maxRadX: {maxRadX}");
-        }
-
-        if (Input.GetKeyDown(KeyCode.J))
-        {
-            Color[] colors = _RadiusLookupTexture.GetPixels();
-            int width = _RadiusLookupTexture.width;
-            int height = _RadiusLookupTexture.height;
-
-            Debug.Log($"Texture width is {width}, texture height is {height}");
-            for (int i = 0; i < colors.Length; i++)
-            {
-                // Calculate the UV coordinates
-                float u = (i % width) / (float)width;
-                float v = (i / width) / (float)height;
-
-                Debug.Log($"Value at coordinate ({u}, {v}) is: {colors[i]}");
-            }
-        }
-
-        if (Input.GetKeyDown(KeyCode.H)) 
-        {
-            int[] idArray = new int[numInstances];
-            int minId = int.MaxValue;
-            int maxId = int.MinValue;
-            ids.GetData(idArray);
-            foreach (int x in idArray) 
-            {
-                Debug.Log($"id: {x}");
-                minId = Mathf.Min(minId, x);
-                maxId = Mathf.Max(maxId, x);
-            }
-            Debug.Log($"minId: {minId}, maxId: {maxId}, numInstances: {numInstances}");
-        }*/
+       
         radii.SetCounterValue(0);
 
         _PositionsBufferLODAppend0.SetCounterValue(0);
@@ -306,27 +239,6 @@ public class SpiralGalaxyGenerator : MonoBehaviour
         prevCameraRot = Camera.main.transform.rotation;
         prevNumInstances = numInstances;
         positionCalculator.SetFloat("_TimeStep", bufferManager.timeStep);
-    }
-    private void Update2()
-    {
-        material[1].SetColor("_EmissionColour", _EmissionColour);
-        //_PositionsBufferLOD0.SetCounterValue(0);
-        //_PositionsBufferLOD1.SetCounterValue(0);
-        if (prevCameraPos != Camera.main.transform.position || prevCameraRot != Camera.main.transform.rotation) 
-        {
-            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-            viewFrustumPlanesBuffer.SetData(planes);
-        }
-
-        int numRows = Resolution;
-        positionCalculator.Dispatch(positionCalculatorHandle, positionGroupSizeX, 1, 1);
-        sphereGenerator.Dispatch(SphereGeneratorHandle, 10, 10, 1);
-        sphereGenerator.SetInt("_Resolution", Resolution);
-        SetPositionCalculatorData();
-        Graphics.DrawProceduralIndirect(material[0], bounds, MeshTopology.Triangles, _IndexBuffer, sphereArgsBuffer);//Spheres
-        Graphics.DrawProceduralIndirect(material[1], bounds, MeshTopology.Points, billboardArgsBuffer);
-        prevCameraPos = Camera.main.transform.position;
-        prevCameraRot = Camera.main.transform.rotation;
     }
 
     private void OnDestroy()

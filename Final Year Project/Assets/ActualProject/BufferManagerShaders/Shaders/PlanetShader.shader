@@ -1,18 +1,5 @@
 Shader "Custom/PlanetShader"
 {
-/*
-struct PlanetTerrainProperties
-{
-    float roughness;
-    float baseRoughness;
-    float persistence;
-    float minVal;
-    float noiseStrength;
-    float3 noiseCentre;
-    int octaves;
-};
-
-*/
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
@@ -140,10 +127,9 @@ struct PlanetTerrainProperties
             float4 frag (Interpolators i) : SV_Target
             {
                 //return float4(1.0, 0.0, 0.0, 1.0)
-                /*Unlike the other bodies in the simulation that are emissive, the planets need to be shaded
-                For a given planet, we will only consider the light incident on it from the star that it is orbitting
-                */
+                //Unlike the other bodies in the simulation that are emissive, the planets need to be shaded
                 //Basic Phong shading, where the star the planet is orbitting is treated as a uniformly coloured point light
+                //Implementation based on the paper ""Illumination for computer generated pictures": /https://api.semanticscholar.org/CorpusID:1439868
                 float3 hitToLight = i.lightPosWS - i.positionWS;
                 float3 lightDir = normalize(hitToLight);
                 float3 viewDirection = normalize(i.positionWS - GetCameraPositionWS());

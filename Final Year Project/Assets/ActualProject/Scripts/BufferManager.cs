@@ -584,8 +584,6 @@ public class BufferManager : MonoBehaviour
         {
             overlayUI.SetActive(true);
         }
-        //positionsBuffer.SetCounterValue(0);
-        //positionsBuffer2.SetCounterValue(0)
         floatStarColours = ColourToFloatArray(starColours);
         solarSystemCreator.SetFloats("colours", floatStarColours);
         shaderProbabilities = ProbabilityToFloatArray(starColourProbabilities);
@@ -602,15 +600,6 @@ public class BufferManager : MonoBehaviour
             }
         }
 
-        /*if (Input.GetKeyDown(KeyCode.V)) 
-        {
-            float[] rads = new float[1];
-            radii.GetData(rads);
-            foreach (float rad in rads) 
-            {
-                Debug.Log($"radius: {rad}");
-            }
-        }*/
         randomValuesBuffer.SetCounterValue(0);
         lowLODSolarSystemPositions.SetCounterValue(0);
         lowLODGalaxyPositions.SetCounterValue(0);
@@ -622,7 +611,6 @@ public class BufferManager : MonoBehaviour
         debugPosBuffer.SetCounterValue(0);
 
         Vector3 camForward = Camera.main.transform.forward;
-        //Debug.Log(camForward);
         chunkManager.SetVector("playerPosition", playerPosition.position);
         chunkManager.SetVector("cameraForward", camForward);
         chunkManager.SetFloat("lodSwitchBackDist", lodSwitchBackDist);
@@ -684,139 +672,14 @@ public class BufferManager : MonoBehaviour
         Graphics.DrawProceduralIndirect(galacticClusterMaterial, bounds, MeshTopology.Points, galacticClusterArgsBuffer);
 
         ComputeBuffer.CopyCount(solarSystemBuffer, solarSystemArgsBuffer, sizeof(uint));
-        //ComputeBuffer.CopyCount(solarSystemBuffer, starSphereArgsBuffer, sizeof(uint));
 
         ComputeBuffer.CopyCount(planetsBuffer, planetsArgsBuffer, sizeof(uint));
-        //ComputeBuffer.CopyCount(planetsBuffer, planetSphereArgsBuffer, sizeof(uint));
 
-        //Graphics.DrawMeshInstancedIndirect(starMesh, 0, starMaterial, bounds, solarSystemArgsBuffer);
-        //Graphics.DrawMeshInstancedIndirect(planetMesh, 0, planetMaterial, bounds, planetsArgsBuffer);
         Graphics.DrawProceduralIndirect(starMaterial, bounds, MeshTopology.Triangles, starIndexBuffer, solarSystemArgsBuffer);//Spheres
         Graphics.DrawProceduralIndirect(planetMaterial, bounds, MeshTopology.Triangles, planetIndexBuffer, planetsArgsBuffer);//Spheres
         Graphics.DrawMeshInstancedIndirect(sphereMesh, 0, triggerMaterial, bounds, triggerArgsBuffer);
 
-        ChunkIdentifier[] chunk = new ChunkIdentifier[1];
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            chunksBuffer.GetData(chunk);
-            foreach (var c in chunk)
-            {
-                Debug.Log(c.pos);
-                Debug.Log(c.chunkType);
-                Debug.Log(c.chunkSize);
-                Debug.Log($"Chunks visible in view dist: {c.chunksInViewDist}");
-            }
-        }
-        Vector3[] offset = new Vector3[maxInstanceCount];
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            //Debug.Log(Camera.main.transform.forward);
-            chunkOffsetBuffer.GetData(offset);
-            foreach (var o in offset) 
-            {
-                if (o != Vector3.zero) Debug.Log($"{o} has entered the conditional!");
-            }
-        }
-        chunkOffsetBuffer.SetCounterValue(0);
-
-        /*
-        int[] planetArgs = new int[5];
-        int[] solarSystemArgs = new int[5];
-        int[] clusterArgs = new int[4];
-        int[] lowGalaxyArgs = new int[4];
-        int[] lowSolarArgs = new int[4];
-        int[] bigGalaxyArgs = new int[1];
-        Vector3[] actualPositions = new Vector3[1];
-        //verify that gpu view frustum culling works
-        if (Input.GetKeyDown(KeyCode.K)) 
-        {
-            debugBuffer.GetData(actualPositions);
-            planetsArgsBuffer.GetData(planetArgs);
-            solarSystemArgsBuffer.GetData(solarSystemArgs);
-            galacticClusterArgsBuffer.GetData(clusterArgs);
-            lowLODGalaxyArgsBuffer.GetData(lowGalaxyArgs);
-            lowLODSolarSystemArgsBuffer.GetData(lowSolarArgs);
-            bigGalaxyPropertiesCount.GetData(bigGalaxyArgs);
-
-            Debug.Log($"Actual position: {actualPositions[0]}");
-            Debug.Log($"planets: {planetArgs[1]}, low lod solars {lowSolarArgs[1]}, high lod solars {solarSystemArgs[1]}, low lod galaxies {lowGalaxyArgs[1]}, high lod galaxies {bigGalaxyArgs[0]}, clusters {clusterArgs[1]}");
-        }
-
-        MeshProperties[] mp = new MeshProperties[(int)Mathf.Pow(chunksVisibleInViewDist * 8 + 1, 3)];
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            lowLODSolarSystemPositions.GetData(mp);
-            foreach (var p in mp)
-            {
-                Debug.Log(p.mat);
-            }
-        }
-        Plane[] plns = new Plane[6];
-        if (Input.GetKeyDown(KeyCode.T)) 
-        {
-            viewFrustumPlanesBufferAtTrigger.GetData(plns);
-            foreach (var pl in plns) 
-            {
-                Debug.Log(pl);
-            }
-        }
-        int[] ss = new int[5];
-        if (Input.GetKeyDown(KeyCode.O))
-        {
-            planetsArgsBuffer.GetData(ss);
-            foreach (var p in ss)
-            {
-                Debug.Log(p);
-            }
-        }
-        int[] args = new int[3];
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            dispatchBuffer.GetData(args);
-            foreach (int x in args)
-            {
-                Debug.Log(x);
-            }
-        }
-        TriggerChunkIdentifier[]chunks = new TriggerChunkIdentifier[2];
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            triggerBuffer.GetData(chunks);
-            for (int i = 0; i < chunks.Length; i++) 
-            {
-                TriggerChunkIdentifier t = chunks[i];
-                Debug.Log("type: "+ t.cid.chunkType);
-                Debug.Log("pos: "+ t.cid.pos);
-                Debug.Log("forward: "+ t.cameraForward);
-                triggerRays[i] = new Ray(t.cid.pos, t.cameraForward * 10000.0f);
-                drawRays = true;
-            }
-        }
-        */
-        int[] args = new int[3];
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            dispatchBuffer.GetData(args);
-            foreach (int x in args)
-            {
-                Debug.Log(x);
-            }
-        }
-        TriggerChunkIdentifier[] chunks = new TriggerChunkIdentifier[2];
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            triggerBuffer.GetData(chunks);
-            for (int i = 0; i < chunks.Length; i++)
-            {
-                TriggerChunkIdentifier t = chunks[i];
-                Debug.Log("type: " + t.cid.chunkType);
-                Debug.Log("pos: " + t.cid.pos);
-                Debug.Log("forward: " + t.cameraForward);
-                Debug.Log($"entered: {t.entered}");
-                triggerRays[i] = new Ray(t.cid.pos, t.cameraForward * 10000.0f);
-                drawRays = true;
-            }
-        }
+      
     }
 
     private void OnDrawGizmos()
